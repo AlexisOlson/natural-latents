@@ -1,0 +1,22 @@
+Natural Latents
+
+Copyright 2026 Alexis Olson. Licensed under the Apache License, Version 2.0.
+
+This repository contains code adapted from DLorell/stoch_to_det, distributed
+under the Apache License, Version 2.0:
+
+    https://github.com/DLorell/stoch_to_det
+
+The files under NaturalLatents/Upstream/ are adapted from that project at
+revision 7b41957da9500716102cba323b3a48af0f23751c, the head of its pull
+request #6 by Jeremy Gillen (jezgillen). Each such file names its source path
+and revision in its first line and states its modifications. That revision
+includes upstream's finite-information foundation, duality, optimum existence,
+seed and race machinery, and pull request #6's shared-race, coordinate-race,
+floor and probability-table modules. The assembly in this repository follows
+pull request #6's method: powered-reference race coding with a coordinate
+ledger. The shape of the probability-table statement follows its readable
+theorem.
+
+The remaining files are the author's own work, some adapted from the author's
+earlier repository; those files state so in their first line.

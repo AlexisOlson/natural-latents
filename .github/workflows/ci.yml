@@ -1,0 +1,74 @@
+# Continuous verification. In order:
+#   1. the frozen statement's SHA-256 (scripts/check_statement.py)
+#   2. the trust-shortcut scan over every Lean file
+#   3. install the pinned toolchain; fetch the Mathlib cache
+#   4. `lake build`, then `lake env lean Verify.lean`, which must exit 0 and print nothing
+# Nothing here runs `lake update` or changes a pin.
+
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the frozen statement
+        run: python3 scripts/check_statement.py
+
+      - name: Scan for trust shortcuts
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=0
+          grep -rn -E '\b(sorry|admit|native_decide|unsafe|bv_decide|implemented_by|extern|skipKernelTC)\b|decide \+native|^\s*(local |scoped )?(syntax|macro|macro_rules|elab|elab_rules|notation|infix|infixl|infixr|prefix|postfix)\b|^\s*(@\[[^]]*\]\s*)?(private |protected |noncomputable )*axiom\b' \
+            --include='*.lean' NaturalLatents NaturalLatents.lean Verify.lean || status=$?
+          case "$status" in
+            1) echo "trust scan: clean" ;;
+            0) echo "::error::trust shortcut found above"; exit 1 ;;
+            *) echo "::error::grep failed with status $status"; exit 1 ;;
+          esac
+
+      - uses: leanprover/lean-action@v1.6.0
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-mathlib-cache: false
+          use-github-cache: false
+
+      - name: Fetch Mathlib oleans
+        run: |
+          if ! lake exe cache get; then
+            echo "::error::lake exe cache get failed; stopping before Mathlib would compile from source"
+            exit 1
+          fi
+
+      - name: Build
+        run: lake build
+
+      - name: Kernel audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$(lake env lean -DrelaxedAutoImplicit=false Verify.lean 2>&1)"
+          if [ -n "$out" ]; then
+            echo "$out"
+            echo "::error::Verify.lean printed output; a passing audit is silent"
+            exit 1
+          fi
