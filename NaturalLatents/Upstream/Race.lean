@@ -119,7 +119,6 @@ private lemma expMeasure_one_tilt {t : ℝ} (ht : 0 < t) :
       ← ENNReal.ofReal_mul ht.le]
     congr 1
     rw [← Real.exp_add]
-    congr 1
     field_simp [ht.ne']
     ring
   · simp [if_neg hy]
@@ -127,11 +126,11 @@ private lemma expMeasure_one_tilt {t : ℝ} (ht : 0 < t) :
 private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
     Measure.map (fun x : ℝ => x / t) (expMeasure (1 / t)) =
       expMeasure 1 := by
-  letI : IsProbabilityMeasure (expMeasure (1 / t)) :=
+  let : IsProbabilityMeasure (expMeasure (1 / t)) :=
     isProbabilityMeasure_expMeasure (one_div_pos.mpr ht)
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
-  letI : IsProbabilityMeasure
+  let : IsProbabilityMeasure
       (Measure.map (fun x : ℝ => x / t) (expMeasure (1 / t))) :=
     Measure.isProbabilityMeasure_map (measurable_id.div_const t).aemeasurable
   apply Measure.eq_of_cdf
@@ -159,11 +158,11 @@ private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
 excess vector. -/
 private lemma map_div_expMeasure_one {t : ℝ} (ht : 0 < t) :
     Measure.map (fun x : ℝ => x / t) (expMeasure 1) = expMeasure t := by
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
-  letI : IsProbabilityMeasure (expMeasure t) :=
+  let : IsProbabilityMeasure (expMeasure t) :=
     isProbabilityMeasure_expMeasure ht
-  letI : IsProbabilityMeasure
+  let : IsProbabilityMeasure
       (Measure.map (fun x : ℝ => x / t) (expMeasure 1)) :=
     Measure.isProbabilityMeasure_map (measurable_id.div_const t).aemeasurable
   apply Measure.eq_of_cdf
@@ -192,7 +191,7 @@ private lemma map_sub_restrict_expMeasure_one {a : ℝ} (ha : 0 ≤ a) :
         ((expMeasure 1).restrict (Set.Ioi a)) =
       ENNReal.ofReal (Real.exp (-a)) • expMeasure 1 := by
   let ν : Measure ℝ := expMeasure 1
-  letI : IsProbabilityMeasure ν :=
+  let : IsProbabilityMeasure ν :=
     isProbabilityMeasure_expMeasure zero_lt_one
   apply Measure.ext_of_Iic
   intro x
@@ -283,9 +282,9 @@ private lemma map_losing_scaled_excess
         weightedLosingExcessLaw t a := by
   let d : {i : κ // i ≠ a} → ℝ≥0∞ := fun i =>
     ENNReal.ofReal (Real.exp (-(t i.1 * u)))
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
-  letI (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
+  let (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
       (expMeasure (t i.1)) := isProbabilityMeasure_expMeasure (ht i.1)
   have hmap :
       Measure.map
@@ -303,7 +302,7 @@ private lemma map_losing_scaled_excess
           ((expMeasure 1).restrict (Set.Ioi (t i.1 * u))) =
         d i • expMeasure (t i.1) := by
     exact map_scaled_excess_restrict_expMeasure_one (ht i.1) hu
-  letI (i : {i : κ // i ≠ a}) : IsFiniteMeasure
+  let (i : {i : κ // i ≠ a}) : IsFiniteMeasure
       (d i • expMeasure (t i.1)) := ⟨by simp [d]⟩
   have hscaled :
       Measure.pi (fun i : {i : κ // i ≠ a} =>
@@ -336,9 +335,9 @@ private lemma map_eval_restrict_strictClockWin
     Measure.map (fun E : κ → ℝ => E a)
         ((clockLaw κ).restrict {E | strictClockWin t a E}) =
       ENNReal.ofReal (t a) • expMeasure (1 / t a) := by
-  letI : ∀ _ : κ, IsProbabilityMeasure (expMeasure 1) :=
+  let : ∀ _ : κ, IsProbabilityMeasure (expMeasure 1) :=
     fun _ => isProbabilityMeasure_expMeasure zero_lt_one
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
   let e : Option {i : κ // i ≠ a} ≃ κ := Equiv.optionSubtypeNe a
   let f := (MeasurableEquiv.piOptionEquivProd
@@ -395,7 +394,7 @@ private lemma map_eval_restrict_strictClockWin
       dsimp [g]
       rw [MeasurableEquiv.coe_piCongrLeft, Equiv.piCongrLeft_apply]
       simp [e, hf_none]
-    simp only [Set.mem_preimage, Set.mem_setOf_eq, Set.mem_pi, Set.mem_univ,
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, Set.mem_pi, Set.mem_univ,
       true_implies, Set.mem_Ioi]
     constructor
     · intro h i
@@ -520,8 +519,7 @@ private lemma insertWinnerZero_measurable
   apply measurable_pi_lambda
   intro i
   by_cases h : i = a
-  · simpa [insertWinnerZero, h] using
-      (measurable_const : Measurable (fun _ : {j : κ // j ≠ a} → ℝ => (0 : ℝ)))
+  · simp [insertWinnerZero, h]
   · simpa [insertWinnerZero, h] using
       (measurable_pi_apply (⟨i, h⟩ : {j : κ // j ≠ a}))
 
@@ -537,9 +535,9 @@ private theorem clock_min_excess_restrict_factorization
         ((clockLaw κ).restrict {E | strictClockWin t a E}) =
       (ENNReal.ofReal (t a) • expMeasure 1).prod
         (Measure.map (insertWinnerZero a) (weightedLosingExcessLaw t a)) := by
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
-  letI (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
+  let (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
       (expMeasure (t i.1)) := isProbabilityMeasure_expMeasure (ht i.1)
   let e : Option {i : κ // i ≠ a} ≃ κ := Equiv.optionSubtypeNe a
   let f := (MeasurableEquiv.piOptionEquivProd
@@ -600,7 +598,7 @@ private theorem clock_min_excess_restrict_factorization
           (fun i : {i : κ // i ≠ a} =>
             Set.Ioi (t i.1 / t a * y)) := by
     ext x
-    simp only [P, Set.mem_preimage, Set.mem_setOf_eq, strictClockWin,
+    simp only [P, Set.mem_preimage, Set.mem_ofPred_eq, strictClockWin,
       Set.mem_pi, Set.mem_univ, true_implies, Function.comp_apply,
       Set.mem_Ioi]
     constructor
@@ -718,9 +716,9 @@ private theorem clock_min_excess_restrict_factorization
   have hρprob : IsProbabilityMeasure ρ := by
     dsimp [ρ, weightedLosingExcessLaw]
     infer_instance
-  letI : IsProbabilityMeasure ρ := hρprob
+  let : IsProbabilityMeasure ρ := hρprob
   have hembed : Measurable embed := insertWinnerZero_measurable a
-  letI : IsProbabilityMeasure ρfull := by
+  let : IsProbabilityMeasure ρfull := by
     dsimp [ρfull]
     exact Measure.isProbabilityMeasure_map hembed.aemeasurable
   change Measure.map J (q.restrict P) =
@@ -783,14 +781,14 @@ private theorem clock_min_excess_restrict_factorization
         simp only [A, Set.mem_preimage, Set.mem_inter_iff,
           Set.mem_prod, J, rpre, embed, loseMap]
         dsimp only [u]
-        simpa only [hys, true_and, hpiff]
+        simp only [hys, true_and, hpiff]
       have hBsec :
           (fun x : {i : κ // i ≠ a} → ℝ => (x, y)) ⁻¹' B = orth := by
         ext x
         have hpiff : (x, y) ∈ P ↔ x ∈ orth := by
           exact Set.ext_iff.mp hPsec x
         simp only [B, Set.mem_preimage, Set.mem_inter_iff, first]
-        simpa only [hys, true_and, hpiff]
+        simp only [hys, true_and, hpiff]
       have hlaw := map_losing_scaled_excess t ht a hu
       change Measure.map loseMap (loseμ.restrict orth) =
           (∏ i : {i : κ // i ≠ a},
@@ -867,7 +865,7 @@ private lemma map_weightedLosingExcess_scale
         (fun R : {i : κ // i ≠ a} → ℝ => fun i => t i.1 * R i)
         (weightedLosingExcessLaw t a) =
       Measure.pi fun _ : {i : κ // i ≠ a} => expMeasure 1 := by
-  letI (i : {i : κ // i ≠ a}) : IsProbabilityMeasure (expMeasure (t i.1)) :=
+  let (i : {i : κ // i ≠ a}) : IsProbabilityMeasure (expMeasure (t i.1)) :=
     isProbabilityMeasure_expMeasure (ht i.1)
   let r : {i : κ // i ≠ a} → ℝ := fun i => t i.1
   unfold weightedLosingExcessLaw
@@ -905,11 +903,11 @@ private lemma winnerClockJoin_law
         ((expMeasure 1).prod
           (Measure.pi fun _ : {i : κ // i ≠ a} => expMeasure 1)) =
       clockLaw κ := by
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
   let loseμ : Measure ({i : κ // i ≠ a} → ℝ) :=
     Measure.pi fun _ : {i : κ // i ≠ a} => expMeasure 1
-  letI : IsProbabilityMeasure loseμ := by
+  let : IsProbabilityMeasure loseμ := by
     dsimp [loseμ]
     infer_instance
   let e : Option {i : κ // i ≠ a} ≃ κ := Equiv.optionSubtypeNe a
@@ -1066,17 +1064,17 @@ theorem winnerResidualClock_restrict_law
     · subst i
       simp [assemble, winnerClockJoin, scale]
     · simp [assemble, winnerClockJoin, scale, loseScale, hi]
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
-  letI (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
+  let (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
       (expMeasure (t i.1)) := isProbabilityMeasure_expMeasure (ht i.1)
-  letI : IsProbabilityMeasure ρ := by
+  let : IsProbabilityMeasure ρ := by
     dsimp [ρ, weightedLosingExcessLaw]
     infer_instance
-  letI : IsProbabilityMeasure loseμ := by
+  let : IsProbabilityMeasure loseμ := by
     dsimp [loseμ]
     infer_instance
-  letI : SFinite A := by
+  let : SFinite A := by
     dsimp [A]
     infer_instance
   have hscaleLaw : Measure.map scale (A.prod ρ) = A.prod loseμ := by
@@ -1185,9 +1183,9 @@ private theorem clockLaw_eq_sum_restrict_strictClockWin
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1) :
     clockLaw κ = Measure.sum fun a : κ =>
       (clockLaw κ).restrict {E | strictClockWin t a E} := by
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
-  letI : IsProbabilityMeasure (clockLaw κ) := by
+  let : IsProbabilityMeasure (clockLaw κ) := by
     unfold clockLaw
     infer_instance
   let S : κ → Set (κ → ℝ) := fun a => {E | strictClockWin t a E}

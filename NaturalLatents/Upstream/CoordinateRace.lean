@@ -39,7 +39,7 @@ variable {Ω : Type u} {κ : Type} {Γ : Type v}
 
 lemma integrable_sharedWinner_code (r : Ω → κ → ℝ) (F : (Ω → κ) → ℝ) :
     Integrable (fun E : κ → ℝ => F (sharedWinner r E)) (seedLaw κ) := by
-  letI : MeasurableSpace κ := ⊤
+  let : MeasurableSpace κ := ⊤
   have hA : Measurable (fun E : κ → ℝ => sharedWinner r E) := by
     apply measurable_pi_lambda
     intro z

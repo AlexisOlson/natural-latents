@@ -173,7 +173,7 @@ noncomputable def clockLaw (ι : Type) [Fintype ι] : Measure (ι → ℝ) :=
 
 instance (ι : Type) [Fintype ι] : IsProbabilityMeasure (clockLaw ι) := by
   unfold clockLaw
-  letI : ∀ _ : ι, IsProbabilityMeasure (expMeasure 1) :=
+  let : ∀ _ : ι, IsProbabilityMeasure (expMeasure 1) :=
     fun _ => isProbabilityMeasure_expMeasure zero_lt_one
   infer_instance
 
@@ -192,7 +192,7 @@ instance (ι : Type) [Fintype ι] : IsProbabilityMeasure (seedLaw ι) := by
 nonpositive clocks: `-log E = 0` there, but `Exp(1)` assigns that half-line
 measure zero. -/
 lemma expMeasure_one_Iic_zero : expMeasure 1 (Set.Iic 0) = 0 := by
-  letI := isProbabilityMeasure_expMeasure (r := (1 : ℝ)) zero_lt_one
+  let := isProbabilityMeasure_expMeasure (r := (1 : ℝ)) zero_lt_one
   have hreal : (expMeasure 1).real (Set.Iic 0) = 0 := by
     rw [← cdf_eq_real]
     simpa using cdf_expMeasure_eq (r := (1 : ℝ)) zero_lt_one 0
@@ -200,7 +200,7 @@ lemma expMeasure_one_Iic_zero : expMeasure 1 (Set.Iic 0) = 0 := by
 
 lemma expMeasure_one_Ioi (x : ℝ) (hx : 0 ≤ x) :
     expMeasure 1 (Set.Ioi x) = ENNReal.ofReal (Real.exp (-x)) := by
-  letI := isProbabilityMeasure_expMeasure (r := (1 : ℝ)) zero_lt_one
+  let := isProbabilityMeasure_expMeasure (r := (1 : ℝ)) zero_lt_one
   have hsub : 0 ≤ 1 - Real.exp (-x) := by
     exact sub_nonneg.mpr (Real.exp_le_one_iff.mpr (by linarith))
   have hreal : (expMeasure 1).real (Set.Iic x) = 1 - Real.exp (-x) := by
@@ -272,9 +272,9 @@ lemma pi_exp_strictClockWin {κ : Type*} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ a, 0 < t a) (htotal : ∑ a, t a = 1) (a : κ) :
     Measure.pi (fun _ : κ => expMeasure 1) {E | strictClockWin t a E} =
       ENNReal.ofReal (t a) := by
-  letI : ∀ _ : κ, IsProbabilityMeasure (expMeasure 1) :=
+  let : ∀ _ : κ, IsProbabilityMeasure (expMeasure 1) :=
     fun _ => isProbabilityMeasure_expMeasure zero_lt_one
-  letI : IsProbabilityMeasure (expMeasure 1) :=
+  let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
   let e : Option {i : κ // i ≠ a} ≃ κ := Equiv.optionSubtypeNe a
   let f := (MeasurableEquiv.piOptionEquivProd
@@ -327,7 +327,7 @@ lemma pi_exp_strictClockWin {κ : Type*} [Fintype κ] [DecidableEq κ]
       dsimp [g]
       rw [MeasurableEquiv.coe_piCongrLeft, Equiv.piCongrLeft_apply]
       simp [e, hf_none]
-    simp only [Set.mem_preimage, Set.mem_setOf_eq, Set.mem_pi, Set.mem_univ,
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, Set.mem_pi, Set.mem_univ,
       true_implies, Set.mem_Ioi]
     constructor
     · intro h i

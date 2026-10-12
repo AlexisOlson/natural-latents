@@ -89,14 +89,13 @@ lemma H_eq_negMulLog {m : α → ℝ} (hm : IsFinMeas m) :
             · simp [ha]
             · rw [lg_eq_log_div, Real.log_div hmass ha]
               simp only [Real.negMulLog]
-              field_simp [hlog2]
-              <;> ring
+              (field_simp [hlog2]; ring)
       _ = mass m * Real.log (mass m) + ∑ a, Real.negMulLog (m a) := by
             unfold mass
             rw [Finset.sum_add_distrib, Finset.sum_mul]
 
 /-- `𝖧` is 1-homogeneous: `𝖧(c · m) = c · 𝖧(m)` for `c ≥ 0`. -/
-lemma H_smul {m : α → ℝ} (hm : IsFinMeas m) {c : ℝ} (hc : 0 ≤ c) :
+lemma H_smul {m : α → ℝ} (_hm : IsFinMeas m) {c : ℝ} (hc : 0 ≤ c) :
     H (fun a => c * m a) = c * H m := by
   rcases hc.eq_or_lt with rfl | hc
   · simp [H, mass]
@@ -244,7 +243,7 @@ lemma H_push_equiv [Fintype γ] [DecidableEq α] (e : α ≃ γ) (m : α → ℝ
       · intro hx
         exfalso
         apply hx
-        simp [Function.comp_def]
+        simp
     rw [hround] at hback
     exact hback
 

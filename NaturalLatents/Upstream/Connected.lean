@@ -61,6 +61,7 @@ private def componentRel (S : Finset (α × β))
     (z z' : {z // z ∈ S}) : Prop :=
   Relation.ReflTransGen (fun a b => Adj a.1 b.1) z z'
 
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
 private lemma adj_symm {z z' : α × β} (h : Adj z z') : Adj z' z := by
   rcases h with h | h
   · exact Or.inl h.symm
@@ -89,16 +90,16 @@ theorem exists_componentDecomp {p : α × β → ℝ} (hp : IsPMF p) :
     by_contra h
     have hzero : ∀ z, p z = 0 := by
       intro z
-      have hz : z ∉ S := by simpa [Finset.not_nonempty_iff_eq_empty.mp h]
+      have hz : z ∉ S := by simp [Finset.not_nonempty_iff_eq_empty.mp h]
       simpa [S, support] using hz
     have hmass : mass p = 0 := by simp [mass, hzero]
     linarith [hp.total]
   let z0 : {z // z ∈ S} := ⟨hS.choose, hS.choose_spec⟩
   let s : Setoid {z // z ∈ S} := componentSetoid S
-  letI : DecidableRel ((· ≈ ·) : {z // z ∈ S} → {z // z ∈ S} → Prop) :=
+  let : DecidableRel ((· ≈ ·) : {z // z ∈ S} → {z // z ∈ S} → Prop) :=
     Classical.decRel _
   let Q := Quotient s
-  letI : Fintype Q := Quotient.fintype s
+  let : Fintype Q := Quotient.fintype s
   let eQ : Q ≃ Fin (Fintype.card Q) := Fintype.equivFin Q
   let κ := Fin (Fintype.card Q)
   let k : α × β → κ := fun z =>
@@ -231,7 +232,7 @@ private lemma push_equiv_apply {γ δ : Type*} [Fintype γ] [DecidableEq γ]
     exact (hnot (by simp)).elim
 
 private lemma H_eq_zero_of_pairwise {γ : Type*} [Fintype γ] [DecidableEq γ]
-    {m : γ → ℝ} (hm : IsFinMeas m)
+    {m : γ → ℝ} (_hm : IsFinMeas m)
     (hsing : ∀ x y, m x ≠ 0 → m y ≠ 0 → x = y) : H m = 0 := by
   classical
   by_cases hne : ∃ x, m x ≠ 0
@@ -254,7 +255,7 @@ private lemma H_eq_zero_of_pairwise {γ : Type*} [Fintype γ] [DecidableEq γ]
     · subst y
       simp [hx]
     · simp [hzero y hy]
-  · push_neg at hne
+  · push Not at hne
     have hm0 : m = fun _ => 0 := funext hne
     simp [hm0, H, mass]
 
@@ -332,6 +333,7 @@ private lemma H_mixture_disjoint {ι γ : Type*} [Fintype ι] [DecidableEq ι]
     exact H_push_equiv (Equiv.prodComm ι γ) r hr
   rw [← hr_as_m, ← hrs_eq, hrs_decomp]
 
+omit [DecidableEq β] in
 private lemma component_mixture_X {p : α × β → ℝ} (D : ComponentDecomp p) (x : α) :
     ∑ i, D.wt i * mX (D.part i) x = mX p x := by
   change ∑ i, D.wt i * push Prod.fst (D.part i) x = push Prod.fst p x
@@ -339,6 +341,7 @@ private lemma component_mixture_X {p : α × β → ℝ} (D : ComponentDecomp p)
   simp_rw [← D.mixture, Finset.mul_sum]
   rw [Finset.sum_comm]
 
+omit [DecidableEq α] in
 private lemma component_mixture_Y {p : α × β → ℝ} (D : ComponentDecomp p) (y : β) :
     ∑ i, D.wt i * mY (D.part i) y = mY p y := by
   change ∑ i, D.wt i * push Prod.snd (D.part i) y = push Prod.snd p y
@@ -356,6 +359,7 @@ private lemma H_eq_components {p : α × β → ℝ} (D : ComponentDecomp p) :
     · rfl
   · exact D.mixture
 
+omit [DecidableEq β] in
 private lemma HX_eq_components {p : α × β → ℝ} (D : ComponentDecomp p) :
     H (mX p) = H D.wt + ∑ i, D.wt i * H (mX (D.part i)) := by
   apply H_mixture_disjoint D.wt (fun i => mX (D.part i)) D.wt_isPMF
@@ -367,6 +371,7 @@ private lemma HX_eq_components {p : α × β → ℝ} (D : ComponentDecomp p) :
       (by simpa [support] using hzj) (hzx.trans hz'x.symm)
   · exact component_mixture_X D
 
+omit [DecidableEq α] in
 private lemma HY_eq_components {p : α × β → ℝ} (D : ComponentDecomp p) :
     H (mY p) = H D.wt + ∑ i, D.wt i * H (mY (D.part i)) := by
   apply H_mixture_disjoint D.wt (fun i => mY (D.part i)) D.wt_isPMF
@@ -444,6 +449,7 @@ private lemma glueLatent_score {p : α × β → ℝ} (hp : IsPMF p)
   simp_rw [Latent.score_eq (D.part_isPMF _)]
   simp only [mul_sub, Finset.sum_sub_distrib]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma latent_base_ne_zero {p : α × β → ℝ} (V : Latent p)
     {v : V.ι} {z : α × β} (h : V.prior v * V.comp v z ≠ 0) : p z ≠ 0 := by
   have hpos : 0 < V.prior v * V.comp v z :=
@@ -457,6 +463,7 @@ private lemma latent_base_ne_zero {p : α × β → ℝ} (V : Latent p)
   rw [V.mixture z] at hle
   exact (lt_of_lt_of_le hpos hle).ne'
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma glueLatent_isDet {p : α × β → ℝ} (D : ComponentDecomp p)
     (V : ∀ i, Latent (D.part i)) (hV : ∀ i, (V i).IsDet) :
     (glueLatent D V).IsDet := by
@@ -481,10 +488,11 @@ private lemma glueLatent_isDet {p : α × β → ℝ} (D : ComponentDecomp p)
   subst v'
   rfl
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma componentDecomp_nonempty {p : α × β → ℝ} (D : ComponentDecomp p) :
     Nonempty D.κ := by
   by_contra h
-  letI : IsEmpty D.κ := not_nonempty_iff.mp h
+  let : IsEmpty D.κ := not_nonempty_iff.mp h
   have ht := D.wt_isPMF.total
   simp [mass] at ht
 
@@ -573,7 +581,7 @@ private lemma fiberWeight_isPMF {p : α × β → ℝ} (D : ComponentDecomp p)
 
 private noncomputable def fiberLaw {p : α × β → ℝ} (D : ComponentDecomp p)
     (V : Latent p) (v : V.ι) (i : D.κ) : α × β → ℝ :=
-  if h : fiberWeight D V v i = 0 then D.part i
+  if _h : fiberWeight D V v i = 0 then D.part i
   else fun z => if componentIndex D z = i then (fiberWeight D V v i)⁻¹ * V.comp v z else 0
 
 private lemma comp_eq_zero_of_fiberWeight_zero {p : α × β → ℝ}

@@ -76,7 +76,7 @@ variable {p : α × β → ℝ}
 and an empty sum cannot be `1`. -/
 instance nonempty_ι (V : Latent p) : Nonempty V.ι := by
   by_contra h
-  letI : IsEmpty V.ι := not_nonempty_iff.mp h
+  let : IsEmpty V.ι := not_nonempty_iff.mp h
   have htotal := V.prior_isPMF.total
   simp [mass] at htotal
 
@@ -84,6 +84,7 @@ instance nonempty_ι (V : Latent p) : Nonempty V.ι := by
 noncomputable def joint (V : Latent p) : V.ι × (α × β) → ℝ :=
   fun w => V.prior w.1 * V.comp w.1 w.2
 
+omit [DecidableEq α] [DecidableEq β] in
 lemma joint_isPMF (V : Latent p) : IsPMF V.joint := by
   refine ⟨?_, ?_⟩
   · intro w
@@ -127,8 +128,9 @@ noncomputable def const (hp : IsPMF p) : Latent p where
   comp_isPMF := fun _ => hp
   mixture := by intro z; simp
 
+omit [DecidableEq α] [DecidableEq β] in
 lemma const_isDet (hp : IsPMF p) : (const hp).IsDet := by
-  haveI : Subsingleton (const hp).ι := inferInstanceAs (Subsingleton Unit)
+  have : Subsingleton (const hp).ι := inferInstanceAs (Subsingleton Unit)
   intro z v v' _ _; exact Subsingleton.elim v v'
 
 end Latent
@@ -161,15 +163,14 @@ theorem condMI_eq_condH_sub_pair
     [Fintype γ] [DecidableEq γ]
     [Fintype δ] [DecidableEq δ]
     [Fintype ε] [DecidableEq ε]
-    {m : Ω → ℝ} (hm : IsPMF m)
+    {m : Ω → ℝ} (_hm : IsPMF m)
     (f : Ω → γ) (g : Ω → δ) (h : Ω → ε) :
     condMI f g h m =
       condH f h m - condH f (fun ω => (g ω, h ω)) m := by
   have hassoc :
       Hvar (fun ω : Ω => (f ω, (g ω, h ω))) m =
         Hvar (fun ω : Ω => (f ω, g ω, h ω)) m := by
-    simpa using Hvar_equiv hm (fun ω : Ω => (f ω, g ω, h ω))
-      (Equiv.prodAssoc γ δ ε)
+    simp
   unfold condMI condH
   rw [hassoc]
   ring

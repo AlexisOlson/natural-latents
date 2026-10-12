@@ -964,7 +964,7 @@ private lemma isCompact_dualPmfSet (S : Finset (α × β)) :
       Z = ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
         {q : α × β → ℝ | q z = 0} := by
     ext q
-    simp only [Z, Set.mem_setOf_eq, Set.mem_iInter, Finset.mem_filter,
+    simp only [Z, Set.mem_ofPred_eq, Set.mem_iInter, Finset.mem_filter,
       Finset.mem_univ, true_and]
     constructor
     · intro h z hz
@@ -1019,6 +1019,7 @@ private noncomputable def dualHullParams (S : Finset (α × β)) :
     Set.pi (Set.univ : Set (Fin (dualHullSize (α := α) (β := β))))
       (fun _ => dualPhiGraph S)
 
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
 private lemma continuous_dualHullBarycenter :
     Continuous (dualHullBarycenter (α := α) (β := β)) := by
   unfold dualHullBarycenter
@@ -1078,7 +1079,7 @@ private lemma dualConvexHull_subset_barycenter_image
       · intro j _ hji
         simp [Ne.symm hji]
       · simp
-    simpa using hsingle
+    simp
   have hweights_nonneg : ∀ j, 0 ≤ weights j := by
     intro j
     dsimp [weights]
@@ -1169,7 +1170,7 @@ private lemma dualConvexHull_subset_barycenter_image
           · intro j _ hji
             simp [Ne.symm hji]
           · simp
-        simpa using hsingle
+        simp
       _ = ∑ y ∈ t, weights₀ y • y := by
         simp only [univ_eq_attach]
         simpa using (Finset.sum_attach t (fun y => weights₀ y • y))
@@ -1189,6 +1190,7 @@ private lemma isCompact_dualConvexHull
   rw [heq]
   exact (isCompact_dualHullParams S).image continuous_dualHullBarycenter
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma supported_support_self (p : α × β → ℝ) :
     Supported (support p) p := by
   intro z hz
@@ -1320,6 +1322,7 @@ private lemma dualDirac_isPMF (z : α × β) : IsPMF (dualDirac z) := by
     by_cases h : z' = z <;> simp [dualDirac, h]
   · simp [mass, dualDirac]
 
+omit [Fintype α] [Fintype β] in
 private lemma dualDirac_supported {S : Finset (α × β)} {z : α × β}
     (hz : z ∈ S) : Supported S (dualDirac z) := by
   intro z' hz'
@@ -1347,7 +1350,7 @@ private lemma envelope_le_valid_objective
     refine ⟨?_, ?_⟩
     · intro x y
       dsimp [ell]
-      simp only [Prod.snd_add, Prod.fst_add, Pi.add_apply,
+      simp only [
         mul_add, Finset.sum_add_distrib]
       ring
     · intro a x
@@ -1394,6 +1397,7 @@ private lemma dualFunctional_expand
       simp_rw [map_smul]
       simp only [smul_eq_mul]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma sum_eq_sum_of_supported {S : Finset (α × β)}
     {q : α × β → ℝ} (hqS : Supported S q) (F : α × β → ℝ) :
     (∑ z, F z * q z) = ∑ z ∈ S, F z * q z := by
@@ -1508,11 +1512,13 @@ private lemma restrictTo_valid {S : Finset (α × β)} {c : α × β → ℝ}
   intro q hq hqS
   simpa [restrictTo] using hc q hq hqS
 
+omit [Fintype α] [Fintype β] in
 private lemma restrictTo_supported (S : Finset (α × β)) (c : α × β → ℝ) :
     Supported S (restrictTo S c) := by
   intro z hz
   simp [restrictTo, hz]
 
+omit [Fintype α] [Fintype β] in
 private lemma restrictTo_objective (S : Finset (α × β))
     (c q : α × β → ℝ) :
     (∑ z ∈ S, restrictTo S c z * q z) = ∑ z ∈ S, c z * q z := by
@@ -1541,7 +1547,7 @@ private lemma isClosed_supported_set (S : Finset (α × β)) :
       ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
         {c : α × β → ℝ | c z = 0} := by
     ext c
-    simp only [Set.mem_setOf_eq, Set.mem_iInter, Finset.mem_filter,
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter, Finset.mem_filter,
       Finset.mem_univ, true_and]
     constructor
     · intro h z hz

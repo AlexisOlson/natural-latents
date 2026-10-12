@@ -39,6 +39,7 @@ private lemma Latent.push_snd_joint (V : Latent p) :
   rw [Finset.sum_filter, Fintype.sum_prod_type]
   simpa [Latent.joint] using V.mixture z
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.push_fst_joint (V : Latent p) :
     push (fun w : V.ι × (α × β) => w.1) V.joint = V.prior := by
   funext v
@@ -70,6 +71,7 @@ private lemma Latent.Hvar_lift {γ : Type*} [Fintype γ] [DecidableEq γ]
             (push_push (fun w : V.ι × (α × β) => w.2) f V.joint)
     _ = push f p := by rw [V.push_snd_joint]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.Hvar_prior (V : Latent p) :
     Hvar (fun w : V.ι × (α × β) => w.1) V.joint = H V.prior := by
   unfold Hvar
@@ -81,6 +83,7 @@ private lemma Hvar_id {γ : Type*} [Fintype γ] [DecidableEq γ]
   change H (push (Equiv.refl γ) m) = H m
   exact H_push_equiv (Equiv.refl γ) m hm
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.Hvar_lift_pair_prior {γ : Type*} [Fintype γ] [DecidableEq γ]
     (V : Latent p) (f : α × β → γ) :
     Hvar (fun w : V.ι × (α × β) => (f w.2, w.1)) V.joint =
@@ -113,7 +116,7 @@ private lemma Latent.Hvar_lift_pair_prior {γ : Type*} [Fintype γ] [DecidableEq
         · intro u _ huv
           simp [huv]
         · simp
-      simpa using hvsum
+      simp
     · simp [hz]
   rw [hfiber]
   by_cases hv : V.prior v = 0
@@ -312,7 +315,7 @@ noncomputable def concaveEnvelopePhi (p : α × β → ℝ) : ℝ :=
 theorem tau_eq_Psi_sub_envelope (hp : IsPMF p) :
     tau p = Psi p - concaveEnvelopePhi p := by
   let payoff : Latent p → ℝ := fun V => ∑ v, V.prior v * Phi (V.comp v)
-  letI : Nonempty (Latent p) := ⟨Latent.const hp⟩
+  let : Nonempty (Latent p) := ⟨Latent.const hp⟩
   have hscore (V : Latent p) : V.score = Psi p - payoff V := by
     simpa [payoff] using V.score_eq hp
   have hscore_bdd : BddBelow (Set.range fun V : Latent p => V.score) :=
@@ -346,6 +349,7 @@ private noncomputable def conditionedComp {γ : Type} [Fintype γ] [DecidableEq 
     if push f p c = 0 then p z
     else if f z = c then (push f p c)⁻¹ * p z else 0
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma conditionedComp_isPMF {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) (c : γ) :
     IsPMF (conditionedComp (p := p) f c) := by
@@ -373,6 +377,7 @@ private lemma conditionedComp_isPMF {γ : Type} [Fintype γ] [DecidableEq γ]
         _ = (push f p c)⁻¹ * push f p c := by rfl
         _ = 1 := inv_mul_cancel₀ hc
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma push_mul_conditionedComp {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) (c : γ) (z : α × β) :
     push f p c * conditionedComp (p := p) f c z =
@@ -417,10 +422,11 @@ private noncomputable def functionLatent {γ : Type} [Fintype γ] [DecidableEq �
               (if f z = f z then p z else 0) := by
           apply Finset.sum_eq_single (f z)
           · intro c _ hne
-            simp [hne, Ne.symm hne]
+            simp [Ne.symm hne]
           · simp
-        simpa using hsingle
+        simp
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma functionLatent_isDet {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) : (functionLatent hp f).IsDet := by
   unfold Latent.IsDet
@@ -443,6 +449,7 @@ noncomputable def Latent.ofFunction {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) : Latent p :=
   functionLatent hp f
 
+omit [DecidableEq α] [DecidableEq β] in
 /-- A function-induced latent is deterministic. -/
 theorem Latent.ofFunction_isDet {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) :
@@ -533,10 +540,11 @@ theorem Latent.ofFunction_score_eq_detScore
   unfold detScore
   ring
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.exists_comp_ne_zero (V : Latent p) (v : V.ι) :
     ∃ z, V.comp v z ≠ 0 := by
   by_contra h
-  push_neg at h
+  push Not at h
   have hzero : mass (V.comp v) = 0 := by simp [mass, h]
   have hone := (V.comp_isPMF v).total
   rw [hzero] at hone
@@ -545,6 +553,7 @@ private lemma Latent.exists_comp_ne_zero (V : Latent p) (v : V.ι) :
 private noncomputable def Latent.representative (V : Latent p) (v : V.ι) : α × β :=
   Classical.choose (V.exists_comp_ne_zero v)
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.comp_representative_ne_zero (V : Latent p) (v : V.ι) :
     V.comp v (V.representative v) ≠ 0 :=
   Classical.choose_spec (V.exists_comp_ne_zero v)
@@ -552,6 +561,7 @@ private lemma Latent.comp_representative_ne_zero (V : Latent p) (v : V.ι) :
 private noncomputable def Latent.activeIndex (V : Latent p) (z : α × β) : V.ι :=
   if h : ∃ v, V.joint (v, z) ≠ 0 then Classical.choose h else Classical.arbitrary V.ι
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.activeIndex_spec (V : Latent p) (z : α × β)
     (h : ∃ v, V.joint (v, z) ≠ 0) : V.joint (V.activeIndex z, z) ≠ 0 := by
   simp only [activeIndex, dif_pos h]
@@ -565,6 +575,7 @@ private noncomputable def Latent.detCode (V : Latent p) :
     α × β → Fin (Fintype.card (α × β)) :=
   fun z => V.detLabel (V.activeIndex z)
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.detCode_eq_label_of_active (V : Latent p) (hV : V.IsDet)
     {z : α × β} {v : V.ι} (hv : V.joint (v, z) ≠ 0) :
     V.detCode z = V.detLabel v := by
@@ -573,6 +584,7 @@ private lemma Latent.detCode_eq_label_of_active (V : Latent p) (hV : V.IsDet)
   have huv : V.activeIndex z = v := hV z (V.activeIndex z) v hactive hv
   simp [detCode, huv]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.detLabel_inj_of_prior_ne_zero (V : Latent p) (hV : V.IsDet)
     {v u : V.ι} (hv : V.prior v ≠ 0) (hu : V.prior u ≠ 0)
     (hlabel : V.detLabel v = V.detLabel u) : v = u := by
@@ -587,6 +599,7 @@ private lemma Latent.detLabel_inj_of_prior_ne_zero (V : Latent p) (hV : V.IsDet)
     exact V.comp_representative_ne_zero u
   exact hV (V.representative v) v u hvactive huactive
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.sum_joint_fiber (V : Latent p) (v : V.ι) :
     ∑ z, V.joint (v, z) = V.prior v := by
   unfold Latent.joint
@@ -596,6 +609,7 @@ private lemma Latent.sum_joint_fiber (V : Latent p) (v : V.ι) :
     simpa [mass] using (V.comp_isPMF v).total
   rw [htotal, mul_one]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.push_detCode_eq_push_detLabel (V : Latent p) (hV : V.IsDet) :
     push V.detCode p = push V.detLabel V.prior := by
   funext c
@@ -627,6 +641,7 @@ private lemma Latent.push_detCode_eq_push_detLabel (V : Latent p) (hV : V.IsDet)
           · simp [hv, V.sum_joint_fiber]
           · simp [hv]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.mixture_eq_joint_of_active (V : Latent p) (hV : V.IsDet)
     {z : α × β} {v : V.ι} (hv : V.joint (v, z) ≠ 0) :
     p z = V.joint (v, z) := by
@@ -640,6 +655,7 @@ private lemma Latent.mixture_eq_joint_of_active (V : Latent p) (hV : V.IsDet)
         exact huv (hV z u v hu hv)
       · simp
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.p_eq_zero_of_no_active (V : Latent p) {z : α × β}
     (h : ¬ ∃ v, V.joint (v, z) ≠ 0) : p z = 0 := by
   have hjoint : ∀ v, V.joint (v, z) = 0 := by
@@ -650,6 +666,7 @@ private lemma Latent.p_eq_zero_of_no_active (V : Latent p) {z : α × β}
       simpa [Latent.joint] using (V.mixture z).symm
     _ = 0 := Finset.sum_eq_zero fun v _ => hjoint v
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.detCode_fiber_eq_joint (V : Latent p) (hV : V.IsDet)
     {v : V.ι} (hvprior : V.prior v ≠ 0) (z : α × β) :
     (if V.detCode z = V.detLabel v then p z else 0) = V.joint (v, z) := by
@@ -674,6 +691,7 @@ private lemma Latent.detCode_fiber_eq_joint (V : Latent p) (hV : V.IsDet)
     have hvjoint : V.joint (v, z) = 0 := not_ne_iff.mp (not_exists.mp hex v)
     simp [hpzero, hvjoint]
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.push_detLabel_self (V : Latent p) (hV : V.IsDet)
     {v : V.ι} (hv : V.prior v ≠ 0) :
     push V.detLabel V.prior (V.detLabel v) = V.prior v := by
@@ -686,12 +704,14 @@ private lemma Latent.push_detLabel_self (V : Latent p) (hV : V.IsDet)
       exact (huv (V.detLabel_inj_of_prior_ne_zero hV huprior hv hlabels)).elim
   · simp
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.push_detCode_self (V : Latent p) (hV : V.IsDet)
     {v : V.ι} (hv : V.prior v ≠ 0) :
     push V.detCode p (V.detLabel v) = V.prior v := by
   rw [V.push_detCode_eq_push_detLabel hV]
   exact V.push_detLabel_self hV hv
 
+omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.functionLatent_comp_detLabel (hp : IsPMF p) (V : Latent p)
     (hV : V.IsDet) {v : V.ι} (hv : V.prior v ≠ 0) :
     (functionLatent hp V.detCode).comp (V.detLabel v) = V.comp v := by
@@ -792,6 +812,7 @@ def pmfSet : Set (α × β → ℝ) := {q | IsPMF q}
 noncomputable def phiGraph : Set ((α × β → ℝ) × ℝ) :=
   (fun q => (q, Phi q)) '' pmfSet
 
+omit [DecidableEq α] [DecidableEq β] in
 lemma isCompact_pmfSet : IsCompact (pmfSet : Set (α × β → ℝ)) := by
   have heq : (pmfSet : Set (α × β → ℝ)) = stdSimplex ℝ (α × β) := by
     ext q
@@ -834,6 +855,7 @@ private noncomputable def envelopeParams :
     Set.pi (Set.univ : Set (Fin (envelopeSize (α := α) (β := β))))
       (fun _ => phiGraph)
 
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
 private lemma continuous_envelopeBarycenter :
     Continuous (envelopeBarycenter (α := α) (β := β)) := by
   unfold envelopeBarycenter
@@ -893,7 +915,7 @@ private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
       · intro j _ hji
         simp [Ne.symm hji]
       · simp
-    simpa using hsingle
+    simp
   have hweights_nonneg : ∀ j, 0 ≤ weights j := by
     intro j
     dsimp [weights]
@@ -982,7 +1004,7 @@ private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
           · intro j _ hji
             simp [Ne.symm hji]
           · simp
-        simpa using hsingle
+        simp
       _ = ∑ y ∈ t, w y • y := by
         simp only [univ_eq_attach]
         simpa using (Finset.sum_attach t (fun y => w y • y))
@@ -1017,13 +1039,13 @@ private lemma Latent.graphMixture_mem_convexHull (V : Latent p) :
       exact V.mixture z
     · simp only [Prod.snd_sum, Prod.smul_snd, smul_eq_mul]
 
-lemma exists_latent_of_mem_convexHull_phiGraph (hp : IsPMF p) {r : ℝ}
+lemma exists_latent_of_mem_convexHull_phiGraph (_hp : IsPMF p) {r : ℝ}
     (h : (p, r) ∈ convexHull ℝ (phiGraph : Set ((α × β → ℝ) × ℝ))) :
     ∃ V : Latent p, (∑ v, V.prior v * Phi (V.comp v)) = r := by
   rcases mem_convexHull_iff_exists_fintype.mp h with
     ⟨ι, hι, w, z, hw_nonneg, hw_sum, hz, hcenter⟩
-  letI : Fintype ι := hι
-  letI : DecidableEq ι := Classical.decEq ι
+  let : Fintype ι := hι
+  let : DecidableEq ι := Classical.decEq ι
   have hz' : ∀ i, ∃ q : α × β → ℝ, IsPMF q ∧ (q, Phi q) = z i := by
     intro i
     rcases hz i with ⟨q, hq, hqz⟩
@@ -1091,7 +1113,7 @@ theorem exists_tau_optimal_latent (hp : IsPMF p) :
       exact W.score_nonneg⟩
   apply le_antisymm
   · unfold tau
-    letI : Nonempty (Latent p) := ⟨Latent.const hp⟩
+    let : Nonempty (Latent p) := ⟨Latent.const hp⟩
     refine le_ciInf fun W => ?_
     have hW_slice :
         (p, ∑ v, W.prior v * Phi (W.comp v)) ∈ slice :=
@@ -1117,7 +1139,7 @@ theorem exists_T_optimal_latent (hp : IsPMF p) :
   have hV₀det : V₀.IsDet := by
     simpa [V₀] using functionLatent_isDet hp f₀
   have hV₀_le_T : V₀.score ≤ T p := by
-    letI : Nonempty {V : Latent p // V.IsDet} :=
+    let : Nonempty {V : Latent p // V.IsDet} :=
       ⟨⟨Latent.const hp, Latent.const_isDet hp⟩⟩
     unfold T
     refine le_ciInf fun W => ?_

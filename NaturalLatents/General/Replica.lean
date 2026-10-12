@@ -98,6 +98,7 @@ lemma replica_sum_replica_first {p : Law X Y} (L : FiniteLatent p)
   simp_rw [hswap]
   exact replica_sum_replica_second L j z
 
+omit [DecidableEq X] [DecidableEq Y] in
 open stoch_to_det in
 lemma replica_replica_isPMF {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p) :
     IsPMF (replicaJoint L) := by

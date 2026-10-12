@@ -73,7 +73,7 @@ private lemma mY_eq_sum (q : α × β → ℝ) (y : β) : mY q y = ∑ x, q (x, 
   exact congrArg Prod.fst h
 
 private lemma mX_zero_of_support_eq {q r : α × β → ℝ}
-    (hq : IsPMF q) (hr : IsPMF r) (hs : support q = support r) {x : α}
+    (hq : IsPMF q) (_hr : IsPMF r) (hs : support q = support r) {x : α}
     (hx : mX q x = 0) : mX r x = 0 := by
   rw [mX_eq_sum]
   apply Finset.sum_eq_zero
@@ -96,7 +96,7 @@ private lemma mX_zero_iff_of_support_eq {q r : α × β → ℝ}
     mX_zero_of_support_eq hr hq hs.symm⟩
 
 private lemma mY_zero_of_support_eq {q r : α × β → ℝ}
-    (hq : IsPMF q) (hr : IsPMF r) (hs : support q = support r) {y : β}
+    (hq : IsPMF q) (_hr : IsPMF r) (hs : support q = support r) {y : β}
     (hy : mY q y = 0) : mY r y = 0 := by
   rw [mY_eq_sum]
   apply Finset.sum_eq_zero
@@ -126,8 +126,8 @@ private lemma mul_ratio_rpow_one_third_cube {a b : ℝ} (ha : 0 ≤ a) (hb : 0 �
     simp [hb0, ha0]
   · have hratio : 0 ≤ a / b := div_nonneg ha hb
     have hcube : ((a / b) ^ ((1 : ℝ) / 3)) ^ 3 = a / b := by
-      convert Real.rpow_inv_natCast_pow hratio (by norm_num : (3 : ℕ) ≠ 0) using 1 <;>
-        norm_num
+      (convert Real.rpow_inv_natCast_pow hratio (by norm_num : (3 : ℕ) ≠ 0) using 1;
+        norm_num)
     rw [hcube]
     field_simp
 
@@ -445,7 +445,6 @@ theorem contactSecant_mean_identities
         rw [← sum_push_mul Prod.fst q f,
           ← sum_push_mul Prod.fst q (fun x => f x ^ 2)]
   constructor <;>
-    change _ = _ <;>
     dsimp [f, g, A, B, μf, μg] at hmeanf hmeang ⊢ <;>
     linarith
 

@@ -48,6 +48,7 @@ def AbsCont (P Q : ω → ℝ) : Prop := ∀ a, Q a = 0 → P a = 0
 /-- The Bhattacharyya coefficient `BC(P,Q) := ∑ √(P Q)`. -/
 noncomputable def BC (P Q : ω → ℝ) : ℝ := ∑ a, Real.sqrt (P a * Q a)
 
+omit [DecidableEq ω] in
 /-- Finite Gibbs inequality for the bits-valued `KL`. -/
 private lemma KL_nonneg {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
     (hac : AbsCont P Q) : 0 ≤ KL P Q := by
@@ -80,6 +81,7 @@ private lemma KL_nonneg {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
   rw [← sum_div]
   exact div_nonneg hnats (Real.log_pos (by norm_num)).le
 
+omit [DecidableEq ω] in
 /-- **(T3)** Bhattacharyya, first half:
 `min_r [D(r‖P) + D(r‖Q)] = −2 lg BC(P,Q)`. Only `≥` is used (Thm 9.1). -/
 theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
