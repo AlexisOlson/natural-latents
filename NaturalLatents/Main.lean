@@ -112,13 +112,15 @@ end Bridge
 theorem table : TableClaim :=
   ⟨c, c_nonneg, c_lt_seven, fun _ _ _ _ _ _ _ hp => table_bound_entropy hp⟩
 
-/-- The table form implies the optimum form: `T p` is at most the error of any one code,
+/-- A code bound implies the optimum bound: `T p` is at most the error of any one code,
 and the stochastic feasible set is nonempty (the constant latent). -/
-theorem score_of_table (h : TableClaim) : ScoreClaim := by
-  obtain ⟨c, hc0, hc7, hc⟩ := h
-  refine ⟨c, hc0, hc7, ?_⟩
-  intro A B _ _ _ _ p hp
-  obtain ⟨g, hg⟩ := hc A B p hp
+theorem T_le_mul_tau_of_code {A B : Type} [Fintype A] [Fintype B]
+    [DecidableEq A] [DecidableEq B] {p : A × B → ℝ} (hp : Probability p)
+    (c : ℝ) (hc0 : 0 ≤ c) (g : A × B → Fin (Fintype.card (A × B)))
+    (hg : ∀ (k : ℕ) (q : A × B × Fin k → ℝ), Probability q →
+      (∀ x y, ∑ v, q (x, y, v) = p (x, y)) →
+        DeterministicError (deterministicTable p g) ≤ c * StochasticError q) :
+    T p ≤ c * tau p := by
   have hT : T p ≤ DeterministicError (deterministicTable p g) :=
     ciInf_le (Set.finite_range _).bddBelow g
   have hne : {s : ℝ | ∃ (k : ℕ) (q : A × B × Fin k → ℝ), Probability q ∧
@@ -138,8 +140,23 @@ theorem score_of_table (h : TableClaim) : ScoreClaim := by
       rw [div_le_iff₀' hpos]
       exact hg k q hq hm)
 
+/-- The table form implies the optimum form. -/
+theorem score_of_table (h : TableClaim) : ScoreClaim := by
+  obtain ⟨c, hc0, hc7, hc⟩ := h
+  refine ⟨c, hc0, hc7, ?_⟩
+  intro A B _ _ _ _ p hp
+  obtain ⟨g, hg⟩ := hc A B p hp
+  exact T_le_mul_tau_of_code hp c hc0 g hg
+
+/-- The exact optimum bound in the frozen statement's vocabulary. -/
+theorem T_le_mul_tau (A B : Type) [Fintype A] [Fintype B]
+    [DecidableEq A] [DecidableEq B] (p : A × B → ℝ) (hp : Probability p) :
+    T p ≤ (2789 / 400) * tau p := by
+  obtain ⟨g, hg⟩ := table_bound_entropy hp
+  exact T_le_mul_tau_of_code hp c c_nonneg g hg
+
 /-- **The finite natural-latent theorem, optimum form.** -/
 theorem score : ScoreClaim :=
-  score_of_table table
+  ⟨c, c_nonneg, c_lt_seven, T_le_mul_tau⟩
 
 end NaturalLatents

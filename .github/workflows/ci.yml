@@ -1,8 +1,10 @@
 # Continuous verification. In order:
 #   1. the frozen statement's SHA-256 (scripts/check_statement.py)
-#   2. the trust-shortcut scan over every Lean file
+#   2. the trust-shortcut scan (scripts/trust_scan.sh)
 #   3. install the pinned toolchain; fetch the Mathlib cache
-#   4. `lake build`, then `lake env lean Verify.lean`, which must exit 0 and print nothing
+#   4. `lake build --wfail` (any warning fails)
+#   5. the silent kernel audit of headline types and proof-step axioms
+#   6. `lake env leanchecker NaturalLatents.Main` (kernel replay of both headlines)
 # Nothing here runs `lake update` or changes a pin.
 
 name: verify
@@ -32,16 +34,7 @@ jobs:
 
       - name: Scan for trust shortcuts
         shell: bash
-        run: |
-          set -uo pipefail
-          status=0
-          grep -rn -E '\b(sorry|admit|native_decide|unsafe|bv_decide|implemented_by|extern|skipKernelTC)\b|decide \+native|^\s*(local |scoped )?(syntax|macro|macro_rules|elab|elab_rules|notation|infix|infixl|infixr|prefix|postfix)\b|^\s*(@\[[^]]*\]\s*)?(private |protected |noncomputable )*axiom\b' \
-            --include='*.lean' NaturalLatents NaturalLatents.lean Verify.lean || status=$?
-          case "$status" in
-            1) echo "trust scan: clean" ;;
-            0) echo "::error::trust shortcut found above"; exit 1 ;;
-            *) echo "::error::grep failed with status $status"; exit 1 ;;
-          esac
+        run: bash scripts/trust_scan.sh
 
       - uses: leanprover/lean-action@v1.6.0
         with:
@@ -60,7 +53,7 @@ jobs:
           fi
 
       - name: Build
-        run: lake build
+        run: lake build --wfail
 
       - name: Kernel audit
         shell: bash
@@ -72,3 +65,6 @@ jobs:
             echo "::error::Verify.lean printed output; a passing audit is silent"
             exit 1
           fi
+
+      - name: Replay the kernel
+        run: lake env leanchecker NaturalLatents.Main
