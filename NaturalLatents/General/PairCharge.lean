@@ -815,7 +815,7 @@ lemma pairCharge_actual_covariance_payment {S : Finset (X × Y)} {w P R : Law X 
     (contact_E_nonneg hpair.2.2.1.1 _ (fun _ => sq_nonneg _)) (sq_nonneg _)
   have hpaid := pairCharge_fixed_covariance (s P R) (contactj P R) z v t t0 x
     HX HY HXp HYp (A0 P R) (B0 P R) hbar M Z NH NL
-    hs hshi hjlo hjhi hv rfl ht0 ht0pos hxlo hxhi hHX hHY hHXp hHYp
+    hs hshi hjlo hjhi hv rfl ht0 ht0pos hxhi hHX hHY hHXp hHYp
     ha hb rfl hbarScalar rfl hHC hNL hZ
   have hN : N = NH + NL / 3 := by
     dsimp [N, NH, NL, F, Fp]
@@ -1067,8 +1067,8 @@ lemma pairCharge_elementary_complement {S : Finset (X × Y)} {w P R : Law X Y}
     · by_cases hsecond : s P R ≤ (1/2:ℝ)
       · exact pairCharge_region_middle (s P R) (contactj P R) (by linarith) hsecond hj.1 hj.2
       · exact pairCharge_region_high (s P R) (contactj P R) (by linarith) hs1 hj.1 hj.2
-  have hP := pairCharge_fixed_floor_information (s P R) (contactj P R) (I P) hfloor.1 hfloor.2 hpay
-  have hR := pairCharge_fixed_floor_information (s P R) (contactj P R) (I R) hfloorR.1 hfloorR.2 hpay
+  have hP := lt_of_lt_of_le ((lt_div_iff₀ hfloor.1).2 hpay) hfloor.2
+  have hR := lt_of_lt_of_le ((lt_div_iff₀ hfloorR.1).2 hpay) hfloorR.2
   have hc := pairCharge_cubic_price hm.s_pos.le hs1
   linarith
 

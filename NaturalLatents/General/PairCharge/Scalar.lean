@@ -523,19 +523,21 @@ lemma pairCharge_average_KL (Ip Im Vp Vm Delta y : ℝ)
 
 /-- The mean-gap numerator is positive on its full scalar rectangle. -/
 lemma pairCharge_fixed_floor_y_pos (s j : ℝ)
-    (hspos : 0 < s) (hshi : s ≤ 1) (hjlo : (1 / 16 : ℝ) ≤ j) :
+    (hsnonneg : 0 ≤ s) (hshi : s ≤ 1) (hjpos : 0 < j) :
     0 < 1 - s + s * j := by
-  have hjpos : 0 < j := lt_of_lt_of_le (by norm_num) hjlo
-  have hsj := mul_pos hspos hjpos
-  linarith
+  have hsj : 0 ≤ s * j := mul_nonneg hsnonneg hjpos.le
+  by_cases hs : s = 1
+  · subst s
+    simpa using hjpos
+  · have : 0 < 1 - s := lt_of_le_of_ne (by linarith) (sub_ne_zero.mpr (Ne.symm hs)).symm
+    linarith
 
 /-- Denominator positivity, with the stronger bound `31/4`. -/
 lemma pairCharge_fixed_floor_denominator (s j : ℝ)
     (hslo : 0 ≤ s) (hshi : s ≤ 1)
-    (hjlo : (1 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
+    (hjnonneg : 0 ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
     (31 / 4 : ℝ) ≤
       15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2 := by
-  have hjnonneg : 0 ≤ j := by linarith
   have hsrest : 0 ≤ 1 - s := by linarith
   have hsprod := mul_nonneg hslo hsrest
   have hs2 : s ^ 2 ≤ 1 := by nlinarith only [hsprod, hshi]
@@ -564,7 +566,7 @@ lemma pairCharge_fixed_floor_gap (s j v h : ℝ)
 /-- The variance replacement by the formal balanced endpoint. The exact difference is a product of two
 nonnegative factors, so the proof avoids differentiation and any assumed realization of `v = 1/4`. -/
 lemma pairCharge_fixed_floor_variance (s j v h D C E : ℝ)
-    (_hslo : 0 ≤ s) (hshi : s ≤ 1)
+    (hshi : s ≤ 1)
     (hjhi : j ≤ (1 / 2 : ℝ)) (hvhi : v ≤ (1 / 4 : ℝ))
     (hh : h = (1 + s * j) / 4)
     (hD : D = (9 * v - 2) / 3 + j / 6 - s ^ 2 * v ^ 2 / 4 -
@@ -586,18 +588,6 @@ lemma pairCharge_fixed_floor_variance (s j v h D C E : ℝ)
   have hfactor := mul_nonneg hvfactor
     (add_nonneg hbase (mul_nonneg hcoef (sq_nonneg s)))
   linarith only [hcert, hfactor]
-
-/-- Dividing the exact scalar payment by a positive denominator. -/
-lemma pairCharge_fixed_floor_information (s j ibar : ℝ)
-    (hden : 0 <
-      15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
-    (hfloor : 3 * (1 - s + s * j) ^ 2 /
-      pairChargeLowDenominator s j ≤ ibar)
-    (hpay : pairChargeCubicRemainder s *
-      pairChargeLowDenominator s j
-      < 3 * (1 - s + s * j) ^ 2) :
-    (3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160 < ibar := by
-  exact lt_of_lt_of_le ((lt_div_iff₀ hden).2 hpay) hfloor
 
 /-- Exact algebraic comparison with `v = 1/4`. The stronger rectangle `v ≤ 1/4`, `j ≤ 1/2`, `s ≤ 1/3`
 suffices. -/
@@ -650,10 +640,8 @@ lemma pairCharge_defect_parameter_payment (t t0 x : ℝ)
     (ht0 : 0 < t0) (ht : t0 ≤ t) :
     15 * t - 8 * x + x ^ 2 / t - 15 * (t - t0) ≤
       15 * t0 - 8 * x + x ^ 2 / t0 := by
-  have htpos : 0 < t := lt_of_lt_of_le ht0 ht
-  have hdiv : x ^ 2 / t ≤ x ^ 2 / t0 := by
-    apply (div_le_div_iff₀ htpos ht0).2
-    exact mul_le_mul_of_nonneg_left ht (sq_nonneg x)
+  have hdiv : x ^ 2 / t ≤ x ^ 2 / t0 :=
+    div_le_div_of_nonneg_left (sq_nonneg x) ht0 ht
   linarith only [hdiv]
 
 /-- The covariance payment in full scalar form. Feature moments and covariances are explicit hypotheses;
@@ -665,7 +653,7 @@ lemma pairCharge_fixed_covariance
     (hjlo : (5 / 16 : ℝ) ≤ j) (hjhi : j < (1 / 2 : ℝ))
     (hv : v = (1 - z ^ 2) / 4)
     (ht : t = (1 / 2 : ℝ) - j) (ht0 : t0 = t - 3 * z ^ 2 / 2)
-    (ht0pos : 0 < t0) (_hxlo : 0 ≤ x) (hxhi : x ≤ 2 * t0)
+    (ht0pos : 0 < t0) (hxhi : x ≤ 2 * t0)
     (hHX : 0 ≤ HX) (hHY : 0 ≤ HY) (hHXp : 0 ≤ HXp) (hHYp : 0 ≤ HYp)
     (ha : a = s * (1 + z) / 2) (hb : b = s * (1 - z) / 2)
     (hbarMom : hbar = (HX + HY + HXp + HYp) / 2)
@@ -859,18 +847,20 @@ lemma pairCharge_contactj_nonneg {S : Finset (X × Y)} {w P R : Law X Y}
   exact div_nonneg (pairCharge_J_nonneg hpair) (sq_nonneg _)
 
 omit [DecidableEq X] [DecidableEq Y] in
+lemma pairCharge_E_centered_square {P : Law X Y} (hP : stoch_to_det.IsPMF P)
+    (F : X × Y → ℝ) :
+    E P (fun z => (F z - E P F)^2) = E P (fun z => (F z)^2) - (E P F)^2 := by
+  have h := contact_q_E_shift_sq hP F (-E P F)
+  have heq : (fun z => (F z - E P F)^2) = (fun z => (F z + -E P F)^2) := by rfl
+  rw [heq,h]
+  ring
+
+omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_E_sq_ge_sq_E {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X × Y → ℝ) : (E P F)^2 ≤ E P (fun z => (F z)^2) := by
-  have h := contact_E_nonneg hP (fun z => (F z - E P F)^2)
-    (fun z => sq_nonneg _)
-  have he := contact_q_E_shift_sq hP F (-E P F)
-  have hid : E P (fun z => (F z - E P F)^2) =
-      E P (fun z => (F z)^2) - (E P F)^2 := by
-    calc
-      _ = E P (fun z => (F z + -E P F)^2) := by rfl
-      _ = _ := by rw [he]; ring
-  rw [hid] at h
-  linarith
+  rw [← sub_nonneg]
+  rw [← pairCharge_E_centered_square hP F]
+  exact contact_E_nonneg hP _ (fun z => sq_nonneg _)
 
 lemma pairCharge_J_ge_uv_sq {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
@@ -933,16 +923,6 @@ lemma pairCharge_contactj_bounds {S : Finset (X × Y)} {w P R : Law X Y}
   exact ⟨hl.1.trans hl.2, (pairCharge_contactj_upper hpair).2⟩
 
 omit [DecidableEq X] [DecidableEq Y] in
-lemma pairCharge_E_scale_sq (P : Law X Y) (F : X × Y → ℝ) (a : ℝ) :
-    E P (fun z => (a * F z)^2) = a^2 * E P (fun z => (F z)^2) := by
-  calc
-    _ = E P (fun z => a^2 * (F z)^2) := by
-      congr 1
-      funext z
-      ring
-    _ = _ := contact_q_E_scale P _ _
-
-omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_E_scale_prod (P : Law X Y) (F G : X × Y → ℝ) (a b : ℝ) :
     E P (fun z => (a * F z) * (b * G z)) = a * b * E P (fun z => F z * G z) := by
   calc
@@ -951,6 +931,11 @@ lemma pairCharge_E_scale_prod (P : Law X Y) (F G : X × Y → ℝ) (a b : ℝ) :
       funext z
       ring
     _ = _ := contact_q_E_scale P _ _
+
+omit [DecidableEq X] [DecidableEq Y] in
+lemma pairCharge_E_scale_sq (P : Law X Y) (F : X × Y → ℝ) (a : ℝ) :
+    E P (fun z => (a * F z)^2) = a^2 * E P (fun z => (F z)^2) := by
+  simpa only [pow_two] using pairCharge_E_scale_prod P F F a a
 
 lemma pairCharge_maxcorr_sq {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (F : X → ℝ) (G : Y → ℝ)
@@ -1275,14 +1260,6 @@ lemma pairCharge_E_affine_square (P : Law X Y) (F G : X × Y → ℝ) (c : ℝ) 
     ring
   simp only [hid, contact_E_add, pairCharge_E_div]
 
-omit [DecidableEq X] [DecidableEq Y] in
-lemma pairCharge_E_centered_square {P : Law X Y} (hP : stoch_to_det.IsPMF P)
-    (F : X × Y → ℝ) :
-    E P (fun z => (F z - E P F)^2) = E P (fun z => (F z)^2) - (E P F)^2 := by
-  have h := contact_q_E_shift_sq hP F (-E P F)
-  have heq : (fun z => (F z - E P F)^2) = (fun z => (F z + -E P F)^2) := by rfl
-  rw [heq,h]
-  ring
 
 /-- The exact endpoint table (5.5) for the fixed quarter correction. -/
 lemma pairCharge_fixed_endpoint_table {S : Finset (X × Y)} {w P R : Law X Y}
@@ -1363,64 +1340,6 @@ lemma pairCharge_fixed_endpoint_table {S : Finset (X × Y)} {w P R : Law X Y}
       hm.U2,hm.V2,hu,hv,hHQ,hsum]
     ring
 
-/-- The exact fixed-quarter statistic, gap and integrated variance. -/
-lemma pairCharge_fixed_statistic_data {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) :
-    let t := s P R
-    let jj := contactj P R
-    let vv := A0 P R*B0 P R/t^2
-    let hh := (1+t*jj)/4
-    let F : X × Y → ℝ := fun z =>
-      U P R z.1*V P R z.2/t+(U P R z.1+V P R z.2+t)/4
-    E P F-E (productLaw P) F = hh-t*vv ∧
-    E (productLaw P) (fun z => (F z-E (productLaw P) F)^2)/3 +
-      E P (fun z => (F z-E P F)^2)/6 + (E P F-E (productLaw P) F)^2/12 =
-    (9*vv-2)/3+jj/6-t^2*vv^2/4-t*vv*hh/6-hh^2/12 +
-      t*((3/8:ℝ)-2*vv-jj/6+t*(vv/3+jj/24))/2 +
-      t*((7/12:ℝ)-t/2+2*t*vv/3+t*jj/12)/16 := by
-  let t := s P R
-  let H : X × Y → ℝ := fun z => U P R z.1*V P R z.2
-  let L : X × Y → ℝ := fun z => U P R z.1+V P R z.2+t
-  let F : X × Y → ℝ := fun z => H z/t+L z/4
-  obtain ⟨hH,hHQ,hL,hLQ,hH2,hH2Q,hL2,hL2Q,hHL,hHLQ⟩ := pairCharge_fixed_endpoint_table hpair
-  have hden : t ≠ 0 := (contact_moments hpair).s_pos.ne'
-  have hFP : E P F = (t+J P R)/(4*t) := by
-    dsimp [F]
-    rw [contact_E_add,pairCharge_E_div,pairCharge_E_div,hH,hL]
-    dsimp [t]
-    ring
-  have hFQ : E (productLaw P) F = A0 P R*B0 P R/t := by
-    dsimp [F]
-    rw [contact_E_add,pairCharge_E_div,pairCharge_E_div,hHQ,hLQ]
-    ring
-  have hFP2 : E P (fun z => (F z)^2) =
-      J P R/t^2+(-J P R+t*(t+J P R)/4)/(2*t)+(3*t/2-t^2+J P R/2)/16 := by
-    rw [pairCharge_E_affine_square P H L t,hH2,hHL,hL2]
-  have hFQ2 : E (productLaw P) (fun z => (F z)^2) =
-      (9*A0 P R*B0 P R-2*t^2)/t^2+
-      (t^2-6*A0 P R*B0 P R+t*A0 P R*B0 P R)/(2*t)+
-      (t-t^2+2*A0 P R*B0 P R)/16 := by
-    rw [pairCharge_E_affine_square (productLaw P) H L t,hH2Q,hHLQ,hL2Q]
-  change E P F-E (productLaw P) F = _ ∧ _ = _
-  constructor
-  · rw [hFP,hFQ]
-    dsimp only [contactj]
-    change (t+J P R)/(4*t)-A0 P R*B0 P R/t =
-      (1+t*(J P R/t^2))/4-t*(A0 P R*B0 P R/t^2)
-    field_simp [hden]
-  · rw [pairCharge_E_centered_square (pairCharge_product_isPMF hpair.2.1.1),
-      pairCharge_E_centered_square hpair.2.1.1,hFP,hFQ,hFP2,hFQ2]
-    dsimp only [contactj]
-    change _ = (9*(A0 P R*B0 P R/t^2)-2)/3+(J P R/t^2)/6-
-      t^2*(A0 P R*B0 P R/t^2)^2/4-
-      t*(A0 P R*B0 P R/t^2)*((1+t*(J P R/t^2))/4)/6-
-      ((1+t*(J P R/t^2))/4)^2/12+
-      t*((3/8:ℝ)-2*(A0 P R*B0 P R/t^2)-(J P R/t^2)/6+
-        t*((A0 P R*B0 P R/t^2)/3+(J P R/t^2)/24))/2+
-      t*((7/12:ℝ)-t/2+2*t*(A0 P R*B0 P R/t^2)/3+t*(J P R/t^2)/12)/16
-    field_simp [hden]
-    ring
-
 /-- Exact variance for any fixed additive correction. -/
 lemma pairCharge_fixed_coefficient_data {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (c : ℝ) :
@@ -1486,6 +1405,27 @@ lemma pairCharge_fixed_coefficient_data {S : Finset (X × Y)} {w P R : Law X Y}
       c^2*t*((7/12:ℝ)-t/2+2*t*(A0 P R*B0 P R/t^2)/3+t*(J P R/t^2)/12)
     field_simp [hden]
     ring
+
+/-- The exact fixed-quarter statistic, gap and integrated variance. -/
+lemma pairCharge_fixed_statistic_data {S : Finset (X × Y)} {w P R : Law X Y}
+    (hpair : CommonSupportPairs S w P R) :
+    let t := s P R
+    let jj := contactj P R
+    let vv := A0 P R*B0 P R/t^2
+    let hh := (1+t*jj)/4
+    let F : X × Y → ℝ := fun z =>
+      U P R z.1*V P R z.2/t+(U P R z.1+V P R z.2+t)/4
+    E P F-E (productLaw P) F = hh-t*vv ∧
+    E (productLaw P) (fun z => (F z-E (productLaw P) F)^2)/3 +
+      E P (fun z => (F z-E P F)^2)/6 + (E P F-E (productLaw P) F)^2/12 =
+    (9*vv-2)/3+jj/6-t^2*vv^2/4-t*vv*hh/6-hh^2/12 +
+      t*((3/8:ℝ)-2*vv-jj/6+t*(vv/3+jj/24))/2 +
+      t*((7/12:ℝ)-t/2+2*t*vv/3+t*jj/12)/16 := by
+  have h := pairCharge_fixed_coefficient_data hpair (1 / 4 : ℝ)
+  constructor
+  · simpa [div_eq_mul_inv, mul_comm] using h.1
+  · convert h.2 using 1
+    all_goals simp [div_eq_mul_inv, mul_comm] <;> ring
 
 end
 

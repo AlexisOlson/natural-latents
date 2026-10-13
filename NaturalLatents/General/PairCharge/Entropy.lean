@@ -439,10 +439,10 @@ lemma pairCharge_quarter_floor {S : Finset (X × Y)} {w P R : Law X Y}
   have hjs := pairCharge_contactj_bounds hpair
   have hvs := pairCharge_v_bounds hpair
   have hden : 0 < den := by
-    have hb := pairCharge_fixed_floor_denominator t jj hs0.le hs1 hjs.1 hjs.2
+    have hb := pairCharge_fixed_floor_denominator t jj hs0.le hs1 (le_trans (by norm_num) hjs.1) hjs.2
     change (31/4:ℝ) ≤ den at hb
     linarith
-  have hy : 0 < 1-t+t*jj := pairCharge_fixed_floor_y_pos t jj hs0 hs1 hjs.1
+  have hy : 0 < 1-t+t*jj := pairCharge_fixed_floor_y_pos t jj hs0.le hs1 (lt_of_lt_of_le (by norm_num) hjs.1)
   have hstats := pairCharge_fixed_statistic_data hpair
   change gap = hh-t*vv ∧ D = rawD+CL/2+EL/16 at hstats
   have hgap : (1-t+t*jj)/4 ≤ gap := by
@@ -450,7 +450,7 @@ lemma pairCharge_quarter_floor {S : Finset (X × Y)} {w P R : Law X Y}
     exact pairCharge_fixed_floor_gap t jj vv hh hs0.le hvs.2 rfl
   have hD : 192*D ≤ den := by
     rw [hstats.2]
-    exact pairCharge_fixed_floor_variance t jj vv hh rawD CL EL hs0.le hs1 hjs.2 hvs.2 rfl rfl rfl rfl
+    exact pairCharge_fixed_floor_variance t jj vv hh rawD CL EL hs1 hjs.2 hvs.2 rfl rfl rfl rfl
   have hP := hpair.2.1.1
   have hQ := pairCharge_product_isPMF hP
   have he : (∑ z, (P z-productLaw P z)*F z) = gap := by
