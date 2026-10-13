@@ -41,7 +41,7 @@ lemma integrable_sharedWinner_code (r : Ω → κ → ℝ) (F : (Ω → κ) → 
     Integrable (fun E : κ → ℝ => F (sharedWinner r E)) (seedLaw κ) := by
   let : MeasurableSpace κ := ⊤
   have hA : Measurable (fun E : κ → ℝ => sharedWinner r E) := by
-    apply measurable_pi_lambda
+    apply Measurable.of_eval
     intro z
     unfold sharedWinner weightedLexWinner
     apply measurable_lexMax

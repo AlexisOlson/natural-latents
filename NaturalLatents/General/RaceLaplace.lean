@@ -186,9 +186,9 @@ lemma race_scalar_log_ratio_law_of_stable_laplace
     rw [hsection]
     exact stoch_to_det.expMeasure_one_Ioi _ (by positivity)
   let : IsProbabilityMeasure ((μ.prod ν).map H) :=
-    Measure.isProbabilityMeasure_map hH.aemeasurable
+    inferInstance
   let : IsProbabilityMeasure (ν.map K) :=
-    Measure.isProbabilityMeasure_map hK.aemeasurable
+    inferInstance
   have hLaw : (μ.prod ν).map H = ν.map K := by
     apply Measure.ext_of_Iic
     intro x
@@ -500,7 +500,7 @@ lemma race_integral_laplace_exponent (a v : ℝ) (ha : 1 < a) (hv : 0 < v) :
         (expMeasure (1 : ℝ)).real (Set.Iic (v * t ^ (-a))) :=
       congrArg ENNReal.toReal hset
     rw [hsetreal, ← cdf_eq_real,
-      cdf_expMeasure_eq zero_lt_one, if_pos
+      cdf_expMeasure_eq zero_lt_one, ite_eq_left
         (mul_pos hv (Real.rpow_pos_of_pos ht _)).le]
     simp
   calc

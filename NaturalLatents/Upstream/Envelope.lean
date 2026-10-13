@@ -17,6 +17,15 @@ namespace stoch_to_det
 
 open Finset
 
+lemma isCompact_probabilityWeights (ι : Type*) [Fintype ι] :
+    IsCompact {q : ι → ℝ | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1} := by
+  let := Convexity.StdSimplex.compactSpace ℝ ι
+  convert isCompact_range (continuous_pi fun i =>
+    Convexity.StdSimplex.continuous_weights_apply ℝ i) using 1
+  · ext q
+    simp [Convexity.StdSimplex.range_toFun_comp_weights]
+  · infer_instance
+
 variable {α β : Type*} [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β]
 variable {p : α × β → ℝ}
 
@@ -96,7 +105,7 @@ private lemma Latent.Hvar_lift_pair_prior {γ : Type*} [Fintype γ] [DecidableEq
     apply Finset.sum_congr rfl
     intro z _
     by_cases hz : f z = c
-    · simp only [hz, if_true]
+    · simp only [hz, ite_true]
       have hvsum :
           (∑ x, if x = v then V.prior x * V.comp x z else 0) =
             (if v = v then V.prior v * V.comp v z else 0) := by
@@ -352,12 +361,12 @@ private lemma conditionedComp_isPMF {γ : Type} [Fintype γ] [DecidableEq γ]
     have hprior_pos : 0 < push f p c := lt_of_le_of_ne hprior_nonneg (Ne.symm hc)
     constructor
     · intro z
-      simp only [conditionedComp, hc, if_false]
+      simp only [conditionedComp, hc, ite_false]
       split
       · exact mul_nonneg (inv_nonneg.mpr hprior_nonneg) (hp.nonneg z)
       · exact le_rfl
     · unfold mass conditionedComp
-      simp only [hc, if_false]
+      simp only [hc, ite_false]
       calc
         (∑ z, if f z = c then (push f p c)⁻¹ * p z else 0) =
             (push f p c)⁻¹ * ∑ z ∈ univ.filter (fun z => f z = c), p z := by
@@ -381,7 +390,7 @@ private lemma push_mul_conditionedComp {γ : Type} [Fintype γ] [DecidableEq γ]
       simp [conditionedComp, hc, hz]
     · rw [show conditionedComp (p := p) f (f z) z =
           (push f p (f z))⁻¹ * p z by simp [conditionedComp, hc]]
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       field_simp [hc]
   · by_cases hc : push f p c = 0
     · simp [conditionedComp, hfc, hc]
@@ -527,7 +536,7 @@ private noncomputable def Latent.activeIndex (V : Latent p) (z : α × β) : V.�
 omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.activeIndex_spec (V : Latent p) (z : α × β)
     (h : ∃ v, V.joint (v, z) ≠ 0) : V.joint (V.activeIndex z, z) ≠ 0 := by
-  simp only [activeIndex, dif_pos h]
+  simp only [activeIndex, dite_eq_left h]
   exact Classical.choose_spec h
 
 private noncomputable def Latent.detLabel (V : Latent p) (v : V.ι) :
@@ -584,7 +593,7 @@ private lemma Latent.push_detCode_eq_push_detLabel (V : Latent p) (hV : V.IsDet)
           apply Finset.sum_congr rfl
           intro z _
           by_cases hz : V.detCode z = c
-          · simp only [hz, if_true]
+          · simp only [hz, ite_true]
             exact (V.mixture z).symm
           · simp [hz]
     _ = ∑ z, ∑ v, if V.detLabel v = c then V.joint (v, z) else 0 := by
@@ -638,7 +647,7 @@ private lemma Latent.detCode_fiber_eq_joint (V : Latent p) (hV : V.IsDet)
     have hpjoint := V.mixture_eq_joint_of_active hV huactive
     have hcodelabel := V.detCode_eq_label_of_active hV huactive
     by_cases hcode : V.detCode z = V.detLabel v
-    · rw [if_pos hcode, hpjoint]
+    · rw [ite_eq_left hcode, hpjoint]
       have huprior : V.prior (V.activeIndex z) ≠ 0 := by
         intro hu
         apply huactive
@@ -647,7 +656,7 @@ private lemma Latent.detCode_fiber_eq_joint (V : Latent p) (hV : V.IsDet)
         hcodelabel.symm.trans hcode
       have huv := V.detLabel_inj_of_prior_ne_zero hV huprior hvprior hlabels
       rw [huv]
-    · rw [if_neg hcode]
+    · rw [ite_eq_right hcode]
       by_contra hvjoint
       exact hcode (V.detCode_eq_label_of_active hV (Ne.symm hvjoint))
   · have hpzero := V.p_eq_zero_of_no_active hex
@@ -684,11 +693,11 @@ private lemma Latent.functionLatent_comp_detLabel (hp : IsPMF p) (V : Latent p)
   have hfiber := V.detCode_fiber_eq_joint hV hv z
   unfold Latent.joint at hfiber
   by_cases hcode : V.detCode z = V.detLabel v
-  · rw [if_pos hcode] at hfiber
-    simp only [conditionedComp, hpush, hv, if_false, hcode, if_true]
+  · rw [ite_eq_left hcode] at hfiber
+    simp only [conditionedComp, hpush, hv, ite_false, hcode, ite_true]
     rw [hfiber]
     field_simp [hv]
-  · rw [if_neg hcode] at hfiber
+  · rw [ite_eq_right hcode] at hfiber
     have hcomp : V.comp v z = 0 := by
       have hprod : V.prior v * V.comp v z = 0 := hfiber.symm
       exact (mul_eq_zero.mp hprod).resolve_left hv
@@ -777,7 +786,8 @@ noncomputable def phiGraph : Set ((α × β → ℝ) × ℝ) :=
 
 omit [DecidableEq α] [DecidableEq β] in
 lemma isCompact_pmfSet : IsCompact (pmfSet : Set (α × β → ℝ)) := by
-  have heq : (pmfSet : Set (α × β → ℝ)) = stdSimplex ℝ (α × β) := by
+  have heq : (pmfSet : Set (α × β → ℝ)) =
+      {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1} := by
     ext q
     constructor
     · intro hq
@@ -785,7 +795,7 @@ lemma isCompact_pmfSet : IsCompact (pmfSet : Set (α × β → ℝ)) := by
     · rintro ⟨hq, htotal⟩
       exact ⟨hq, by simpa [mass] using htotal⟩
   rw [heq]
-  exact isCompact_stdSimplex ℝ (α × β)
+  exact isCompact_probabilityWeights (α × β)
 
 lemma isCompact_phiGraph : IsCompact (phiGraph : Set ((α × β → ℝ) × ℝ)) := by
   let graphMap : (α × β → ℝ) → (α × β → ℝ) × ℝ :=
@@ -814,7 +824,7 @@ private noncomputable def envelopeBarycenter
 private noncomputable def envelopeParams :
     Set ((Fin (envelopeSize (α := α) (β := β)) → ℝ) ×
       (Fin (envelopeSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :=
-  stdSimplex ℝ (Fin (envelopeSize (α := α) (β := β))) ×ˢ
+  {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1} ×ˢ
     Set.pi (Set.univ : Set (Fin (envelopeSize (α := α) (β := β))))
       (fun _ => phiGraph)
 
@@ -827,7 +837,7 @@ private lemma continuous_envelopeBarycenter :
 private lemma isCompact_envelopeParams :
     IsCompact (envelopeParams (α := α) (β := β)) := by
   unfold envelopeParams
-  apply IsCompact.prod (isCompact_stdSimplex ℝ _)
+  apply IsCompact.prod (isCompact_probabilityWeights _)
   exact isCompact_univ_pi fun _ => isCompact_phiGraph
 
 private lemma isCompact_envelopeBarycenter_image :
@@ -927,7 +937,7 @@ private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
         simpa [hi₀] using hsingle
       have hpoint : points j = i₀.1 := by
         dsimp [points, i₀]
-        rw [dif_pos hj]
+        rw [dite_eq_left hj]
       rw [hweight, hpoint]
       symm
       have hsingle :

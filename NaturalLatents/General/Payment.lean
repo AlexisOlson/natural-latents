@@ -411,7 +411,7 @@ lemma payment_profile_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   apply Finset.sum_le_sum
   intro j _
   by_cases hij : i ≠ j
-  · simp only [if_pos hij]
+  · simp only [ite_eq_left hij]
     exact mul_le_mul_of_nonneg_left (haffinity i j hij) (payment_mu_nonneg hp D.L i j)
   · have heq : i = j := not_ne_iff.mp hij
     subst j

@@ -101,14 +101,14 @@ private lemma expMeasure_one_tilt {t : ℝ} (ht : 0 < t) :
   simp only [gammaPDF_eq, Real.rpow_one, Real.Gamma_one, div_one,
     sub_self, Real.rpow_zero, mul_one, one_mul]
   by_cases hy : 0 ≤ y
-  · simp only [if_pos hy]
+  · simp only [ite_eq_left hy]
     rw [← ENNReal.ofReal_mul (Real.exp_nonneg _),
       ← ENNReal.ofReal_mul ht.le]
     congr 1
     rw [← Real.exp_add]
     field_simp [ht.ne']
     ring_nf
-  · simp [if_neg hy]
+  · simp [ite_eq_right hy]
 
 private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
     Measure.map (fun x : ℝ => x / t) (expMeasure (1 / t)) =
@@ -119,7 +119,7 @@ private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
     isProbabilityMeasure_expMeasure zero_lt_one
   let : IsProbabilityMeasure
       (Measure.map (fun x : ℝ => x / t) (expMeasure (1 / t))) :=
-    Measure.isProbabilityMeasure_map (measurable_id.div_const t).aemeasurable
+    inferInstance
   apply Measure.eq_of_cdf
   ext x
   rw [cdf_eq_real, cdf_eq_real, measureReal_def, measureReal_def,
@@ -135,11 +135,11 @@ private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
     ENNReal.toReal_ofReal (cdf_nonneg _ _)]
   rw [cdf_expMeasure_eq (one_div_pos.mpr ht), cdf_expMeasure_eq zero_lt_one]
   by_cases hx : 0 ≤ x
-  · rw [if_pos hx, if_pos (mul_nonneg ht.le hx)]
+  · rw [ite_eq_left hx, ite_eq_left (mul_nonneg ht.le hx)]
     congr 2
     field_simp [ht.ne']
   · have htx : ¬ 0 ≤ t * x := by nlinarith
-    rw [if_neg hx, if_neg htx]
+    rw [ite_eq_right hx, ite_eq_right htx]
 
 /- Scaling and memorylessness in the orientation used by the within-cluster
 excess vector. -/
@@ -190,7 +190,7 @@ private lemma map_sub_restrict_expMeasure_one {a : ℝ} (ha : 0 ≤ a) :
     rw [cdf_expMeasure_eq zero_lt_one,
       cdf_expMeasure_eq zero_lt_one,
       cdf_expMeasure_eq zero_lt_one]
-    simp only [if_pos hxapos, if_pos ha, if_pos hx, one_mul]
+    simp only [ite_eq_left hxapos, ite_eq_left ha, ite_eq_left hx, one_mul]
     have hnonneg : 0 ≤ 1 - Real.exp (-x) :=
       sub_nonneg.mpr (Real.exp_le_one_iff.mpr (by linarith))
     rw [← ENNReal.ofReal_mul (Real.exp_nonneg (-a))]
@@ -202,7 +202,7 @@ private lemma map_sub_restrict_expMeasure_one {a : ℝ} (ha : 0 ≤ a) :
     rw [Set.inter_comm (Set.Iic (x + a)), Set.Ioi_inter_Iic,
       Set.Ioc_eq_empty hnot, measure_empty, ← ofReal_cdf ν x]
     dsimp [ν]
-    rw [cdf_expMeasure_eq zero_lt_one, if_neg (not_le.mpr hxneg)]
+    rw [cdf_expMeasure_eq zero_lt_one, ite_eq_right (not_le.mpr hxneg)]
     simp
 
 private lemma map_scaled_excess_restrict_expMeasure_one
@@ -230,7 +230,7 @@ private lemma map_scaled_excess_restrict_expMeasure_one
       rw [map_sub_restrict_expMeasure_one htu]
     _ = ENNReal.ofReal (Real.exp (-(t * u))) •
         Measure.map (fun y : ℝ => y / t) (expMeasure 1) := by
-      rw [Measure.map_smul]
+      exact Measure.map_smul _ (measurable_id.div_const t).aemeasurable
     _ = ENNReal.ofReal (Real.exp (-(t * u))) • expMeasure t := by
       rw [map_div_expMeasure_one ht]
 
@@ -317,7 +317,7 @@ private noncomputable def winnerClockJoin
 private lemma winnerClockJoin_measurable
     {κ : Type} [Fintype κ] [DecidableEq κ] (a : κ) :
     Measurable (winnerClockJoin a) := by
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   intro i
   by_cases hi : i = a
   · simp only [winnerClockJoin, hi, dite_true]
@@ -607,7 +607,7 @@ private theorem clock_min_excess_restrict_factorization
     have hlose : Measurable
         (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ =>
           fun i => xy.1 i / t i.1 - xy.2 / t a) := by
-      apply measurable_pi_lambda
+      apply Measurable.of_eval
       intro i
       have hxi : Measurable
           (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ => xy.1 i) :=
@@ -621,7 +621,7 @@ private theorem clock_min_excess_restrict_factorization
     have hea : Measurable (fun E : κ → ℝ => E a) := measurable_pi_apply a
     apply Measurable.prodMk
     · exact hea.div_const (t a)
-    · apply measurable_pi_lambda
+    · apply Measurable.of_eval
       intro i
       have hei : Measurable (fun E : κ → ℝ => E i) := measurable_pi_apply i
       exact (hei.div_const (t i)).sub (hea.div_const (t a))
@@ -664,7 +664,7 @@ private theorem clock_min_excess_restrict_factorization
         rw [map_eval_restrict_strictClockWin t ht htotal a]
       _ = ENNReal.ofReal (t a) •
           Measure.map (fun y : ℝ => y / t a) (expMeasure (1 / t a)) := by
-        rw [Measure.map_smul]
+        exact Measure.map_smul _ (measurable_id.div_const (t a)).aemeasurable
       _ = ENNReal.ofReal (t a) • expMeasure 1 := by
         rw [map_div_expMeasure (ht a)]
   have hminSplit :
@@ -700,7 +700,7 @@ private theorem clock_min_excess_restrict_factorization
   have hembed : Measurable embed := (winnerClockJoin_measurable a).comp (measurable_const.prodMk measurable_id)
   let : IsProbabilityMeasure ρfull := by
     dsimp [ρfull]
-    exact Measure.isProbabilityMeasure_map hembed.aemeasurable
+    infer_instance
   change Measure.map J (q.restrict P) =
     (ENNReal.ofReal (t a) • expMeasure 1).prod ρfull
   apply Measure.ext_prod
@@ -734,7 +734,7 @@ private theorem clock_min_excess_restrict_factorization
       let rpre : Set ({i : κ // i ≠ a} → ℝ) := embed ⁻¹' r
       have hu : 0 ≤ u := div_nonneg hy.le (ht a).le
       have hloseMap : Measurable loseMap := by
-        apply measurable_pi_lambda
+        apply Measurable.of_eval
         intro i
         have hxi : Measurable
             (fun x : {j : κ // j ≠ a} → ℝ => x i) := measurable_pi_apply i
@@ -917,7 +917,7 @@ lemma winnerResidualClock_measurable
   have hea : Measurable (fun E : κ → ℝ => E a) := measurable_pi_apply a
   have hratio : Measurable (fun E : κ → ℝ => E a / t a) :=
     hea.div measurable_const
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   intro i
   by_cases hi : i = a
   · simpa only [winnerResidualClock, hi, dite_true] using hratio
@@ -955,10 +955,10 @@ theorem winnerResidualClock_restrict_law
       ℝ × ({i : κ // i ≠ a} → ℝ) := Prod.map id loseScale
   have hnorm : Measurable norm := by fun_prop
   have hout : Measurable out := by
-    apply measurable_pi_lambda
+    apply Measurable.of_eval
     intro i
     by_cases hi : i = a
-    · simpa only [out, hi, if_true] using
+    · simpa only [out, hi, ite_true] using
         (measurable_fst : Measurable
           (fun sr : ℝ × (κ → ℝ) => sr.1))
     · have hcoord : Measurable
@@ -966,7 +966,7 @@ theorem winnerResidualClock_restrict_law
         (measurable_pi_apply i).comp measurable_snd
       have hmul : Measurable (fun sr : ℝ × (κ → ℝ) => t i * sr.2 i) := by
         fun_prop
-      simpa only [out, hi, if_false] using hmul
+      simpa only [out, hi, ite_false] using hmul
   have hembed : Measurable embed := (winnerClockJoin_measurable a).comp (measurable_const.prodMk measurable_id)
   have hloseScale : Measurable loseScale := by fun_prop
   have hscale : Measurable scale := measurable_id.prodMap hloseScale
@@ -976,7 +976,7 @@ theorem winnerResidualClock_restrict_law
     · subst i
       simp [winnerResidualClock, out, norm]
     · simp only [winnerResidualClock, hi, dite_false, Function.comp_apply,
-        out, norm, if_false]
+        out, norm, ite_false]
       field_simp [(ht i).ne', (ht a).ne']
   have houtEmbed : out ∘ Prod.map id embed = assemble := by
     funext sr i
@@ -1045,7 +1045,7 @@ theorem winnerResidualClock_restrict_law
       rw [hAprod]
     _ = ENNReal.ofReal (t a) •
         Measure.map (winnerClockJoin a) ((expMeasure 1).prod loseμ) := by
-      rw [Measure.map_smul]
+      exact Measure.map_smul _ (winnerClockJoin_measurable a).aemeasurable
     _ = ENNReal.ofReal (t a) • clockLaw κ := by
       rw [show Measure.map (winnerClockJoin a)
           ((expMeasure 1).prod loseμ) = clockLaw κ by

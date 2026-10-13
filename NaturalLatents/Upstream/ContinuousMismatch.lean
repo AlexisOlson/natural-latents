@@ -19,7 +19,7 @@ theorem log_le_quadratic_at_one {x : ℝ} (hx : 0 < x) (hx1 : x ≤ 1) :
     have hsub : HasDerivAt (fun y : ℝ => y - 1) 1 x := by
       simpa using (hasDerivAt_id x).sub_const 1
     convert ((Real.hasDerivAt_log hx.ne').sub hsub).add
-      ((hsub.pow 2).div_const 2) using 1 <;> try rfl
+      ((hsub.pow 2).div_const 2) using 1; try rfl
     field_simp
     ring
   have hm : MonotoneOn F (Set.Ioi 0) := by

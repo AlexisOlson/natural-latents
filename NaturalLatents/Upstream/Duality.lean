@@ -229,7 +229,7 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
         q z * lg (q z) - q z * lg (w z)
           - ((2 : ℝ) / 3) * (q z * lg (mX q z.1))
           - ((2 : ℝ) / 3) * (q z * lg (mY q z.2)) := by
-    rw [refMeas, if_pos hzS]
+    rw [refMeas, ite_eq_left hzS]
     by_cases hz : q z = 0
     · simp [hz]
     · have hzpos : 0 < q z := lt_of_le_of_ne (hq.nonneg z) (Ne.symm hz)
@@ -315,7 +315,7 @@ theorem Gdef_nonneg {S : Finset (α × β)} {w : α × β → ℝ}
       change q z ≤ push Prod.snd q z.2
       unfold push
       exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-    rw [refMeas, if_pos hzS]
+    rw [refMeas, ite_eq_left hzS]
     exact (mul_pos
       (mul_pos (hw.1 z hzS) (Real.rpow_pos_of_pos (hzpos.trans_le hxle) _))
       (Real.rpow_pos_of_pos (hzpos.trans_le hyle) _)).ne'
@@ -508,14 +508,14 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
     by_cases hSempty : S = ∅
     · simp [Lambda, hSempty]
     let K : Set ((α → ℝ) × (β → ℝ)) :=
-      Set.prod (stdSimplex ℝ α) (stdSimplex ℝ β)
-    have huΔ : u ∈ stdSimplex ℝ α := by
+      Set.prod ({q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)}) ({q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)})
+    have huΔ : u ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := by
       exact ⟨hu.nonneg, by simpa [mass] using hu.total⟩
-    have hvΔ : v ∈ stdSimplex ℝ β := by
+    have hvΔ : v ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := by
       exact ⟨hv.nonneg, by simpa [mass] using hv.total⟩
     have huvK : (u, v) ∈ K := ⟨huΔ, hvΔ⟩
     have hK : IsCompact K :=
-      (isCompact_stdSimplex ℝ α).prod (isCompact_stdSimplex ℝ β)
+      (isCompact_probabilityWeights α).prod (isCompact_probabilityWeights β)
     have hcont : Continuous (fun uv : (α → ℝ) × (β → ℝ) =>
         Lambda S w uv.1 uv.2) := by
       unfold Lambda
@@ -524,8 +524,8 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
       hK.exists_isMaxOn ⟨(u, v), huvK⟩ hcont.continuousOn
     let u₀ : α → ℝ := uv.1
     let v₀ : β → ℝ := uv.2
-    have hu₀Δ : u₀ ∈ stdSimplex ℝ α := huv.1
-    have hv₀Δ : v₀ ∈ stdSimplex ℝ β := huv.2
+    have hu₀Δ : u₀ ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := huv.1
+    have hv₀Δ : v₀ ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := huv.2
     have hu₀ : IsPMF u₀ :=
       ⟨hu₀Δ.1, by simpa [mass] using hu₀Δ.2⟩
     have hv₀ : IsPMF v₀ :=
@@ -820,7 +820,7 @@ private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} 
       change q z ≤ push Prod.snd q z.2
       unfold push
       exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-    rw [refMeas, if_pos hzS]
+    rw [refMeas, ite_eq_left hzS]
     exact (mul_pos
       (mul_pos (hw.1 z hzS) (Real.rpow_pos_of_pos (hzpos.trans_le hxle) _))
       (Real.rpow_pos_of_pos (hzpos.trans_le hyle) _)).ne'
@@ -847,13 +847,13 @@ private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} 
     calc
       q z = refMeas S w q z := congrFun href z
       _ = w z * mX q z.1 ^ ((2 : ℝ) / 3) * mY q z.2 ^ ((2 : ℝ) / 3) := by
-        rw [refMeas, if_pos hzS]
+        rw [refMeas, ite_eq_left hzS]
   · rintro ⟨_, hqS', hcontact⟩
     have href : refMeas S w q = q := by
       funext z
       by_cases hzS : z ∈ S
-      · rw [refMeas, if_pos hzS, ← hcontact z hzS]
-      · rw [refMeas, if_neg hzS, hqS' z hzS]
+      · rw [refMeas, ite_eq_left hzS, ← hcontact z hzS]
+      · rw [refMeas, ite_eq_right hzS, hqS' z hzS]
     have hsumZero :
         (∑ z ∈ S, q z * lg (q z / refMeas S w q z)) = 0 := by
       rw [href]
@@ -945,7 +945,7 @@ private lemma isCompact_dualPmfSet (S : Finset (α × β)) :
       isClosed_eq (continuous_apply z) continuous_const
   have heq :
       dualPmfSet S =
-        stdSimplex ℝ (α × β) ∩ Z := by
+        {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} ∩ Z := by
     ext q
     constructor
     · rintro ⟨hq, hqS⟩
@@ -953,7 +953,7 @@ private lemma isCompact_dualPmfSet (S : Finset (α × β)) :
     · rintro ⟨⟨hq, htotal⟩, hqS⟩
       exact ⟨⟨hq, by simpa [mass] using htotal⟩, hqS⟩
   rw [heq]
-  exact (isCompact_stdSimplex ℝ (α × β)).inter_right hZclosed
+  exact (isCompact_probabilityWeights (α × β)).inter_right hZclosed
 
 private lemma isCompact_dualPhiGraph (S : Finset (α × β)) :
     IsCompact (dualPhiGraph S : Set ((α × β → ℝ) × ℝ)) := by
@@ -983,7 +983,7 @@ private noncomputable def dualHullBarycenter
 private noncomputable def dualHullParams (S : Finset (α × β)) :
     Set ((Fin (dualHullSize (α := α) (β := β)) → ℝ) ×
       (Fin (dualHullSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :=
-  stdSimplex ℝ (Fin (dualHullSize (α := α) (β := β))) ×ˢ
+  {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} ×ˢ
     Set.pi (Set.univ : Set (Fin (dualHullSize (α := α) (β := β))))
       (fun _ => dualPhiGraph S)
 
@@ -996,7 +996,7 @@ private lemma continuous_dualHullBarycenter :
 private lemma isCompact_dualHullParams (S : Finset (α × β)) :
     IsCompact (dualHullParams S) := by
   unfold dualHullParams
-  apply IsCompact.prod (isCompact_stdSimplex ℝ _)
+  apply IsCompact.prod (isCompact_probabilityWeights _)
   exact isCompact_univ_pi fun _ => isCompact_dualPhiGraph S
 
 private lemma dualHullBarycenter_image_subset (S : Finset (α × β)) :
@@ -1098,7 +1098,7 @@ private lemma dualConvexHull_subset_barycenter_image
         simpa [hi₀] using hsingle
       have hpoint : points j = i₀.1 := by
         dsimp [points, i₀]
-        rw [dif_pos hj]
+        rw [dite_eq_left hj]
       rw [hweight, hpoint]
       symm
       have hsingle :

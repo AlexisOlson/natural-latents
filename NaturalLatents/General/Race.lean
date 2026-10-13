@@ -921,7 +921,7 @@ lemma race_appended_logloss_of_unit_laplace
   let T : (κ → ℝ) × (κ → ℕ → ℝ) → (κ → ℝ) × (κ → ℕ → ℝ) :=
     Prod.map G id
   have hGmeas : Measurable G :=
-    measurable_pi_lambda _ (fun i =>
+    Measurable.of_eval (fun i =>
       (Real.measurable_log.comp (measurable_pi_apply i)).neg)
   have hpG : MeasurePreserving G (stoch_to_det.clockLaw κ) (stoch_to_det.seedLaw κ) :=
     ⟨hGmeas, rfl⟩
@@ -1077,7 +1077,7 @@ lemma race_single_law {Ω κ : Type} [Fintype Ω] [Fintype κ]
     (fun z hz => (hrow z hz).1) (fun z hz => (hrow z hz).2)
   have hlog : 0 < Real.log 2 := Real.log_pos (by norm_num)
   apply (mul_le_mul_iff_of_pos_left hlog).mp
-  convert hn using 1 <;> first | rfl | field_simp [hlog.ne']
+  convert hn using 1 ; first | rfl | field_simp [hlog.ne']
 
 /-- The exponential race: for `a > 1`, a latent with positive prior and positive posterior rows has a
 calibrated seeded family `F` with `h F ≤ a * B L + 2 * j a * d L`. -/

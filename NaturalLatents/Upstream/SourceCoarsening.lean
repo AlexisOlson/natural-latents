@@ -43,9 +43,9 @@ noncomputable def ofJoint {p : X × Y → ℝ} (hp : IsPMF p)
     · simpa [hk] using hp
     · constructor
       · intro z
-        simp only [hk, if_false]
+        simp only [hk, ite_false]
         exact div_nonneg (hr.nonneg _) (Finset.sum_nonneg fun z _ => hr.nonneg (k, z))
-      · simp only [mass, hk, if_false, ← Finset.sum_div]
+      · simp only [mass, hk, ite_false, ← Finset.sum_div]
         exact div_self hk
   mixture := by
     intro z

@@ -87,7 +87,7 @@ theorem exists_setup_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   let w : Law X Y := fun z => if z ∈ stoch_to_det.support p then D.w z else 0
   have hw_eq : ∀ z ∈ stoch_to_det.support p, w z = D.w z := by
     intro z hz
-    simp only [w, if_pos hz]
+    simp only [w, ite_eq_left hz]
   have hw : FeasibleKernel (stoch_to_det.support p) w := by
     constructor
     · intro z hz

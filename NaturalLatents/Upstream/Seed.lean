@@ -143,9 +143,7 @@ noncomputable def seedLaw (ι : Type) [Fintype ι] : Measure (ι → ℝ) :=
 
 instance (ι : Type) [Fintype ι] : IsProbabilityMeasure (seedLaw ι) := by
   unfold seedLaw
-  apply Measure.isProbabilityMeasure_map
-  exact (measurable_pi_lambda _ fun i =>
-    (Real.measurable_log.comp (measurable_pi_apply i)).neg).aemeasurable
+  infer_instance
 
 /- The one-coordinate seed law is atomless.  The only junk-value issue is at
 nonpositive clocks: `-log E = 0` there, but `Exp(1)` assigns that half-line
@@ -164,7 +162,7 @@ lemma expMeasure_one_Ioi (x : ℝ) (hx : 0 ≤ x) :
     exact sub_nonneg.mpr (Real.exp_le_one_iff.mpr (by linarith))
   have hreal : (expMeasure 1).real (Set.Iic x) = 1 - Real.exp (-x) := by
     rw [← cdf_eq_real, cdf_expMeasure_eq (r := (1 : ℝ)) zero_lt_one x,
-      if_pos hx]
+      ite_eq_left hx]
     ring
   have hIic : expMeasure 1 (Set.Iic x) =
       ENNReal.ofReal (1 - Real.exp (-x)) := by
@@ -198,7 +196,7 @@ lemma expMeasure_one_laplace (c : ℝ) (hc : 0 ≤ c) :
     by_cases hx : 0 < x
     · have hxmem : x ∈ Set.Ioi (0 : ℝ) := hx
       rw [Set.indicator_of_mem hxmem]
-      simp only [gammaPDF_eq, if_pos hx.le, Real.one_rpow, Real.Gamma_one, div_one,
+      simp only [gammaPDF_eq, ite_eq_left hx.le, Real.one_rpow, Real.Gamma_one, div_one,
         sub_self, Real.rpow_zero, mul_one, one_mul]
       rw [← ENNReal.ofReal_mul (Real.exp_nonneg (-x)), ← Real.exp_add]
       congr 2

@@ -220,7 +220,7 @@ private lemma push_equiv_apply {γ δ : Type*} [Fintype γ] [DecidableEq γ]
   apply Finset.sum_eq_single (e.symm d)
   · intro c hc hne
     have hec : e c = d := (Finset.mem_filter.mp hc).2
-    exact (hne (e.apply_eq_iff_eq_symm_apply.mp hec)).elim
+    exact (hne (e.eq_symm_apply.mpr hec)).elim
   · intro hnot
     exact (hnot (by simp)).elim
 
@@ -514,13 +514,13 @@ private lemma component_slice {p : α × β → ℝ} (D : ComponentDecomp p)
     (if componentIndex D z = i then p z else 0) = D.wt i * D.part i z := by
   classical
   by_cases hk : componentIndex D z = i
-  · rw [if_pos hk, ← D.mixture z]
+  · rw [ite_eq_left hk, ← D.mixture z]
     apply Finset.sum_eq_single i
     · intro j _ hji
       have hkj : componentIndex D z ≠ j := by simpa [hk] using Ne.symm hji
       simp [part_eq_zero_of_index_ne D hkj]
     · simp
-  · rw [if_neg hk, part_eq_zero_of_index_ne D hk, mul_zero]
+  · rw [ite_eq_right hk, part_eq_zero_of_index_ne D hk, mul_zero]
 
 private lemma push_mixture {ι γ δ : Type*} [Fintype ι] [DecidableEq ι]
     [Fintype γ] [DecidableEq δ] (a : ι → ℝ) (q : ι → γ → ℝ) (m : γ → ℝ)
@@ -537,7 +537,7 @@ private lemma push_part_componentIndex {p : α × β → ℝ} (D : ComponentDeco
   rw [push, Finset.sum_filter]
   by_cases hij : i = j
   · subst j
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     calc
       (∑ z, if componentIndex D z = i then D.part i z else 0) =
           ∑ z, D.part i z := by
@@ -547,7 +547,7 @@ private lemma push_part_componentIndex {p : α × β → ℝ} (D : ComponentDeco
         · simp [hz]
         · simp [hz, part_eq_zero_of_index_ne D hz]
       _ = 1 := by simpa [mass] using (D.part_isPMF i).total
-  · rw [if_neg hij]
+  · rw [ite_eq_right hij]
     apply Finset.sum_eq_zero
     intro z _
     by_cases hz : componentIndex D z = j
@@ -594,7 +594,7 @@ private lemma fiberLaw_isPMF {p : α × β → ℝ} (D : ComponentDecomp p)
   · simpa [fiberLaw, hrho] using D.part_isPMF i
   · constructor
     · intro z
-      simp only [fiberLaw, dif_neg hrho]
+      simp only [fiberLaw, dite_eq_right hrho]
       split
       · exact mul_nonneg (inv_nonneg.mpr ((fiberWeight_isPMF D V v).nonneg i))
           ((V.comp_isPMF v).nonneg z)
@@ -604,7 +604,7 @@ private lemma fiberLaw_isPMF {p : α × β → ℝ} (D : ComponentDecomp p)
           (∑ z, if componentIndex D z = i then V.comp v z else 0) =
             fiberWeight D V v i := by
         simp [fiberWeight, push, Finset.sum_filter]
-      simp only [fiberLaw, dif_neg hrho]
+      simp only [fiberLaw, dite_eq_right hrho]
       calc
         (∑ z, if componentIndex D z = i then
             (fiberWeight D V v i)⁻¹ * V.comp v z else 0) =
@@ -627,7 +627,7 @@ private lemma fiberWeight_mul_fiberLaw {p : α × β → ℝ}
     · simp [fiberLaw, hrho, hz, comp_eq_zero_of_fiberWeight_zero D V v i hrho hz]
     · simp [fiberLaw, hrho, hz]
   · by_cases hz : componentIndex D z = i
-    · simp only [fiberLaw, dif_neg hrho, if_pos hz]
+    · simp only [fiberLaw, dite_eq_right hrho, ite_eq_left hz]
       rw [← mul_assoc, mul_inv_cancel₀ hrho, one_mul]
     · simp [fiberLaw, hrho, hz]
 
@@ -664,7 +664,7 @@ private lemma fiberLaw_supported_component {p : α × β → ℝ}
       simpa [support, fiberLaw, hrho, hk] using hz
     have hpz : p z ≠ 0 := latent_base_ne_zero V (mul_ne_zero hv hcomp)
     have hs := component_slice D i z
-    rw [if_pos hk] at hs
+    rw [ite_eq_left hk] at hs
     have hprod : D.wt i * D.part i z ≠ 0 := by rwa [← hs]
     simpa [support] using (mul_ne_zero_iff.mp hprod).2
 

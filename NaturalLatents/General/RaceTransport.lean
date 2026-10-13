@@ -89,7 +89,7 @@ lemma race_clock_probability {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty
         rw [stoch_to_det.clockArgmin_eq_of_strictClockWin r E b hE]
       _ = _ := by
         by_cases hbi : b = i
-        · simp only [hbi, if_true, integral_const, smul_eq_mul, mul_one, measureReal_def,
+        · simp only [hbi, ite_true, integral_const, smul_eq_mul, mul_one, measureReal_def,
             Measure.restrict_apply_univ]
           rw [stoch_to_det.clockLaw,
             stoch_to_det.pi_exp_strictClockWin r hpos
@@ -110,7 +110,7 @@ lemma race_seed_probability {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty 
     intro b
     exact measurable_const.add (measurable_pi_apply b)
   have hg : Measurable (fun E : κ → ℝ => fun b => -Real.log (E b)) :=
-    measurable_pi_lambda _ fun b => (Real.measurable_log.comp (measurable_pi_apply b)).neg
+    Measurable.of_eval fun b => (Real.measurable_log.comp (measurable_pi_apply b)).neg
   unfold stoch_to_det.seedLaw
   have hf : AEStronglyMeasurable
       (fun G : κ → ℝ => if stoch_to_det.SharedRace.weightedLexWinner r G = i then (1 : ℝ) else 0)
@@ -299,7 +299,7 @@ lemma race_of_single_law {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   have hsum := mul_le_mul_of_nonneg_left (add_le_add hX hY) (Real.log_pos (by norm_num : (1 : ℝ) < 2)).le
   have hB := race_condMI_coordinate_sum L
   rw [← hB]
-  convert hsum using 1 <;> first | rfl | ring
+  convert hsum using 1 ; first | rfl | ring
 
 lemma race_gibbs_nats {Ω κ : Type} [Fintype Ω] [Fintype κ] [DecidableEq κ]
     {μ : Ω → ℝ} (hμ : stoch_to_det.IsPMF μ) (A : Ω → κ)

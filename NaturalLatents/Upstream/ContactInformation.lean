@@ -7,7 +7,7 @@ import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Tactic
 import NaturalLatents.Upstream.Floor
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 
 /-! Information bounds using the full contact moment and a scalar exponential estimate. -/
 
