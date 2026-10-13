@@ -327,7 +327,7 @@ private lemma H_mixture_disjoint {ι γ : Type*} [Fintype ι] [DecidableEq ι]
     apply congrArg (fun t => H a + t)
     apply Finset.sum_congr rfl
     intro i _
-    simpa [rs] using H_smul (hq i).isFinMeas (ha.nonneg i)
+    simpa [rs] using H_smul (ha.nonneg i)
   have hrs_eq : H rs = H r := by
     rw [← hrs_push]
     exact H_push_equiv (Equiv.prodComm ι γ) r hr

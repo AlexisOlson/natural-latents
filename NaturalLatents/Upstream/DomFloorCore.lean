@@ -17,17 +17,6 @@ open Finset
 
 variable {α β : Type*} [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β]
 
-lemma product_isPMF_dom {ι κ : Type*} [Fintype ι] [Fintype κ]
-    {u : ι → ℝ} {v : κ → ℝ} (hu : IsPMF u) (hv : IsPMF v) :
-    IsPMF (fun z : ι × κ => u z.1 * v z.2) := by
-  refine ⟨fun z => mul_nonneg (hu.nonneg z.1) (hv.nonneg z.2), ?_⟩
-  have hu_sum : ∑ i, u i = 1 := by simpa [mass] using hu.total
-  have hv_sum : ∑ k, v k = 1 := by simpa [mass] using hv.total
-  rw [mass, Fintype.sum_prod_type]
-  simp_rw [← Finset.mul_sum]
-  rw [hv_sum]
-  simpa using hu_sum
-
 /-- Mutual information in nats, written with the scalar entropy integrand and
 product marginals. -/
 noncomputable def Knat (q : α × β → ℝ) : ℝ :=
@@ -47,14 +36,8 @@ theorem Knat_eq_log_two_mul_Ixy {q : α × β → ℝ} (hq : IsPMF q) :
     intro z hQz
     by_contra hqz
     have hqpos : 0 < q z := lt_of_le_of_ne (hq.nonneg z) (Ne.symm hqz)
-    have hxle : q z ≤ mX q z.1 := by
-      change q z ≤ push Prod.fst q z.1
-      unfold push
-      exact Finset.single_le_sum (fun u _ => hq.nonneg u) (by simp)
-    have hyle : q z ≤ mY q z.2 := by
-      change q z ≤ push Prod.snd q z.2
-      unfold push
-      exact Finset.single_le_sum (fun u _ => hq.nonneg u) (by simp)
+    have hxle : q z ≤ mX q z.1 := apply_le_push hq.nonneg Prod.fst z
+    have hyle : q z ≤ mY q z.2 := apply_le_push hq.nonneg Prod.snd z
     have hxpos : 0 < mX q z.1 := lt_of_lt_of_le hqpos hxle
     have hypos : 0 < mY q z.2 := lt_of_lt_of_le hqpos hyle
     exact (mul_ne_zero hxpos.ne' hypos.ne') hQz
@@ -101,9 +84,9 @@ theorem Knat_eq_log_two_mul_Ixy {q : α × β → ℝ} (hq : IsPMF q) :
       dsimp [Q]
       rw [Real.log_mul hx0 hy0]
       ring
-  have hEq_q := H_eq_negMulLog hq.isFinMeas
-  have hEq_X := H_eq_negMulLog hqX.isFinMeas
-  have hEq_Y := H_eq_negMulLog hqY.isFinMeas
+  have hEq_q := H_eq_negMulLog hq.nonneg
+  have hEq_X := H_eq_negMulLog hqX.nonneg
+  have hEq_Y := H_eq_negMulLog hqY.nonneg
   rw [hq.total, Real.log_one, mul_zero, zero_add] at hEq_q
   rw [hqX.total, Real.log_one, mul_zero, zero_add] at hEq_X
   rw [hqY.total, Real.log_one, mul_zero, zero_add] at hEq_Y
@@ -140,14 +123,8 @@ theorem Knat_eq_log_two_mul_Ixy {q : α × β → ℝ} (hq : IsPMF q) :
 lemma joint_pos_marginals {q : α × β → ℝ} (hq : IsPMF q)
     {z : α × β} (hz : 0 < q z) :
     0 < mX q z.1 ∧ 0 < mY q z.2 := by
-  have hxle : q z ≤ mX q z.1 := by
-    change q z ≤ push Prod.fst q z.1
-    unfold push
-    exact Finset.single_le_sum (fun u _ => hq.nonneg u) (by simp)
-  have hyle : q z ≤ mY q z.2 := by
-    change q z ≤ push Prod.snd q z.2
-    unfold push
-    exact Finset.single_le_sum (fun u _ => hq.nonneg u) (by simp)
+  have hxle : q z ≤ mX q z.1 := apply_le_push hq.nonneg Prod.fst z
+  have hyle : q z ≤ mY q z.2 := apply_le_push hq.nonneg Prod.snd z
   exact ⟨hz.trans_le hxle, hz.trans_le hyle⟩
 
 end stoch_to_det

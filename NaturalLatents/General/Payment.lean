@@ -333,7 +333,7 @@ lemma payment_coordinate_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     (fun i => stoch_to_det.isPMF_push (D.L.comp_isPMF i)) hrow
     (by intro i j; rw [hmass]; exact payment_mu_pos hp D i j) hsym
   simp_rw [hmass] at hb
-  have htransport := TableBoundProof.condMI_push_source F
+  have htransport := stoch_to_det.condMI_push_source F
     (fun u => u.2.1) (fun u => u.2.2) (fun u => u.1) (replicaJoint D.L)
   change stoch_to_det.condMI _ _ _ q = _ at htransport
   rw [htransport] at hb
@@ -357,7 +357,7 @@ lemma payment_M_average {p : Law X Y} (L : FiniteLatent p) :
       funext w
       rw [hcell]
       by_cases hi : w.1 = i <;> simp [hi,stoch_to_det.Latent.joint]
-    rw [heq, stoch_to_det.MI_smul hq.isFinMeas _ _ (L.prior_isPMF.nonneg i)]
+    rw [heq, stoch_to_det.MI_smul hq.nonneg _ _ (L.prior_isPMF.nonneg i)]
     congr 1
     dsimp [q]
     unfold stoch_to_det.MI stoch_to_det.Hvar stoch_to_det.Ixy
@@ -369,7 +369,7 @@ lemma payment_M_average {p : Law X Y} (L : FiniteLatent p) :
   rw [Finset.mul_sum]
   apply Finset.sum_congr rfl
   intro i _
-  rw [I_eq_upstream_bits (L.comp_isPMF i)]
+  rw [I, stoch_to_det.Knat_eq_log_two_mul_Ixy (L.comp_isPMF i)]
   ring
 
 omit [DecidableEq X] [DecidableEq Y] in

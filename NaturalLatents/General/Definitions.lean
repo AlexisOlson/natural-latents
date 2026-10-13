@@ -149,9 +149,6 @@ def Psi (t : ℝ) : ℝ := -2 * Real.log (b t)
 abbrev BC_X (P R : Law X Y) := stoch_to_det.BC (stoch_to_det.mX P) (stoch_to_det.mX R)
 abbrev BC_Y (P R : Law X Y) := stoch_to_det.BC (stoch_to_det.mY P) (stoch_to_det.mY R)
 abbrev I (P : Law X Y) := stoch_to_det.Knat P
-lemma I_eq_upstream_bits {P : Law X Y} (hP : stoch_to_det.IsPMF P) :
-    I P = Real.log 2 * stoch_to_det.Ixy P := stoch_to_det.Knat_eq_log_two_mul_Ixy hP
-
 def PC (domain : PairDomain (X := X) (Y := Y)) (beta gamma : ℝ) : Prop :=
   ∀ S w P R, domain S w P R → gamma ≤ (I P + I R) / 2 + beta * Psi (s P R)
 

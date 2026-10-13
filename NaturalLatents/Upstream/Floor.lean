@@ -40,7 +40,7 @@ open Finset
 
 variable {α β : Type*} [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β]
 
-private lemma mX_eq_sum (q : α × β → ℝ) (x : α) : mX q x = ∑ y, q (x, y) := by
+lemma mX_eq_sum (q : α × β → ℝ) (x : α) : mX q x = ∑ y, q (x, y) := by
   change push Prod.fst q x = ∑ y, q (x, y)
   unfold push
   rw [show (Finset.univ.filter fun a : α × β => a.1 = x) =
@@ -56,7 +56,7 @@ private lemma mX_eq_sum (q : α × β → ℝ) (x : α) : mX q x = ∑ y, q (x, 
   intro y₁ _ y₂ _ h
   exact congrArg Prod.snd h
 
-private lemma mY_eq_sum (q : α × β → ℝ) (y : β) : mY q y = ∑ x, q (x, y) := by
+lemma mY_eq_sum (q : α × β → ℝ) (y : β) : mY q y = ∑ x, q (x, y) := by
   change push Prod.snd q y = ∑ x, q (x, y)
   unfold push
   rw [show (Finset.univ.filter fun a : α × β => a.2 = y) =
@@ -72,8 +72,8 @@ private lemma mY_eq_sum (q : α × β → ℝ) (y : β) : mY q y = ∑ x, q (x, 
   intro x₁ _ x₂ _ h
   exact congrArg Prod.fst h
 
-private lemma mX_zero_of_support_eq {q r : α × β → ℝ}
-    (hq : IsPMF q) (_hr : IsPMF r) (hs : support q = support r) {x : α}
+lemma mX_zero_of_support_eq {q r : α × β → ℝ}
+    (hq : IsPMF q) (hs : support q = support r) {x : α}
     (hx : mX q x = 0) : mX r x = 0 := by
   rw [mX_eq_sum]
   apply Finset.sum_eq_zero
@@ -89,14 +89,14 @@ private lemma mX_zero_of_support_eq {q r : α × β → ℝ}
   have hnotr : (x, y) ∉ support r := by simpa [hs] using hnotq
   simpa [support] using hnotr
 
-private lemma mX_zero_iff_of_support_eq {q r : α × β → ℝ}
+lemma mX_zero_iff_of_support_eq {q r : α × β → ℝ}
     (hq : IsPMF q) (hr : IsPMF r) (hs : support q = support r) (x : α) :
     mX q x = 0 ↔ mX r x = 0 := by
-  exact ⟨mX_zero_of_support_eq hq hr hs,
-    mX_zero_of_support_eq hr hq hs.symm⟩
+  exact ⟨mX_zero_of_support_eq hq hs,
+    mX_zero_of_support_eq hr hs.symm⟩
 
-private lemma mY_zero_of_support_eq {q r : α × β → ℝ}
-    (hq : IsPMF q) (_hr : IsPMF r) (hs : support q = support r) {y : β}
+lemma mY_zero_of_support_eq {q r : α × β → ℝ}
+    (hq : IsPMF q) (hs : support q = support r) {y : β}
     (hy : mY q y = 0) : mY r y = 0 := by
   rw [mY_eq_sum]
   apply Finset.sum_eq_zero
@@ -112,13 +112,13 @@ private lemma mY_zero_of_support_eq {q r : α × β → ℝ}
   have hnotr : (x, y) ∉ support r := by simpa [hs] using hnotq
   simpa [support] using hnotr
 
-private lemma mY_zero_iff_of_support_eq {q r : α × β → ℝ}
+lemma mY_zero_iff_of_support_eq {q r : α × β → ℝ}
     (hq : IsPMF q) (hr : IsPMF r) (hs : support q = support r) (y : β) :
     mY q y = 0 ↔ mY r y = 0 := by
-  exact ⟨mY_zero_of_support_eq hq hr hs,
-    mY_zero_of_support_eq hr hq hs.symm⟩
+  exact ⟨mY_zero_of_support_eq hq hs,
+    mY_zero_of_support_eq hr hs.symm⟩
 
-private lemma mul_ratio_rpow_one_third_cube {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
+lemma mul_ratio_rpow_one_third_cube {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hzero : b = 0 ↔ a = 0) :
     b * ((a / b) ^ ((1 : ℝ) / 3)) ^ 3 = a := by
   by_cases hb0 : b = 0
@@ -131,7 +131,16 @@ private lemma mul_ratio_rpow_one_third_cube {a b : ℝ} (ha : 0 ≤ a) (hb : 0 �
     rw [hcube]
     field_simp
 
-private lemma contact_ratio_eq {S : Finset (α × β)} {w q r : α × β → ℝ}
+private lemma ratio_rpow_two_thirds {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
+    ((a / b) ^ ((1 : ℝ) / 3)) ^ 2 = (a / b) ^ ((2 : ℝ) / 3) := by
+  rw [← Real.rpow_natCast, ← Real.rpow_mul (div_nonneg ha hb)]
+  norm_num
+
+private lemma mul_ratio_rpow {a b : ℝ} (ha : 0 ≤ a) (hb : 0 < b) (t : ℝ) :
+    b ^ t * (a / b) ^ t = a ^ t := by
+  rw [← Real.mul_rpow hb.le (div_nonneg ha hb.le), mul_div_cancel₀ _ hb.ne']
+
+lemma contact_ratio_eq {S : Finset (α × β)} {w q r : α × β → ℝ}
     (hq : IsContact S w q) (hr : IsContact S w r)
     (hqs : support q = S) (hrs : support r = S) :
     ∀ z, r z = q z *
@@ -165,43 +174,23 @@ private lemma contact_ratio_eq {S : Finset (α × β)} {w q r : α × β → ℝ
         rw [mY_eq_sum]
         exact Finset.single_le_sum (fun x _ => hr.1.nonneg (x, z.2)) (Finset.mem_univ z.1)
       exact lt_of_lt_of_le hrpos hle
-    have hratioX : 0 ≤ mX r z.1 / mX q z.1 := div_nonneg hrxpos.le hqxpos.le
-    have hratioY : 0 ≤ mY r z.2 / mY q z.2 := div_nonneg hrypos.le hqypos.le
-    have hF2 : ((mX r z.1 / mX q z.1) ^ ((1 : ℝ) / 3)) ^ 2 =
-        (mX r z.1 / mX q z.1) ^ ((2 : ℝ) / 3) := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul hratioX]
-      norm_num
-    have hG2 : ((mY r z.2 / mY q z.2) ^ ((1 : ℝ) / 3)) ^ 2 =
-        (mY r z.2 / mY q z.2) ^ ((2 : ℝ) / 3) := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul hratioY]
-      norm_num
-    have hcombineX : mX q z.1 ^ ((2 : ℝ) / 3) *
-        (mX r z.1 / mX q z.1) ^ ((2 : ℝ) / 3) =
-        mX r z.1 ^ ((2 : ℝ) / 3) := by
-      rw [← Real.mul_rpow hqxpos.le hratioX]
-      congr 1
-      field_simp
-    have hcombineY : mY q z.2 ^ ((2 : ℝ) / 3) *
-        (mY r z.2 / mY q z.2) ^ ((2 : ℝ) / 3) =
-        mY r z.2 ^ ((2 : ℝ) / 3) := by
-      rw [← Real.mul_rpow hqypos.le hratioY]
-      congr 1
-      field_simp
-    rw [hF2, hG2]
+    rw [ratio_rpow_two_thirds hrxpos.le hqxpos.le,
+      ratio_rpow_two_thirds hrypos.le hqypos.le]
     calc
       r z = w z * mX r z.1 ^ ((2 : ℝ) / 3) * mY r z.2 ^ ((2 : ℝ) / 3) :=
         hr.2.2 z hz
       _ = (w z * mX q z.1 ^ ((2 : ℝ) / 3) * mY q z.2 ^ ((2 : ℝ) / 3)) *
           (mX r z.1 / mX q z.1) ^ ((2 : ℝ) / 3) *
           (mY r z.2 / mY q z.2) ^ ((2 : ℝ) / 3) := by
-        rw [← hcombineX, ← hcombineY]
+        rw [← mul_ratio_rpow hrxpos.le hqxpos ((2 : ℝ) / 3),
+          ← mul_ratio_rpow hrypos.le hqypos ((2 : ℝ) / 3)]
         ring
       _ = q z * (mX r z.1 / mX q z.1) ^ ((2 : ℝ) / 3) *
           (mY r z.2 / mY q z.2) ^ ((2 : ℝ) / 3) := by rw [← hq.2.2 z hz]
   · rw [hq.2.1 z hz, hr.2.1 z hz]
     simp
 
-private lemma secant_equations {S : Finset (α × β)} {w q r : α × β → ℝ}
+lemma secant_equations {S : Finset (α × β)} {w q r : α × β → ℝ}
     (hq : IsContact S w q) (hr : IsContact S w r)
     (hqs : support q = S) (hrs : support r = S) :
     (∀ x, (∑ y, q (x, y) *
@@ -316,19 +305,28 @@ private lemma secant_equations {S : Finset (α × β)} {w q r : α × β → ℝ
           dsimp [G]
           ring
 
+/-- The `X`-marginal cube-root secant from `q` to `r`. -/
+noncomputable def contactSecantX (q r : α × β → ℝ) (x : α) : ℝ :=
+  (mX r x / mX q x) ^ ((1 : ℝ) / 3) - 1
+
+/-- The `Y`-marginal cube-root secant from `q` to `r`. -/
+noncomputable def contactSecantY (q r : α × β → ℝ) (y : β) : ℝ :=
+  (mY r y / mY q y) ^ ((1 : ℝ) / 3) - 1
+
 private lemma secant_expanded_equations {S : Finset (α × β)}
     {w q r : α × β → ℝ} (hq : IsContact S w q) (hr : IsContact S w r)
     (hqs : support q = S) (hrs : support r = S) :
-    (∀ x, mX q x * ((mX r x / mX q x) ^ ((1 : ℝ) / 3) - 1) =
+    (∀ x, mX q x * contactSecantX q r x =
       2 * (∑ y, q (x, y) *
-        ((mY r y / mY q y) ^ ((1 : ℝ) / 3) - 1)) +
+        contactSecantY q r y) +
       ∑ y, q (x, y) *
-        ((mY r y / mY q y) ^ ((1 : ℝ) / 3) - 1) ^ 2) ∧
-    (∀ y, mY q y * ((mY r y / mY q y) ^ ((1 : ℝ) / 3) - 1) =
+        contactSecantY q r y ^ 2) ∧
+    (∀ y, mY q y * contactSecantY q r y =
       2 * (∑ x, q (x, y) *
-        ((mX r x / mX q x) ^ ((1 : ℝ) / 3) - 1)) +
+        contactSecantX q r x) +
       ∑ x, q (x, y) *
-        ((mX r x / mX q x) ^ ((1 : ℝ) / 3) - 1) ^ 2) := by
+        contactSecantX q r x ^ 2) := by
+  unfold contactSecantX contactSecantY
   have hsec := secant_equations hq hr hqs hrs
   constructor
   · intro x
@@ -373,14 +371,6 @@ singular-pair and contact-hypercontractivity API.
 
 /-! ### L² secant geometry for two contacts -/
 
-/-- The `X`-marginal cube-root secant from `q` to `r`. -/
-noncomputable def contactSecantX (q r : α × β → ℝ) (x : α) : ℝ :=
-  (mX r x / mX q x) ^ ((1 : ℝ) / 3) - 1
-
-/-- The `Y`-marginal cube-root secant from `q` to `r`. -/
-noncomputable def contactSecantY (q r : α × β → ℝ) (y : β) : ℝ :=
-  (mY r y / mY q y) ^ ((1 : ℝ) / 3) - 1
-
 /-- Exact marginal-mean identities forced by the two contact equations. -/
 theorem contactSecant_mean_identities
     {S : Finset (α × β)} {w q r : α × β → ℝ}
@@ -398,13 +388,7 @@ theorem contactSecant_mean_identities
   let B : ℝ := ∑ y, mY q y * g y ^ 2
   let μf : ℝ := ∑ x, mX q x * f x
   let μg : ℝ := ∑ y, mY q y * g y
-  have hsec :
-      (∀ x, mX q x * f x =
-        2 * (∑ y, q (x, y) * g y) + ∑ y, q (x, y) * g y ^ 2) ∧
-      (∀ y, mY q y * g y =
-        2 * (∑ x, q (x, y) * f x) + ∑ x, q (x, y) * f x ^ 2) := by
-    simpa [f, g, contactSecantX, contactSecantY] using
-      secant_expanded_equations hq hr hqs hrs
+  have hsec := secant_expanded_equations hq hr hqs hrs
   have hmeanf : μf = 2 * μg + B := by
     calc
       μf = ∑ x, mX q x * f x := rfl

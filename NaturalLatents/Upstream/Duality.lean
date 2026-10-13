@@ -286,7 +286,7 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
 
 /-! ### Theorem 2.3 -/
 
-private theorem Gdef_nonneg_aux {S : Finset (α × β)} {w : α × β → ℝ}
+theorem Gdef_nonneg {S : Finset (α × β)} {w : α × β → ℝ}
     (hw : Feasible S w) {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
     0 ≤ Gdef S w q := by
   have hqX : IsPMF (mX q) := isPMF_push hq
@@ -787,7 +787,7 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
     exact htarget.trans hMle
   · intro hfeas q hq hqS
     have hgap := Gdef_eq_certificate_gap hfeas.1 hq hqS
-    have hnonneg := Gdef_nonneg_aux hfeas hq hqS
+    have hnonneg := Gdef_nonneg hfeas hq hqS
     linarith
 
 /-- **Theorem 2.3**, equality case: `G_w(q) = 0` exactly at contacts. -/
@@ -873,7 +873,7 @@ private noncomputable def dualContinuousEntropy {γ : Type*} [Fintype γ]
 
 private lemma H_eq_dualContinuousEntropy {γ : Type*} [Fintype γ]
     {m : γ → ℝ} (hm : IsPMF m) : H m = dualContinuousEntropy m := by
-  have h := H_eq_negMulLog hm.isFinMeas
+  have h := H_eq_negMulLog hm.nonneg
   rw [hm.total, Real.log_one, mul_zero, zero_add] at h
   apply (eq_div_iff (Real.log_pos one_lt_two).ne').2
   rw [mul_comm]

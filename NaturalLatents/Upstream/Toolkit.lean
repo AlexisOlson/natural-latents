@@ -49,10 +49,64 @@ def AbsCont (P Q : ω → ℝ) : Prop := ∀ a, Q a = 0 → P a = 0
 noncomputable def BC (P Q : ω → ℝ) : ℝ := ∑ a, Real.sqrt (P a * Q a)
 
 omit [DecidableEq ω] in
+private lemma absCont_pos {P Q : ω → ℝ} (hQ : IsPMF Q) (hac : AbsCont P Q)
+    {a : ω} (ha : P a ≠ 0) : 0 < Q a :=
+  lt_of_le_of_ne (hQ.nonneg a) (Ne.symm (fun h => ha (hac a h)))
+
+omit [DecidableEq ω] in
 /-- Finite Gibbs inequality for the bits-valued `KL`. -/
 private lemma KL_nonneg {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
     (hac : AbsCont P Q) : 0 ≤ KL P Q := by
+<<<<<<< HEAD
   have hnats := gibbs_nonneg hP hQ (fun a hPa hQa => hPa (hac a hQa))
+||||||| merged common ancestors
+  have hterm : ∀ a : ω, P a - Q a ≤ P a * Real.log (P a / Q a) := by
+    intro a
+    by_cases hPa : P a = 0
+    · simp [hPa, hQ.nonneg a]
+    · have hPa_pos : 0 < P a := lt_of_le_of_ne (hP.nonneg a) (Ne.symm hPa)
+      have hQa : Q a ≠ 0 := fun h ↦ hPa (hac a h)
+      have hQa_pos : 0 < Q a := lt_of_le_of_ne (hQ.nonneg a) (Ne.symm hQa)
+      have hlog := Real.log_le_sub_one_of_pos (div_pos hQa_pos hPa_pos)
+      have hmul := mul_le_mul_of_nonneg_left hlog hPa_pos.le
+      have hlog_eq : Real.log (Q a / P a) = -Real.log (P a / Q a) := by
+        rw [Real.log_div hQa hPa, Real.log_div hPa hQa]
+        ring
+      calc
+        P a - Q a = -(Q a - P a) := by ring
+        _ = -(P a * (Q a / P a - 1)) := by field_simp
+        _ ≤ -(P a * Real.log (Q a / P a)) := neg_le_neg hmul
+        _ = P a * Real.log (P a / Q a) := by rw [hlog_eq]; ring
+  have hnats : 0 ≤ ∑ a, P a * Real.log (P a / Q a) := by
+    calc
+      0 = ∑ a, (P a - Q a) := by
+        rw [sum_sub_distrib, ← mass, ← mass, hP.total, hQ.total]
+        norm_num
+      _ ≤ ∑ a, P a * Real.log (P a / Q a) := sum_le_sum fun a _ ↦ hterm a
+=======
+  have hterm : ∀ a : ω, P a - Q a ≤ P a * Real.log (P a / Q a) := by
+    intro a
+    by_cases hPa : P a = 0
+    · simp [hPa, hQ.nonneg a]
+    · have hPa_pos : 0 < P a := lt_of_le_of_ne (hP.nonneg a) (Ne.symm hPa)
+      have hQa_pos : 0 < Q a := absCont_pos hQ hac hPa
+      have hlog := Real.log_le_sub_one_of_pos (div_pos hQa_pos hPa_pos)
+      have hmul := mul_le_mul_of_nonneg_left hlog hPa_pos.le
+      have hlog_eq : Real.log (Q a / P a) = -Real.log (P a / Q a) := by
+        rw [Real.log_div hQa_pos.ne' hPa, Real.log_div hPa hQa_pos.ne']
+        ring
+      calc
+        P a - Q a = -(Q a - P a) := by ring
+        _ = -(P a * (Q a / P a - 1)) := by field_simp
+        _ ≤ -(P a * Real.log (Q a / P a)) := neg_le_neg hmul
+        _ = P a * Real.log (P a / Q a) := by rw [hlog_eq]; ring
+  have hnats : 0 ≤ ∑ a, P a * Real.log (P a / Q a) := by
+    calc
+      0 = ∑ a, (P a - Q a) := by
+        rw [sum_sub_distrib, ← mass, ← mass, hP.total, hQ.total]
+        norm_num
+      _ ≤ ∑ a, P a * Real.log (P a / Q a) := sum_le_sum fun a _ ↦ hterm a
+>>>>>>> lane/cleanup-low
   rw [KL]
   change 0 ≤ ∑ a, P a * (Real.log (P a / Q a) / Real.log 2)
   simp_rw [← mul_div_assoc]
@@ -74,12 +128,8 @@ theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
     rcases (Finset.sum_pos_iff_of_nonneg (fun a _ ↦ hr.nonneg a)).mp hsum with
       ⟨a, _, ha⟩
     exact ⟨a, ha⟩
-  have hPa₀ : 0 < P a₀ := by
-    have hne : P a₀ ≠ 0 := fun h ↦ ha₀.ne' (hacP a₀ h)
-    exact lt_of_le_of_ne (hP.nonneg a₀) (Ne.symm hne)
-  have hQa₀ : 0 < Q a₀ := by
-    have hne : Q a₀ ≠ 0 := fun h ↦ ha₀.ne' (hacQ a₀ h)
-    exact lt_of_le_of_ne (hQ.nonneg a₀) (Ne.symm hne)
+  have hPa₀ : 0 < P a₀ := absCont_pos hP hacP ha₀.ne'
+  have hQa₀ : 0 < Q a₀ := absCont_pos hQ hacQ ha₀.ne'
   have hB : 0 < B := by
     dsimp [B, BC]
     apply Finset.sum_pos'
@@ -96,16 +146,10 @@ theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
       exact div_self hB.ne'
   have hacS : AbsCont r S := by
     intro a hSa
-    by_cases hPa : P a = 0
-    · exact hacP a hPa
-    by_cases hQa : Q a = 0
-    · exact hacQ a hQa
-    have hPa_pos : 0 < P a := lt_of_le_of_ne (hP.nonneg a) (Ne.symm hPa)
-    have hQa_pos : 0 < Q a := lt_of_le_of_ne (hQ.nonneg a) (Ne.symm hQa)
-    have hSa_pos : 0 < S a := by
-      dsimp [S]
-      exact div_pos (Real.sqrt_pos.2 (mul_pos hPa_pos hQa_pos)) hB
-    exact (hSa_pos.ne' hSa).elim
+    by_contra hra
+    have hPa_pos := absCont_pos hP hacP hra
+    have hQa_pos := absCont_pos hQ hacQ hra
+    exact (div_pos (Real.sqrt_pos.2 (mul_pos hPa_pos hQa_pos)) hB).ne' hSa
   have hnonneg : 0 ≤ KL r S := KL_nonneg hr hS hacS
   have hterm : ∀ a : ω,
       2 * (r a * lg (r a / S a)) =
@@ -114,10 +158,8 @@ theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
     by_cases hra : r a = 0
     · simp [hra]
     · have hra_pos : 0 < r a := lt_of_le_of_ne (hr.nonneg a) (Ne.symm hra)
-      have hPa : P a ≠ 0 := fun h ↦ hra (hacP a h)
-      have hQa : Q a ≠ 0 := fun h ↦ hra (hacQ a h)
-      have hPa_pos : 0 < P a := lt_of_le_of_ne (hP.nonneg a) (Ne.symm hPa)
-      have hQa_pos : 0 < Q a := lt_of_le_of_ne (hQ.nonneg a) (Ne.symm hQa)
+      have hPa_pos : 0 < P a := absCont_pos hP hacP hra
+      have hQa_pos : 0 < Q a := absCont_pos hQ hacQ hra
       have hS_pos : 0 < S a := by
         dsimp [S]
         exact div_pos (Real.sqrt_pos.2 (mul_pos hPa_pos hQa_pos)) hB
@@ -125,13 +167,13 @@ theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
         r a * (Real.log (r a / P a) / Real.log 2) +
           r a * (Real.log (r a / Q a) / Real.log 2) +
             r a * (2 * (Real.log B / Real.log 2))
-      rw [Real.log_div hra hS_pos.ne', Real.log_div hra hPa, Real.log_div hra hQa,
+      rw [Real.log_div hra hS_pos.ne', Real.log_div hra hPa_pos.ne', Real.log_div hra hQa_pos.ne',
         show Real.log (S a) =
             (Real.log (P a) + Real.log (Q a)) / 2 - Real.log B by
           dsimp [S]
           rw [Real.log_div (Real.sqrt_pos.2 (mul_pos hPa_pos hQa_pos)).ne' hB.ne',
             Real.log_sqrt (mul_nonneg (hP.nonneg a) (hQ.nonneg a)),
-            Real.log_mul hPa hQa]]
+            Real.log_mul hPa_pos.ne' hQa_pos.ne']]
       field_simp [Real.log_ne_zero_of_pos_of_ne_one (by norm_num : (0 : ℝ) < 2)
         (by norm_num : (2 : ℝ) ≠ 1)]
       ring

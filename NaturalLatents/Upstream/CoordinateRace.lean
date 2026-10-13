@@ -93,11 +93,11 @@ theorem sharedRaceEntropy_le_of_finMeas
     rw [← integral_const_mul]
     apply integral_congr_ae
     filter_upwards [] with E
-    rw [← H_smul (isFinMeas_push hν.isFinMeas) hm0, ← push_smul, hrec]
+    rw [← H_smul hm0, ← push_smul, hrec]
   have hMI : mass μ * MI Prod.fst Prod.snd (posteriorJoint ν r) =
       MI Prod.fst Prod.snd (posteriorJoint μ r) := by
     have hfin := (posteriorJoint_isPMF_of_support hν
-      (fun z hz => hr z (fun hh => hz (by simp [ν, hh])))).isFinMeas
+      (fun z hz => hr z (fun hh => hz (by simp [ν, hh])))).nonneg
     rw [← MI_smul hfin Prod.fst Prod.snd hm0]
     congr 1
     funext zi

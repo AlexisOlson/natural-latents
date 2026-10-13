@@ -603,7 +603,7 @@ lemma H_le_crossEntropy
     (hsupp : ∀ i, r i ≠ 0 → q i ≠ 0) :
     H r ≤ ∑ i, r i * lg (1 / q i) := by
   have hlog2 : 0 < Real.log 2 := Real.log_pos one_lt_two
-  have hH := H_eq_negMulLog hr.isFinMeas
+  have hH := H_eq_negMulLog hr.nonneg
   rw [hr.total, Real.log_one, mul_zero, zero_add] at hH
   have hcross :
       Real.log 2 * (∑ i, r i * lg (1 / q i)) =

@@ -111,10 +111,28 @@ lemma logTwo_mul_MI_eq_kl
       have hsnd0 : sndMarginal z.2 ≠ 0 := (mul_ne_zero_iff.mp hprod).2
       rw [Real.log_div hz hprod, Real.log_mul hfst0 hsnd0]
       ring
+<<<<<<< HEAD
   have hHjoint := logTwo_mul_H_eq_sum_negMulLog hjoint
   have hHfst := logTwo_mul_H_eq_sum_negMulLog hfst
   have hHsnd := logTwo_mul_H_eq_sum_negMulLog hsnd
   unfold SharedRace.logTwo at hHjoint hHfst hHsnd ⊢
+||||||| merged common ancestors
+  have hHjoint := H_eq_negMulLog hjoint.isFinMeas
+  have hHfst := H_eq_negMulLog hfst.isFinMeas
+  have hHsnd := H_eq_negMulLog hsnd.isFinMeas
+  rw [hjoint.total, Real.log_one, mul_zero, zero_add] at hHjoint
+  rw [hfst.total, Real.log_one, mul_zero, zero_add] at hHfst
+  rw [hsnd.total, Real.log_one, mul_zero, zero_add] at hHsnd
+  unfold SharedRace.logTwo
+=======
+  have hHjoint := H_eq_negMulLog hjoint.nonneg
+  have hHfst := H_eq_negMulLog hfst.nonneg
+  have hHsnd := H_eq_negMulLog hsnd.nonneg
+  rw [hjoint.total, Real.log_one, mul_zero, zero_add] at hHjoint
+  rw [hfst.total, Real.log_one, mul_zero, zero_add] at hHfst
+  rw [hsnd.total, Real.log_one, mul_zero, zero_add] at hHsnd
+  unfold SharedRace.logTwo
+>>>>>>> lane/cleanup-low
   calc
     Real.log 2 * MI f g m =
         Real.log 2 * (H fstMarginal + H sndMarginal - H joint) := by

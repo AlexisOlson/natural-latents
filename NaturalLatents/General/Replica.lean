@@ -251,7 +251,7 @@ lemma replica_iidProduct_MI_zero
       dsimp only [q]
       ring
     rw [heq]
-    exact H_smul ht.isFinMeas (ht.nonneg b)
+    exact H_smul (ht.nonneg b)
   have hqH := H_prod_eq_snd_add_fibers hq
   rw [hsnd] at hqH
   simp_rw [hfiber] at hqH
@@ -317,7 +317,7 @@ lemma replica_MI_Zfiber_zero {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p)
         rw [ht_sum]
         simp [ht_sum]
     have hzero : MI Prod.fst Prod.snd q = 0 := replica_iidProduct_MI_zero ht
-    have hscale := MI_smul hq.isFinMeas Prod.fst Prod.snd (hp.nonneg z)
+    have hscale := MI_smul hq.nonneg Prod.fst Prod.snd (hp.nonneg z)
     have hn : n = fun v : L.ι × L.ι => p z * q v := by
       funext v
       simp [n, q, t]
@@ -396,13 +396,13 @@ theorem replica_budget {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLate
     (fun w => w.1) (fun w => w.2.1)
     (fun w => w.2.2.1) (fun w => w.2.2.2)
   have hmarkov := replica_replica_markov hp L
-  have hM := TableBoundProof.condMI_push_source
+  have hM := stoch_to_det.condMI_push_source
     (fun w : L.ι × L.ι × (X × Y) => (w.1, w.2.2))
     (fun w => w.2.1) (fun w => w.2.2) (fun w => w.1) (replicaJoint L)
-  have hBX := TableBoundProof.condMI_push_source
+  have hBX := stoch_to_det.condMI_push_source
     (fun w : L.ι × L.ι × (X × Y) => w.2)
     (fun w => w.1) (fun w => w.2.1) (fun w => w.2.2) (replicaJoint L)
-  have hBY := TableBoundProof.condMI_push_source
+  have hBY := stoch_to_det.condMI_push_source
     (fun w : L.ι × L.ι × (X × Y) => w.2)
     (fun w => w.1) (fun w => w.2.2) (fun w => w.2.1) (replicaJoint L)
   rw [replica_push_first hp L] at hM

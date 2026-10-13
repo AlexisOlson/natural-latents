@@ -111,7 +111,7 @@ lemma ledger_condH_seed {S Z G : Type*}
   apply Finset.sum_congr rfl
   intro s _
   rw [ledger_push_seed_slice r p q s]
-  exact stoch_to_det.H_smul (stoch_to_det.isFinMeas_push hp.isFinMeas) (hr.nonneg s)
+  exact stoch_to_det.H_smul (hr.nonneg s)
 
 lemma ledger_condMI_seed {S Z G K : Type*}
     [Fintype S] [Fintype Z] [Fintype G] [Fintype K]
@@ -349,7 +349,7 @@ theorem T_le_ledger {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLatent 
     have hpoint : ∀ A : X × Y → L.ι, T p ≤ Real.log 2 * stoch_to_det.detScore p A := by
       intro A
       have hb := stoch_to_det.T_le_score (stoch_to_det.Latent.ofFunction hp A)
-        (stoch_to_det.Latent.ofFunction_isDet hp A)
+        (stoch_to_det.functionLatent_isDet hp A)
       rw [stoch_to_det.Latent.ofFunction_score_eq_detScore hp A] at hb
       exact mul_le_mul_of_nonneg_left hb hlog
     calc
