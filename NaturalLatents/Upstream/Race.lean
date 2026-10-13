@@ -120,7 +120,7 @@ private lemma expMeasure_one_tilt {t : ℝ} (ht : 0 < t) :
     congr 1
     rw [← Real.exp_add]
     field_simp [ht.ne']
-    ring
+    ring_nf
   · simp [if_neg hy]
 
 private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
@@ -156,35 +156,20 @@ private lemma map_div_expMeasure {t : ℝ} (ht : 0 < t) :
 
 /- Scaling and memorylessness in the orientation used by the within-cluster
 excess vector. -/
+private lemma map_mul_expMeasure {t : ℝ} (ht : 0 < t) :
+    Measure.map (fun x : ℝ => t * x) (expMeasure t) = expMeasure 1 := by
+  simpa [div_eq_mul_inv, ht.ne', mul_comm] using
+    (map_div_expMeasure (t := 1 / t) (one_div_pos.mpr ht))
+
 private lemma map_div_expMeasure_one {t : ℝ} (ht : 0 < t) :
     Measure.map (fun x : ℝ => x / t) (expMeasure 1) = expMeasure t := by
-  let : IsProbabilityMeasure (expMeasure 1) :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure (expMeasure t) :=
-    isProbabilityMeasure_expMeasure ht
-  let : IsProbabilityMeasure
-      (Measure.map (fun x : ℝ => x / t) (expMeasure 1)) :=
-    Measure.isProbabilityMeasure_map (measurable_id.div_const t).aemeasurable
-  apply Measure.eq_of_cdf
-  ext x
-  rw [cdf_eq_real, cdf_eq_real, measureReal_def, measureReal_def,
-    Measure.map_apply (f := fun y : ℝ => y / t)
-      (measurable_id.div_const t) measurableSet_Iic]
-  rw [show (fun y : ℝ => y / t) ⁻¹' Set.Iic x = Set.Iic (t * x) by
-    ext y
-    simp only [Set.mem_preimage, Set.mem_Iic]
-    exact (div_le_iff₀ ht).trans (by ring_nf)]
-  rw [← ofReal_cdf (expMeasure 1) (t * x),
-    ← ofReal_cdf (expMeasure t) x,
-    ENNReal.toReal_ofReal (cdf_nonneg _ _),
-    ENNReal.toReal_ofReal (cdf_nonneg _ _)]
-  rw [cdf_expMeasure_eq zero_lt_one, cdf_expMeasure_eq ht]
-  by_cases hx : 0 ≤ x
-  · rw [if_pos hx, if_pos (mul_nonneg ht.le hx)]
-    congr 2
-    ring
-  · have htx : ¬ 0 ≤ t * x := by nlinarith
-    rw [if_neg hx, if_neg htx]
+  rw [← map_mul_expMeasure ht,
+    Measure.map_map (g := fun x : ℝ => x / t) (f := fun x : ℝ => t * x)
+      (by fun_prop) (by fun_prop)]
+  have : ((fun x : ℝ => x / t) ∘ fun x : ℝ => t * x) = id := by
+    funext x
+    simp [Function.comp, ht.ne']
+  rw [this, Measure.map_id]
 
 private lemma map_sub_restrict_expMeasure_one {a : ℝ} (ha : 0 ≤ a) :
     Measure.map (fun x : ℝ => x - a)
@@ -329,7 +314,7 @@ private lemma map_losing_scaled_excess
         weightedLosingExcessLaw t a := hscaled
 
 lemma strictClockWin_measurableSet
-    {κ : Type} [Fintype κ] [DecidableEq κ]
+    {κ : Type} [Fintype κ]
     (t : κ → ℝ) (a : κ) :
     MeasurableSet {E : κ → ℝ | strictClockWin t a E} := by
   unfold strictClockWin
@@ -389,7 +374,7 @@ private lemma clockReindex_law
     _ = _ := by rw [hfirst, hsecond]
 
 private lemma map_eval_restrict_strictClockWin
-    {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
+    {κ : Type} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1)
     (a : κ) :
     Measure.map (fun E : κ → ℝ => E a)
@@ -553,7 +538,7 @@ private lemma map_eval_restrict_strictClockWin
 /- On a fixed strict-winner cell, the scaled minimum has law
 `t_a • Exp(1)` and is independent of the full excess vector. -/
 private theorem clock_min_excess_restrict_factorization
-    {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
+    {κ : Type} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1)
     (a : κ) :
     Measure.map
@@ -861,11 +846,6 @@ measure-theoretic independence input for both parts of Lemma 7.2(a). -/
 
 /-! ### Lemma 7.5 and Theorem 10.1: the losing-vector cone -/
 
-private lemma map_mul_expMeasure {t : ℝ} (ht : 0 < t) :
-    Measure.map (fun x : ℝ => t * x) (expMeasure t) = expMeasure 1 := by
-  simpa [div_eq_mul_inv, ht.ne', mul_comm] using
-    (map_div_expMeasure (t := 1 / t) (one_div_pos.mpr ht))
-
 private lemma map_weightedLosingExcess_scale
     {κ : Type} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (a : κ) :
@@ -944,7 +924,7 @@ noncomputable def winnerResidualClock
   fun i => if _h : i = a then E a / t a else E i - t i * (E a / t a)
 
 lemma winnerResidualClock_measurable
-    {κ : Type} [Fintype κ] [DecidableEq κ]
+    {κ : Type} [DecidableEq κ]
     (t : κ → ℝ) (a : κ) :
     Measurable (winnerResidualClock t a) := by
   have hea : Measurable (fun E : κ → ℝ => E a) := measurable_pi_apply a
@@ -964,7 +944,7 @@ lemma winnerResidualClock_measurable
 residual vector consists of fresh iid `Exp(1)` clocks, with total mass equal
 to the probability `t a` of the winner cell. -/
 theorem winnerResidualClock_restrict_law
-    {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
+    {κ : Type} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1)
     (a : κ) :
     Measure.map (winnerResidualClock t a)
@@ -1112,7 +1092,7 @@ namespace SharedRace
 end SharedRace
 
 private lemma strictClockWin_pairwise_disjoint
-    {κ : Type} [Fintype κ] [DecidableEq κ]
+    {κ : Type}
     (t : κ → ℝ) : Pairwise fun a b : κ => Disjoint
       {E : κ → ℝ | strictClockWin t a E}
       {E : κ → ℝ | strictClockWin t b E} := by
@@ -1127,7 +1107,7 @@ private lemma strictClockWin_pairwise_disjoint
 This is the measure-level partition used by all subsequent cellwise moment
 identities. -/
 private theorem clockLaw_eq_sum_restrict_strictClockWin
-    {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
+    {κ : Type} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1) :
     clockLaw κ = Measure.sum fun a : κ =>
       (clockLaw κ).restrict {E | strictClockWin t a E} := by
@@ -1181,7 +1161,7 @@ lemma integral_clock_eq_sum_strictClockWin
 /-- Integrating a measurable residual-clock statistic on one strict winner
 cell gives the winner mass times its expectation under fresh iid clocks. -/
 lemma integral_comp_winnerResidualClock
-    {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
+    {κ : Type} [Fintype κ] [DecidableEq κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1)
     (a : κ) (f : (κ → ℝ) → ℝ) (hf : Measurable f) :
     (∫ E, f (winnerResidualClock t a E)

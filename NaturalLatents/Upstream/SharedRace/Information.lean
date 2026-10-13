@@ -1,7 +1,6 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/SharedRace/Information.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed.
 import NaturalLatents.Upstream.SharedRace.Definitions
-import NaturalLatents.Upstream.SharedRace.Scalar
 
 /-!
 # Finite KL identities for the all-label shared-race bound
@@ -41,7 +40,7 @@ private lemma sum_negMulLog_push
 
 private lemma logTwo_mul_H_eq_sum_negMulLog
     {A : Type u} [Fintype A] {m : A → ℝ} (hm : IsPMF m) :
-    SharedRace.logTwo * H m = ∑ a, Real.negMulLog (m a) := by
+    Real.log 2 * H m = ∑ a, Real.negMulLog (m a) := by
   have h := H_eq_negMulLog hm.nonneg
   rw [hm.total, Real.log_one, mul_zero, zero_add] at h
   exact h
@@ -53,7 +52,7 @@ lemma logTwo_mul_MI_eq_kl
     [Fintype A] [Fintype B] [Fintype C]
     [DecidableEq B] [DecidableEq C]
     {m : A → ℝ} (hm : IsPMF m) (f : A → B) (g : A → C) :
-    SharedRace.logTwo * MI f g m =
+    Real.log 2 * MI f g m =
       ∑ z, push (fun a => (f a, g a)) m z *
         Real.log
           (push (fun a => (f a, g a)) m z /
@@ -114,7 +113,6 @@ lemma logTwo_mul_MI_eq_kl
   have hHjoint := logTwo_mul_H_eq_sum_negMulLog hjoint
   have hHfst := logTwo_mul_H_eq_sum_negMulLog hfst
   have hHsnd := logTwo_mul_H_eq_sum_negMulLog hsnd
-  unfold SharedRace.logTwo at hHjoint hHfst hHsnd ⊢
   calc
     Real.log 2 * MI f g m =
         Real.log 2 * (H fstMarginal + H sndMarginal - H joint) := by
@@ -171,7 +169,7 @@ theorem posteriorMI_mul_logTwo_eq_expectedKL
     (hm : IsPMF m)
     (hr : ∀ a, m a ≠ 0 → IsPMF (r a))
     (hrpos : ∀ a, m a ≠ 0 → ∀ b, 0 < r a b) :
-    SharedRace.logTwo *
+    Real.log 2 *
         MI Prod.fst Prod.snd (posteriorJoint m r) =
       ∑ a, m a * ∑ b, r a b *
         Real.log (r a b / posteriorMean m r b) := by
@@ -193,16 +191,8 @@ theorem posteriorMI_mul_logTwo_eq_expectedKL
   · have hma_pos : 0 < m a :=
       lt_of_le_of_ne (hm.nonneg a) (Ne.symm ha)
     have hrab_pos : 0 < r a b := hrpos a ha b
-    have hmean_pos : 0 < posteriorMean m r b := by
-      unfold posteriorMean
-      have hnonneg : ∀ x ∈ (Finset.univ : Finset A), 0 ≤ m x * r x b := by
-        intro x _
-        by_cases hx : m x = 0
-        · simp [hx]
-        · exact mul_nonneg (hm.nonneg x) ((hr x hx).nonneg b)
-      have hle : m a * r a b ≤ ∑ x, m x * r x b :=
-        Finset.single_le_sum hnonneg (Finset.mem_univ a)
-      exact lt_of_lt_of_le (mul_pos hma_pos hrab_pos) hle
+    have hmean_pos : 0 < posteriorMean m r b :=
+      posteriorMean_pos_of_support hm (fun x hx => (hrpos x hx)) b
     have hquot :
         (m a * r a b) / (m a * posteriorMean m r b) =
           r a b / posteriorMean m r b := by

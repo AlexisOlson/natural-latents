@@ -48,59 +48,60 @@ noncomputable def sharedRaceEntropy [DecidableEq κ] [Nonempty κ]
     (μ : Ω → ℝ) (r : Ω → κ → ℝ) : ℝ :=
   ∫ G, H (push (sharedWinner r G) μ) ∂(seedLaw κ)
 
+/-- The source marginal of the categorical joint. -/
+lemma push_posteriorJoint_fst [DecidableEq Ω]
+    {μ : Ω → ℝ} {r : Ω → κ → ℝ}
+    (hr : ∀ z, μ z ≠ 0 → IsPMF (r z)) :
+    push Prod.fst (posteriorJoint μ r) = μ := by
+  funext z
+  unfold push posteriorJoint
+  simp_rw [Finset.sum_filter]
+  rw [Fintype.sum_prod_type]
+  by_cases hz : μ z = 0
+  · simp [hz]
+  · calc
+      (∑ x, ∑ i, if x = z then μ x * r x i else 0) =
+          ∑ x, if x = z then ∑ i, μ x * r x i else 0 := by
+        apply Finset.sum_congr rfl
+        intro x _
+        by_cases hx : x = z <;> simp [hx]
+      _ = ∑ i, μ z * r z i := by simp
+      _ = μ z * ∑ i, r z i := by rw [Finset.mul_sum]
+      _ = μ z := by
+        rw [show (∑ i, r z i) = 1 by simpa [mass] using (hr z hz).total,
+          mul_one]
+
+/-- The categorical marginal of the joint is the mean posterior. -/
+lemma push_posteriorJoint_snd [DecidableEq κ]
+    {μ : Ω → ℝ} {r : Ω → κ → ℝ} :
+    push Prod.snd (posteriorJoint μ r) = posteriorMean μ r := by
+  funext i
+  unfold push posteriorJoint posteriorMean
+  simp_rw [Finset.sum_filter]
+  rw [Fintype.sum_prod_type]
+  simp
+
+
 /-- Support-local version: posterior rows outside the support of `μ` are
 irrelevant and need not be normalized. -/
 lemma posteriorJoint_isPMF_of_support {μ : Ω → ℝ} {r : Ω → κ → ℝ}
     (hμ : IsPMF μ) (hr : ∀ z, μ z ≠ 0 → IsPMF (r z)) :
     IsPMF (posteriorJoint μ r) := by
+  classical
   constructor
   · intro zi
     by_cases hz : μ zi.1 = 0
     · simp [posteriorJoint, hz]
     · exact mul_nonneg (hμ.nonneg zi.1) ((hr zi.1 hz).nonneg zi.2)
-  · unfold mass posteriorJoint
-    rw [Fintype.sum_prod_type]
-    calc
-      (∑ z, ∑ i, μ z * r z i) = ∑ z, μ z * ∑ i, r z i := by
-        apply Finset.sum_congr rfl
-        intro z _
-        rw [Finset.mul_sum]
-      _ = ∑ z, μ z := by
-        apply Finset.sum_congr rfl
-        intro z _
-        by_cases hz : μ z = 0
-        · simp [hz]
-        · rw [show (∑ i, r z i) = 1 by
-            simpa [mass] using (hr z hz).total, mul_one]
-      _ = 1 := by simpa [mass] using hμ.total
+  · rw [← mass_push Prod.fst, push_posteriorJoint_fst hr, hμ.total]
 
 /-- Support-local version of `posteriorMean_isPMF`. -/
 lemma posteriorMean_isPMF_of_support {μ : Ω → ℝ} {r : Ω → κ → ℝ}
     (hμ : IsPMF μ) (hr : ∀ z, μ z ≠ 0 → IsPMF (r z)) :
     IsPMF (posteriorMean μ r) := by
-  constructor
-  · intro i
-    apply Finset.sum_nonneg
-    intro z _
-    by_cases hz : μ z = 0
-    · simp [hz]
-    · exact mul_nonneg (hμ.nonneg z) ((hr z hz).nonneg i)
-  · unfold mass posteriorMean
-    calc
-      (∑ i, ∑ z, μ z * r z i) = ∑ z, ∑ i, μ z * r z i :=
-        Finset.sum_comm
-      _ = ∑ z, μ z * ∑ i, r z i := by
-        apply Finset.sum_congr rfl
-        intro z _
-        rw [Finset.mul_sum]
-      _ = ∑ z, μ z := by
-        apply Finset.sum_congr rfl
-        intro z _
-        by_cases hz : μ z = 0
-        · simp [hz]
-        · rw [show (∑ i, r z i) = 1 by
-            simpa [mass] using (hr z hz).total, mul_one]
-      _ = 1 := by simpa [mass] using hμ.total
+  classical
+  rw [← push_posteriorJoint_snd]
+  exact isPMF_push (posteriorJoint_isPMF_of_support hμ hr)
 
 omit [Fintype κ] in
 /-- Strictly positive posterior rows on the support give a strictly positive
@@ -137,14 +138,10 @@ lemma pmf_apply_le_one {m : κ → ℝ} (hm : IsPMF m) (i : κ) :
 /-- Collision probability of a finite PMF is at most one. -/
 lemma pmf_sum_sq_le_one {m : κ → ℝ} (hm : IsPMF m) :
     ∑ i, m i ^ 2 ≤ 1 := by
-  calc
-    (∑ i, m i ^ 2) ≤ ∑ i, m i := by
-      apply Finset.sum_le_sum
-      intro i _
-      have hi0 := hm.nonneg i
-      have hi1 := pmf_apply_le_one hm i
-      nlinarith
-    _ = 1 := by simpa [mass] using hm.total
+  have h := Finset.sum_sq_le_sq_sum_of_nonneg (s := Finset.univ) (f := m)
+    (fun i _ => hm.nonneg i)
+  rw [show (∑ i, m i) = 1 by simpa [mass] using hm.total] at h
+  simpa using h
 
 /-- The categorical mismatch charge is nonnegative under support-local PMF
 assumptions. -/
@@ -159,38 +156,6 @@ lemma categoricalMismatch_nonneg_of_support
   · simp [hz]
   · exact mul_nonneg (hμ.nonneg z) (sub_nonneg.mpr (pmf_sum_sq_le_one (hr z hz)))
 
-/-- The source marginal of the categorical joint. -/
-lemma push_posteriorJoint_fst [DecidableEq Ω]
-    {μ : Ω → ℝ} {r : Ω → κ → ℝ}
-    (hr : ∀ z, μ z ≠ 0 → IsPMF (r z)) :
-    push Prod.fst (posteriorJoint μ r) = μ := by
-  funext z
-  unfold push posteriorJoint
-  simp_rw [Finset.sum_filter]
-  rw [Fintype.sum_prod_type]
-  by_cases hz : μ z = 0
-  · simp [hz]
-  · calc
-      (∑ x, ∑ i, if x = z then μ x * r x i else 0) =
-          ∑ x, if x = z then ∑ i, μ x * r x i else 0 := by
-        apply Finset.sum_congr rfl
-        intro x _
-        by_cases hx : x = z <;> simp [hx]
-      _ = ∑ i, μ z * r z i := by simp
-      _ = μ z * ∑ i, r z i := by rw [Finset.mul_sum]
-      _ = μ z := by
-        rw [show (∑ i, r z i) = 1 by simpa [mass] using (hr z hz).total,
-          mul_one]
-
-/-- The categorical marginal of the joint is the mean posterior. -/
-lemma push_posteriorJoint_snd [DecidableEq κ]
-    {μ : Ω → ℝ} {r : Ω → κ → ℝ} :
-    push Prod.snd (posteriorJoint μ r) = posteriorMean μ r := by
-  funext i
-  unfold push posteriorJoint posteriorMean
-  simp_rw [Finset.sum_filter]
-  rw [Fintype.sum_prod_type]
-  simp
 
 end SharedRace
 end stoch_to_det

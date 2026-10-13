@@ -98,13 +98,8 @@ private lemma sum_ne_zero_subtype_eq {κ : Type*} [Fintype κ]
     (a f : κ → ℝ) (hf : ∀ i, a i = 0 → f i = 0) :
     (∑ i : {i : κ // a i ≠ 0}, f i.1) = ∑ i, f i := by
   classical
-  have hsplit := Fintype.sum_subtype_add_sum_subtype (fun i => a i ≠ 0) f
-  have hzero : (∑ i : {i : κ // ¬ a i ≠ 0}, f i.1) = 0 := by
-    apply Finset.sum_eq_zero
-    intro i _
-    exact hf i.1 (not_ne_iff.mp i.2)
-  rw [hzero, add_zero] at hsplit
-  exact hsplit
+  rw [← Finset.sum_subtype (Finset.univ.filter fun i => a i ≠ 0) (by simp) f]
+  exact Finset.sum_filter_of_ne (fun i _ hi h => hi (hf i h))
 
 /-- Theorem 2.5 packaged as a `SeedSetup`: prune the zero-prior labels
 of `exists_common_contact_pair`'s latent (pruning to the subtype
@@ -396,7 +391,7 @@ lemma pi_exp_strictClockWin {κ : Type*} [Fintype κ] [DecidableEq κ]
 a finite product of any atomless sigma-finite law.  Splitting off the second
 coordinate turns every section into a singleton. -/
 /- A fixed list order supplies a measurable tie-breaking version of argmax. -/
-noncomputable def lexMax {Ω ι : Type*} [Fintype ι] [DecidableEq ι]
+noncomputable def lexMax {Ω ι : Type*} [Fintype ι]
     [Nonempty ι] (F : Ω → ι → ℝ) (ω : Ω) : ι :=
   (List.argmax (F ω) Finset.univ.toList).get (by
     rw [Option.isSome_iff_ne_none, Ne, List.argmax_eq_none]
@@ -469,10 +464,7 @@ lemma lexMax_max {Ω ι : Type*} [Fintype ι] [DecidableEq ι]
 
 lemma ae_forall_fintype {Ω κ : Type*} [Finite κ]
     {mΩ : MeasurableSpace Ω} {P : Measure Ω} {R : κ → Ω → Prop}
-    (hR : ∀ k, ∀ᵐ ω ∂P, R k ω) : ∀ᵐ ω ∂P, ∀ k, R k ω := by
-  have h := (Filter.eventually_all_finite (I := (Set.univ : Set κ)) Set.finite_univ).2
-    (fun k _ => hR k)
-  simpa using h
+    (hR : ∀ k, ∀ᵐ ω ∂P, R k ω) : ∀ᵐ ω ∂P, ∀ k, R k ω := ae_all_iff.2 hR
 
 /-! ### Conditional mutual information against a continuous variable
 
@@ -598,7 +590,7 @@ as an a.e. version of the arbitrary maximizer in `winner`. -/
 /- The finite cross-entropy inequality used for conditional-entropy
 concavity.  It is just Gibbs' inequality, with all quantities in bits. -/
 lemma H_le_crossEntropy
-    {κ : Type*} [Fintype κ] [DecidableEq κ]
+    {κ : Type*} [Fintype κ]
     {r q : κ → ℝ} (hr : IsPMF r) (hq : IsPMF q)
     (hsupp : ∀ i, r i ≠ 0 → q i ≠ 0) :
     H r ≤ ∑ i, r i * lg (1 / q i) := by

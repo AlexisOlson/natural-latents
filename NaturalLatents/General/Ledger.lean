@@ -51,11 +51,10 @@ lemma ledger_product_isPMF {S Z : Type*} [Fintype S] [Fintype Z]
 
 lemma ledger_push_source {S Z G : Type*}
     [Fintype S] [Fintype Z] [DecidableEq G]
-    {r : S → ℝ} {p : Z → ℝ} (hr : stoch_to_det.IsPMF r) (f : Z → G) :
+    {r : S → ℝ} {p : Z → ℝ} (hr : ∑ s, r s = 1) (f : Z → G) :
     stoch_to_det.push (fun w : S × Z => f w.2) (fun w => r w.1 * p w.2) =
       stoch_to_det.push f p := by
   classical
-  have hr_sum : ∑ s, r s = 1 := hr.total
   funext c
   simp only [stoch_to_det.push, Finset.sum_filter, Fintype.sum_prod_type]
   calc
@@ -70,7 +69,7 @@ lemma ledger_push_source {S Z G : Type*}
     _ = (∑ s, r s) * (∑ z, if f z = c then p z else 0) := by
       rw [Finset.sum_mul]
     _ = ∑ z, if f z = c then p z else 0 := by
-      rw [hr_sum, one_mul]
+      rw [hr, one_mul]
 
 lemma ledger_Hvar_source {S Z G : Type*}
     [Fintype S] [Fintype Z] [Fintype G] [DecidableEq G]
@@ -78,7 +77,7 @@ lemma ledger_Hvar_source {S Z G : Type*}
     stoch_to_det.Hvar (fun w : S × Z => f w.2) (fun w => r w.1 * p w.2) =
       stoch_to_det.Hvar f p := by
   unfold stoch_to_det.Hvar
-  rw [ledger_push_source hr f]
+  rw [ledger_push_source hr.total f]
 
 lemma ledger_push_seed_slice {S Z G : Type*}
     [Fintype S] [Fintype Z] [DecidableEq S] [DecidableEq G]

@@ -54,14 +54,17 @@ lemma integrable_sharedWinner_code (r : Ω → κ → ℝ) (F : (Ω → κ) → 
   exact Finset.single_le_sum (fun A _ => norm_nonneg (F A))
     (Finset.mem_univ (sharedWinner r E))
 
-/-- Homogeneous extension of any source-law entropy comparison. -/
-theorem sharedRaceEntropy_le_of_finMeas
-    (a b : ℝ)
-    (h : ∀ (μ : Ω → ℝ) (r : Ω → κ → ℝ),
+/-- A uniform shared-race entropy estimate over source laws and posterior rows. -/
+def SharedRaceEntropyBound (a b : ℝ) : Prop :=
+  ∀ (μ : Ω → ℝ) (r : Ω → κ → ℝ),
       IsPMF μ → (∀ z, μ z ≠ 0 → IsPMF (r z)) →
       (∀ z, μ z ≠ 0 → ∀ i, 0 < r z i) →
       sharedRaceEntropy μ r ≤ a * MI Prod.fst Prod.snd (posteriorJoint μ r) +
-        b * categoricalMismatch μ r)
+        b * categoricalMismatch μ r
+
+/-- Homogeneous extension of any source-law entropy comparison. -/
+theorem sharedRaceEntropy_le_of_finMeas
+    (a b : ℝ) (h : SharedRaceEntropyBound (Ω := Ω) (κ := κ) a b)
     {μ : Ω → ℝ} {r : Ω → κ → ℝ} (hμ : IsFinMeas μ)
     (hr : ∀ z, μ z ≠ 0 → IsPMF (r z))
     (hrpos : ∀ z, μ z ≠ 0 → ∀ i, 0 < r z i) :
@@ -123,12 +126,7 @@ theorem sharedRaceEntropy_le_of_finMeas
 /-- A universal shared-race entropy estimate can be conditioned on any finite
 function of the source, without changing its mismatch term. -/
 theorem conditional_entropy_le_of_uniform_entropy_bound
-    (a b : ℝ)
-    (h : ∀ (μ : Ω → ℝ) (r : Ω → κ → ℝ),
-      IsPMF μ → (∀ z, μ z ≠ 0 → IsPMF (r z)) →
-      (∀ z, μ z ≠ 0 → ∀ i, 0 < r z i) →
-      sharedRaceEntropy μ r ≤ a * MI Prod.fst Prod.snd (posteriorJoint μ r) +
-        b * categoricalMismatch μ r)
+    (a b : ℝ) (h : SharedRaceEntropyBound (Ω := Ω) (κ := κ) a b)
     {μ : Ω → ℝ} {r : Ω → κ → ℝ} (hμ : IsPMF μ)
     (hr : ∀ z, μ z ≠ 0 → IsPMF (r z))
     (hrpos : ∀ z, μ z ≠ 0 → ∀ i, 0 < r z i) (g : Ω → Γ) :
@@ -145,13 +143,11 @@ theorem conditional_entropy_le_of_uniform_entropy_bound
         b * categoricalMismatch (fiber c) r := by
     apply sharedRaceEntropy_le_of_finMeas a b h (hfin c)
     · intro z hz
-      apply hr z
-      intro hh
-      simp [fiber, hh] at hz
+      have hsupp : μ z ≠ 0 := fun hh => hz (by simp [fiber, hh])
+      exact hr z hsupp
     · intro z hz
-      apply hrpos z
-      intro hh
-      simp [fiber, hh] at hz
+      have hsupp : μ z ≠ 0 := fun hh => hz (by simp [fiber, hh])
+      exact hrpos z hsupp
   have hpost (c : Γ) : posteriorJoint (fiber c) r =
       fun zi : Ω × κ => if g zi.1 = c then posteriorJoint μ r zi else 0 := by
     funext zi

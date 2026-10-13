@@ -18,7 +18,6 @@ namespace SharedRace
 open Set
 open scoped Interval Real
 
-noncomputable def logTwo : ℝ := Real.log 2
 
 
 end SharedRace
