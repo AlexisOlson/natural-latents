@@ -1,6 +1,8 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
 -- modified: module paths renamed; declarations unused by the main theorems removed.
 import NaturalLatents.General.RaceLaplace
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.NumberTheory.ZetaValues
 
 /-!
 # Caps on the race price
@@ -35,23 +37,25 @@ variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
 lemma gamma_sum_log_factorial (n : ℕ) :
     ∑ m ∈ Finset.range n, Real.log (m + 1 : ℝ) = Real.log (n.factorial : ℝ) := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [Finset.sum_range_succ, ih, Nat.factorial_succ, Nat.cast_mul,
-      Real.log_mul (by positivity) (by positivity)]
+  have hc : (n.factorial : ℝ) = ∏ m ∈ Finset.range n, ((m : ℝ) + 1) := by
+    rw [← Finset.prod_range_add_one_eq_factorial]
     push_cast
-    ring_nf
+    rfl
+  rw [hc, Real.log_prod]
+  intro m _
+  positivity
+
+lemma gamma_factor_pos {y : ℝ} (hy : y < 1) (m : ℕ) :
+    0 < 1 - y / (m + 1) := by
+  have hd : 0 < (m + 1 : ℝ) := by positivity
+  apply sub_pos.mpr
+  rw [div_lt_one hd]
+  linarith [Nat.cast_nonneg m (α := ℝ)]
 
 lemma gamma_log_factor {y : ℝ} (hy : y < 1) (m : ℕ) :
     Real.log (1 - y + m) = Real.log (m + 1 : ℝ) + Real.log (1 - y / (m + 1)) := by
   have hd : 0 < (m + 1 : ℝ) := by positivity
-  have hmd : (1 : ℝ) ≤ m + 1 := by linarith [Nat.cast_nonneg m (α := ℝ)]
-  have hp : 0 < 1 - y / (m + 1) := by
-    apply sub_pos.mpr
-    rw [div_lt_one hd]
-    linarith
-  rw [← Real.log_mul hd.ne' hp.ne']
+  rw [← Real.log_mul hd.ne' (gamma_factor_pos hy m).ne']
   congr 1
   field_simp
   ring_nf
@@ -76,13 +80,7 @@ lemma gamma_partial_identity {y : ℝ} (hy : y < 1) (n : ℕ) :
 
 lemma gamma_term_nonneg {y : ℝ} (hy : y < 1) (m : ℕ) :
     0 ≤ -Real.log (1 - y / (m + 1)) - y / (m + 1) := by
-  have hd : 0 < (m + 1 : ℝ) := by positivity
-  have hmd : (1 : ℝ) ≤ m + 1 := by linarith [Nat.cast_nonneg m (α := ℝ)]
-  have hp : 0 < 1 - y / (m + 1) := by
-    apply sub_pos.mpr
-    rw [div_lt_one hd]
-    linarith
-  have h := Real.log_le_sub_one_of_pos hp
+  have h := Real.log_le_sub_one_of_pos (gamma_factor_pos hy m)
   linarith
 
 lemma gamma_hasSum_product_remainder {y : ℝ} (hy : y < 1) :
@@ -127,30 +125,9 @@ lemma cap_telescope_strict {f q : ℕ → ℝ}
   simp only [Finset.sum_range_one] at hs
   linarith [ht.2]
 
-lemma cap_midpoint_two {x : ℝ} (hx : 1 ≤ x) :
-    1 / x ^ 2 < 1 / (x - 1 / 2) - 1 / (x + 1 / 2) := by
-  have hxp : 0 < x := by linarith
-  have hm : 0 < x - 1 / 2 := by linarith
-  have hp : 0 < x + 1 / 2 := by linarith
-  have hq : 0 < x ^ 2 - 1 / 4 := by nlinarith
-  have heq : 1 / (x - 1 / 2) - 1 / (x + 1 / 2) - 1 / x ^ 2 =
-      1 / (4 * x ^ 2 * (x ^ 2 - 1 / 4)) := by
-    have h2m : x * 2 - 1 ≠ 0 := by linarith
-    have h2p : x * 2 + 1 ≠ 0 := by linarith
-    have h4q : x ^ 2 * 4 - 1 ≠ 0 := by nlinarith
-    have h2m' : 2 * x - 1 ≠ 0 := by linarith
-    have h2p' : 2 * x + 1 ≠ 0 := by linarith
-    field_simp [h2m, h2p, h2m', h2p', h4q, ne_of_gt hxp]
-    ring
-  apply sub_pos.mp
-  rw [heq]
-  positivity
-
 lemma cap_midpoint_three {x : ℝ} (hx : 1 ≤ x) :
     1 / x ^ 3 < (1 / 2) / (x - 1 / 2) ^ 2 - (1 / 2) / (x + 1 / 2) ^ 2 := by
   have hxp : 0 < x := by linarith
-  have hm : 0 < x - 1 / 2 := by linarith
-  have hp : 0 < x + 1 / 2 := by linarith
   have hq : 0 < x ^ 2 - 1 / 4 := by nlinarith
   have hn : 0 < x ^ 2 / 2 - 1 / 16 := by nlinarith
   have heq : (1 / 2) / (x - 1 / 2) ^ 2 - (1 / 2) / (x + 1 / 2) ^ 2 - 1 / x ^ 3 =
@@ -165,47 +142,6 @@ lemma cap_midpoint_three {x : ℝ} (hx : 1 ≤ x) :
   apply sub_pos.mp
   rw [heq]
   positivity
-
-lemma cap_midpoint_four {x : ℝ} (hx : 1 ≤ x) :
-    1 / x ^ 4 < (1 / 3) / (x - 1 / 2) ^ 3 - (1 / 3) / (x + 1 / 2) ^ 3 := by
-  have hxp : 0 < x := by linarith
-  have hm : 0 < x - 1 / 2 := by linarith
-  have hp : 0 < x + 1 / 2 := by linarith
-  have hq : 0 < x ^ 2 - 1 / 4 := by nlinarith
-  have hn1 : 0 < (5 / 6 : ℝ) * x ^ 2 - 3 / 16 := by nlinarith
-  have hn : 0 < (5 / 6 : ℝ) * x ^ 4 - (3 / 16) * x ^ 2 + 1 / 64 := by
-    nlinarith [mul_pos hn1 (sq_pos_of_pos hxp)]
-  have heq : (1 / 3) / (x - 1 / 2) ^ 3 - (1 / 3) / (x + 1 / 2) ^ 3 - 1 / x ^ 4 =
-      ((5 / 6 : ℝ) * x ^ 4 - (3 / 16) * x ^ 2 + 1 / 64) /
-        (x ^ 4 * (x ^ 2 - 1 / 4) ^ 3) := by
-    have h2m : x * 2 - 1 ≠ 0 := by linarith
-    have h2p : x * 2 + 1 ≠ 0 := by linarith
-    have h4q : x ^ 2 * 4 - 1 ≠ 0 := by nlinarith
-    have h2m' : 2 * x - 1 ≠ 0 := by linarith
-    have h2p' : 2 * x + 1 ≠ 0 := by linarith
-    field_simp [h2m, h2p, h2m', h2p', h4q, ne_of_gt hxp]
-    ring
-  apply sub_pos.mp
-  rw [heq]
-  positivity
-
-lemma cap_tail_two :
-    Summable (fun n : ℕ => 1 / ((n : ℝ) + 5) ^ 2) ∧
-      (∑' n : ℕ, 1 / ((n : ℝ) + 5) ^ 2) < 2 / 9 := by
-  have hs := cap_telescope_strict
-    (f := fun n : ℕ => 1 / ((n : ℝ) + 5) ^ 2)
-    (q := fun n : ℕ => 1 / ((n : ℝ) + 9 / 2))
-    (fun n => by positivity) (fun n => by positivity)
-    (fun n => by
-      have hn : (1 : ℝ) ≤ (n : ℝ) + 5 := by linarith [(Nat.cast_nonneg n : (0 : ℝ) ≤ n)]
-      have h1 : (n : ℝ) + 5 - 1 / 2 = (n : ℝ) + 9 / 2 := by ring
-      have h2 : (n : ℝ) + 5 + 1 / 2 = ((n + 1 : ℕ) : ℝ) + 9 / 2 := by
-        rw [Nat.cast_add, Nat.cast_one]
-        ring
-      simpa only [h1, h2] using (cap_midpoint_two hn).le)
-    (by norm_num)
-  norm_num at hs ⊢
-  exact hs
 
 lemma cap_tail_three :
     Summable (fun n : ℕ => 1 / ((n : ℝ) + 3) ^ 3) ∧
@@ -225,44 +161,14 @@ lemma cap_tail_three :
   norm_num at hs ⊢
   exact hs
 
-lemma cap_tail_four :
-    Summable (fun n : ℕ => 1 / ((n : ℝ) + 3) ^ 4) ∧
-      (∑' n : ℕ, 1 / ((n : ℝ) + 3) ^ 4) < 8 / 375 := by
-  have hs := cap_telescope_strict
-    (f := fun n : ℕ => 1 / ((n : ℝ) + 3) ^ 4)
-    (q := fun n : ℕ => (1 / 3) / ((n : ℝ) + 5 / 2) ^ 3)
-    (fun n => by positivity) (fun n => by positivity)
-    (fun n => by
-      have hn : (1 : ℝ) ≤ (n : ℝ) + 3 := by linarith [(Nat.cast_nonneg n : (0 : ℝ) ≤ n)]
-      have h1 : (n : ℝ) + 3 - 1 / 2 = (n : ℝ) + 5 / 2 := by ring
-      have h2 : (n : ℝ) + 3 + 1 / 2 = ((n + 1 : ℕ) : ℝ) + 5 / 2 := by
-        rw [Nat.cast_add, Nat.cast_one]
-        ring
-      simpa only [h1, h2] using (cap_midpoint_four hn).le)
-    (by norm_num)
-  norm_num at hs ⊢
-  exact hs
-
 lemma cap_zeta_two :
     Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) ∧ (∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ 2) < 79 / 48 := by
-  have ht : Summable (fun n : ℕ => 1 / (((n + 4 : ℕ) : ℝ) + 1) ^ 2) := by
-    simpa only [Nat.cast_add, Nat.cast_ofNat, add_assoc, show (4 : ℝ) + 1 = 5 by norm_num] using cap_tail_two.1
-  have hs := (summable_nat_add_iff (f := fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) 4).1 ht
-  refine ⟨hs, ?_⟩
-  rw [← hs.sum_add_tsum_nat_add 4]
-  have hb := cap_tail_two.2
-  have he : (∑' n : ℕ, 1 / (((n + 4 : ℕ) : ℝ) + 1) ^ 2) =
-      ∑' n : ℕ, 1 / ((n : ℝ) + 5) ^ 2 := by
-    congr 1
-    funext n
-    simp only [Nat.cast_add, Nat.cast_ofNat]
-    congr 2
-    ring
-  rw [he]
-  have hfin : (∑ i ∈ Finset.range 4, 1 / ((i : ℝ) + 1) ^ 2) = 205 / 144 := by
-    norm_num [Finset.sum_range_succ]
-  rw [hfin]
-  linarith
+  have h : HasSum (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) (Real.pi ^ 2 / 6) := by
+    have := (hasSum_nat_add_iff' 1).mpr hasSum_zeta_two
+    simpa [Finset.sum_range_one] using this
+  refine ⟨h.summable, ?_⟩
+  rw [h.tsum_eq]
+  nlinarith [Real.pi_lt_d4, Real.pi_pos]
 
 lemma cap_zeta_three :
     Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 3) ∧ (∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ 3) < 241 / 200 := by
@@ -287,24 +193,13 @@ lemma cap_zeta_three :
 
 lemma cap_zeta_four :
     Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 4) ∧ (∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ 4) < 6503 / 6000 := by
-  have ht : Summable (fun n : ℕ => 1 / (((n + 2 : ℕ) : ℝ) + 1) ^ 4) := by
-    simpa only [Nat.cast_add, Nat.cast_ofNat, add_assoc, show (2 : ℝ) + 1 = 3 by norm_num] using cap_tail_four.1
-  have hs := (summable_nat_add_iff (f := fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 4) 2).1 ht
-  refine ⟨hs, ?_⟩
-  rw [← hs.sum_add_tsum_nat_add 2]
-  have hb := cap_tail_four.2
-  have he : (∑' n : ℕ, 1 / (((n + 2 : ℕ) : ℝ) + 1) ^ 4) =
-      ∑' n : ℕ, 1 / ((n : ℝ) + 3) ^ 4 := by
-    congr 1
-    funext n
-    simp only [Nat.cast_add, Nat.cast_ofNat]
-    congr 2
-    ring
-  rw [he]
-  have hfin : (∑ i ∈ Finset.range 2, 1 / ((i : ℝ) + 1) ^ 4) = 17 / 16 := by
-    norm_num [Finset.sum_range_succ]
-  rw [hfin]
-  linarith
+  have h : HasSum (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 4) (Real.pi ^ 4 / 90) := by
+    have := (hasSum_nat_add_iff' 1).mpr hasSum_zeta_four
+    simpa [Finset.sum_range_one] using this
+  refine ⟨h.summable, ?_⟩
+  rw [h.tsum_eq]
+  have hpi2 : Real.pi ^ 2 < 9.87 := by nlinarith [Real.pi_lt_d4, Real.pi_pos]
+  nlinarith [sq_nonneg (Real.pi ^ 2)]
 
 /-- The part of the logarithm's power series after its linear term. -/
 lemma c3a_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
