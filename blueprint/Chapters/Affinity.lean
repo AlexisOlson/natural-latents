@@ -77,7 +77,7 @@ Lean: `NaturalLatents.General.affinity_bhattacharyyaX_le` and `NaturalLatents.Ge
 Lean. In place of a named Cauchy-Schwarz theorem, `affinity_conditional_square` (same file) derives the conditional
 comparison of (A2.6) and (A2.9) by expanding a nonnegative weighted square.
 
-:::theorem "A2.2" (parent := "affinity") (lean := "NaturalLatents.General.affinity_bound, NaturalLatents.General.affinityPoly_pos") (uses := "C1.2, A2.1") (tags := "kernel-verified")
+:::theorem "A2.2" (parent := "affinity") (lean := "NaturalLatents.General.affinity_bound, NaturalLatents.General.affinityPoly_pos") (uses := "C1.2, A2.1") (tags := "partly kernel-verified")
 *Lemma A2.2 (the natural-log affinity payment and the equal-pair endpoint).* For every finite nonempty $`X,Y`, every
 nonempty common support $`S` with all rows and columns used, every feasible $`w>0` on $`S`, and every pair of distinct
 positive contacts $`P,R`, assume the conclusions of section 1 and of Lemma A2.1. Then $`\Psi(s)` is well defined and
@@ -93,6 +93,8 @@ gives $`s=0`, so marginal normalization gives $`BC_X=BC_Y=b(0)=1` and $`\Psi(0)=
 :::
 
 :::proof "A2.2"
+Lean proves: the affinity-payment inequality (A2.11) for distinct positive contacts with `ContactMoments`, and $`b(t)>0` for $`t\le2`.
+
 Bound the quadratic on the scalar interval and apply monotonicity of the natural logarithm, treating equal contacts separately. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/affinity.md#2-the-affinity-bound).
 :::
 

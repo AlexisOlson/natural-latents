@@ -37,7 +37,7 @@ is the deterministic score of a map $`f`, so that $`T(p)=\min_fD_p(f)` as in (D3
 step 2 of the [route](https://github.com/AlexisOlson/natural-latents/blob/main/docs/overview.md#the-route), not the cap $`F` of the [cap page](https://github.com/AlexisOlson/natural-latents/blob/main/docs/cap.md); $`Q=F(Z)`, $`U`, $`A` and $`\Delta`
 below are local, and $`Q` is not the reference of the [race page](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md).
 
-:::theorem "L4.1" (parent := "ledger") (lean := "NaturalLatents.General.T_le_ledger, NaturalLatents.General.ledger_calibrated_graph, NaturalLatents.General.ledger_detScore_coordinate_identity, NaturalLatents.General.ledger_information_balance, NaturalLatents.General.ledger_average_MI_lower, stoch_to_det.T_le_score") (uses := "") (tags := "kernel-verified")
+:::theorem "L4.1" (parent := "ledger") (lean := "NaturalLatents.General.T_le_ledger, NaturalLatents.General.ledger_calibrated_graph, NaturalLatents.General.ledger_detScore_coordinate_identity, NaturalLatents.General.ledger_information_balance, NaturalLatents.General.ledger_average_MI_lower, stoch_to_det.T_le_score") (uses := "") (tags := "partly kernel-verified")
 *Lemma L4.1 (calibrated finite-map averaging and the ledger).* Let $`X,Y,L` be finite random variables, $`Z=(X,Y)`,
 and let $`p` be the law of $`Z`. Let $`F` be a finite-valued random deterministic map from $`\mathrm{supp}\,p` to the
 label set of $`L`, independent of $`Z`. Suppose $`\Pr(F(z)=i)=r_z(i)=\Pr(L=i\mid Z=z)` for every positive source atom
@@ -66,6 +66,8 @@ into a random complete map, as used below.
 :::
 
 :::proof "L4.1"
+Lean proves: $`T(p)\le M-B/2+3h/2` for a `CalibratedSeededFamily`, with the coordinate score and information-balance identities and the averaged mutual-information lower bound used to obtain it.
+
 Use calibration and independence to identify the joint law, expand the entropy chain rules, and choose a map below the finite average. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/ledger.md#4-the-ledger).
 :::
 

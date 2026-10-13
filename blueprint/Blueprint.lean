@@ -43,11 +43,16 @@ whose method this route follows.
 Read the [proof overview](https://github.com/AlexisOlson/natural-latents/blob/main/docs/overview.md).
 The chapters reproduce the page statements and link their cited Lean
 counterparts with strict resolution. The retained Lean notes describe exactly
-which conclusions each declaration states; a declaration may formalize only
-part of the page statement. Nodes with no corresponding declaration
-carry the tag `paper proof`: the general Poisson-process input and the generic
-assembly. The component cost identity links the compiler names of its private
-Lean proofs, as identified in the page notes.
+which conclusions each declaration states.
+
+`kernel-verified`: the cited Lean declarations together prove the whole statement.
+
+`partly kernel-verified`: the cited Lean declarations prove only the scope named at the start of the proof.
+
+`paper proof`: the node has no cited Lean declaration and relies on the paper proof.
+
+The component cost identity links the declaration names of its private Lean proofs,
+as identified in the page notes.
 Information quantities are in nats until the table-form chapter, which uses bits.
 
 {include 0 Chapters.Setup}

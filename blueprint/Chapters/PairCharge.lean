@@ -72,7 +72,7 @@ $`F_m`, $`F_h` in section 5 are scalar functions, not the cap $`F`; $`M_l,M_m,M_
 $`M`; and $`\beta,\gamma` are the charge pair of section 0 of the contact page, while $`\alpha,\kappa,\lambda,k,c_0`
 are local coefficients.
 
-:::theorem "PC4.0" (parent := "pair-charge") (lean := "NaturalLatents.General.contact_moments, NaturalLatents.General.contact_hessian, NaturalLatents.General.pairCharge_contact_defect_X, NaturalLatents.General.pairCharge_contact_defect_Y, NaturalLatents.General.pairCharge_contact_defects_centered, NaturalLatents.General.pairCharge_contact_gram_energy, NaturalLatents.General.pairCharge_quarticRatio_bounds, NaturalLatents.General.defect_bounds, NaturalLatents.General.pairCharge_secant_mixed_moments") (uses := "C1.1, C1.2, C1.4, C1.5") (tags := "kernel-verified")
+:::theorem "PC4.0" (parent := "pair-charge") (lean := "NaturalLatents.General.contact_moments, NaturalLatents.General.contact_hessian, NaturalLatents.General.pairCharge_contact_defect_X, NaturalLatents.General.pairCharge_contact_defect_Y, NaturalLatents.General.pairCharge_contact_defects_centered, NaturalLatents.General.pairCharge_contact_gram_energy, NaturalLatents.General.pairCharge_quarticRatio_bounds, NaturalLatents.General.defect_bounds, NaturalLatents.General.pairCharge_secant_mixed_moments") (uses := "C1.1, C1.2, C1.4, C1.5") (tags := "partly kernel-verified")
 *Lemma PC4.0 (the moment inputs).* For every finite nonempty $`X,Y`, every nonempty $`S` with all rows and columns used,
 every feasible $`w>0` on $`S`, and every pair of distinct positive contacts $`P,R` of $`w`, the quantities (C1.3) and
 (PC4.1) satisfy $`0<A_0,B_0<1`, $`0<s<2`, $`v\le1/4`,
@@ -101,6 +101,8 @@ and $`\mathcal Q(w)=s^2t_0`, so that $`t_0\ge0`, $`j\le1/2` and $`1/16\le\eta^2\
 :::
 
 :::proof "PC4.0"
+Lean proves: the `ContactMoments` identities and bounds, the Hessian inequality (PC-H), the centered defect identities (PC-C), $`\mathcal Q(w)=6A_0B_0-s^2-J`, $`1/16\le j\le1/2`, $`2/9\le v\le1/4`, and the two mixed moments whose sum is $`E[UV(U+V)]=-J`.
+
 Combine the contact moments and Hessian test with centering, conditional expansions, and Cauchy-Schwarz. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#4-pair-information-from-a-positive-quadratic-form).
 :::
 
@@ -136,7 +138,7 @@ under both $`P` and $`Q` (PC4.B), so $`E_PW_u-E_QW_u=E_PW-E_QW` for every $`u`. 
 (PC-H) then bounds the integrated variance $`\mathrm{Res}` by $`\mathrm{Den}(s,j)/192` (Lemma PC4.4), and
 Cauchy–Schwarz turns the gap into the information floor (PC-FLOOR) of Lemma PC4.5.
 
-:::theorem "PC4.1" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_mean_losses_reverse, NaturalLatents.General.pairCharge_separation_reverse, NaturalLatents.General.pairCharge_quarticMoment_reverse, NaturalLatents.General.pairCharge_quarticRatio_reverse, NaturalLatents.General.pairCharge_defectProductRatio_reverse, NaturalLatents.General.pairCharge_pair_reverse, NaturalLatents.General.pairCharge_cond_defect_X_reverse, NaturalLatents.General.pairCharge_cond_defect_Y_reverse, NaturalLatents.General.pairCharge_fixed_coefficient_data, NaturalLatents.General.pairCharge_fixed_endpoint_table") (uses := "PC4.0, C1.1, C1.2") (tags := "kernel-verified")
+:::theorem "PC4.1" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_mean_losses_reverse, NaturalLatents.General.pairCharge_separation_reverse, NaturalLatents.General.pairCharge_quarticMoment_reverse, NaturalLatents.General.pairCharge_quarticRatio_reverse, NaturalLatents.General.pairCharge_defectProductRatio_reverse, NaturalLatents.General.pairCharge_pair_reverse, NaturalLatents.General.pairCharge_cond_defect_X_reverse, NaturalLatents.General.pairCharge_cond_defect_Y_reverse, NaturalLatents.General.pairCharge_fixed_coefficient_data, NaturalLatents.General.pairCharge_fixed_endpoint_table") (uses := "PC4.0, C1.1, C1.2") (tags := "partly kernel-verified")
 *Lemma PC4.1 (reversal and raw moments).* Under the hypotheses of Lemma PC4.0,
 
 $$`
@@ -166,6 +168,8 @@ All four are invariant under reversal.
 :::
 
 :::proof "PC4.1"
+Lean proves: reversal of $`A_0,B_0,s,J,j,v` and the conditional defects, the endpoint moments of $`UV` and $`U+V+s`, and the mean gap and collected algebraic variance of the statistic $`W+4s/25`.
+
 Change measure under contact reversal and expand the first and second moments under the contact and product laws. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#41-reversal-and-a-corrected-statistic).
 :::
 
@@ -231,7 +235,7 @@ $$`
 D=\frac{2E_QW^2+E_PW^2}6-\frac{3\mu_Q^2+2\mu_Q\mu_P+\mu_P^2}{12}.
 `
 
-:::theorem "PC4.3" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_residual_information, NaturalLatents.General.pairCharge_correction_hessian, NaturalLatents.General.pairCharge_residual_identity, NaturalLatents.General.pairCharge_fixed_coefficient_data") (uses := "PC4.0, PC4.1, PC4.2") (tags := "kernel-verified")
+:::theorem "PC4.3" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_residual_information, NaturalLatents.General.pairCharge_correction_hessian, NaturalLatents.General.pairCharge_residual_identity, NaturalLatents.General.pairCharge_fixed_coefficient_data") (uses := "PC4.0, PC4.1, PC4.2") (tags := "partly kernel-verified")
 *Lemma PC4.3 (the integrated residual).* Under the hypotheses of Lemma PC4.0, with the definitions (PC4.2),
 
 $$`
@@ -258,6 +262,8 @@ $$`
 :::
 
 :::proof "PC4.3"
+Lean proves: positivity and the information bound for the algebraic one-orientation residual, $`0\le36\lambda^2(\rho-4h)-12\lambda k\rho+k^2s^2t_0`, and the scalar collected residual identity `pairCharge_residual_identity`.
+
 Integrate the corrected variance polynomial and complete the Hessian quadratic form using the defect products. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#43-integrated-residual).
 :::
 
@@ -284,7 +290,7 @@ $$`
 \qquad \text{(PC-DEN)}
 `
 
-:::theorem "PC4.4" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_residual_identity, NaturalLatents.General.pairCharge_asymmetry_bracket, NaturalLatents.General.pairCharge_residual_le_denominator, NaturalLatents.General.pairCharge_residual_bound") (uses := "PC4.0, PC4.1, PC4.3") (tags := "kernel-verified")
+:::theorem "PC4.4" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_residual_identity, NaturalLatents.General.pairCharge_asymmetry_bracket, NaturalLatents.General.pairCharge_residual_le_denominator, NaturalLatents.General.pairCharge_residual_bound") (uses := "PC4.0, PC4.1, PC4.3") (tags := "partly kernel-verified")
 *Lemma PC4.4 (the residual bound).* Under the hypotheses of Lemma PC4.0,
 
 $$`
@@ -301,6 +307,8 @@ and if $`0<s\le1`, then $`192\,\mathrm{Res}\le \mathrm{Den}(s,j)`.
 :::
 
 :::proof "PC4.4"
+Lean proves: the scalar collected residual identity `pairCharge_residual_identity`, the asymmetry-bracket lower bound $`70`, and $`192\,\overline{\mathrm{pairCharge\_residual}}\le\mathrm{Den}(s,j)` for $`0<s\le1`, with the residual defined algebraically.
+
 Expand the scalar residual identity and discard the nonnegative asymmetry and Hessian terms after bounding their coefficients. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#44-a-direct-residual-bound).
 :::
 
@@ -312,7 +320,7 @@ all in `NaturalLatents/General/PairCharge/Certificate.lean`; the bound for a con
 
 ## 4.5 Information, support holes and positivity
 
-:::theorem "PC4.5" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_residual_information, NaturalLatents.General.pairCharge_entropy_linear_field_affine, NaturalLatents.General.pairCharge_entropy_path_payment, stoch_to_det.joint_absCont_product, NaturalLatents.General.pairCharge_fixed_floor_gap, NaturalLatents.General.pairCharge_average_KL_separate, NaturalLatents.General.pairCharge_projection_information, NaturalLatents.General.pairCharge_information_floor") (uses := "PC4.0, PC4.4") (tags := "kernel-verified")
+:::theorem "PC4.5" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_residual_information, NaturalLatents.General.pairCharge_entropy_linear_field_affine, NaturalLatents.General.pairCharge_entropy_path_payment, stoch_to_det.joint_absCont_product, NaturalLatents.General.pairCharge_fixed_floor_gap, NaturalLatents.General.pairCharge_average_KL_separate, NaturalLatents.General.pairCharge_projection_information, NaturalLatents.General.pairCharge_information_floor") (uses := "PC4.0, PC4.3, PC4.4") (tags := "partly kernel-verified")
 *Lemma PC4.5 (the information floor).* Under the hypotheses of Lemma PC4.0, if $`0<s\le1`, then $`\mathrm{Res}>0`,
 $`\mathrm{Den}(s,j)>0`, and the averaged information $`\bar I=(I(P)+I(R))/2` satisfies
 
@@ -323,6 +331,8 @@ $$`
 :::
 
 :::proof "PC4.5"
+Lean proves: positivity and $`\Delta^2/(4\,\mathrm{Res}_P)\le I(P)` for the algebraic one-orientation residual with nonzero gap, and $`\mathrm{Den}(s,j)>0` with the information floor (PC-FLOOR) for $`0<s\le1`.
+
 Compare the expectation gap with the integrated variance by Cauchy-Schwarz and obtain the entropy path integral by a monotone limit, including support holes. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#45-information-support-holes-and-positivity).
 :::
 
@@ -336,7 +346,7 @@ where $`Q` does. The bound $`\Delta\ge y/4` is `pairCharge_fixed_floor_gap` (`Mo
 `pairCharge_average_KL_separate` (`PairCharge.lean`), and the division by $`\mathrm{Den}(s,j)` is
 `pairCharge_projection_information` (`MomentBounds.lean`); the assembled floor is `pairCharge_information_floor`
 (`PairCharge.lean`), which states $`\mathrm{Den}(s,j)>0` and (PC-FLOOR) for $`s\le1`. Lean has no integral formula for $`I(P)`: it proves $`\tau\Delta\le I(P)+\tau^2\,\mathrm{Res}_P` in one
-orientation for every real $`\tau`, by a second-derivative comparison on $`[0,1)` and continuity at $`u=1`, and it
+orientation, with $`\mathrm{Res}_P` defined algebraically rather than by the integral in (PC4.2), for every real $`\tau`, by a second-derivative comparison on $`[0,1)` and continuity at $`u=1`, and it
 combines the two orientations by a reciprocal-mean step on their separate residuals rather than by one Cauchy-Schwarz
 over the pooled measure.
 
@@ -351,7 +361,7 @@ $$`
 G(s)=\gamma-\alpha s-\kappa s^2.
 `
 
-:::theorem "PC5.1" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_price") (uses := "A2.2") (tags := "kernel-verified")
+:::theorem "PC5.1" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_price") (uses := "A2.2") (tags := "partly kernel-verified")
 *Lemma PC5.1 (the price).* For $`0\le s\le2`, $`b(s)>0` and
 
 $$`
@@ -367,6 +377,8 @@ $$`
 :::
 
 :::proof "PC5.1"
+Lean proves: $`(23/250)\Psi(s)\ge(103/1000)s+(23/1000)s^2` for $`0\le s\le2`, the inequality (PC-PRICE-INTEGRAL).
+
 Complete squares in the price derivative and integrate the positive derivative from the zero endpoint. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#51-the-priced-profile).
 :::
 
@@ -388,7 +400,7 @@ F_m(s)&=\frac{F_l(s)+F_h(s)}2-\frac{49}{512}[3+G(s)]s^2.
 \end{aligned}
 `
 
-:::theorem "PC5.2" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_quartic_low, NaturalLatents.General.pairCharge_quartic_mid, NaturalLatents.General.pairCharge_quartic_high, NaturalLatents.General.pairCharge_scalar_certificate") (uses := "") (tags := "kernel-verified")
+:::theorem "PC5.2" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_quartic_low, NaturalLatents.General.pairCharge_quartic_mid, NaturalLatents.General.pairCharge_quartic_high, NaturalLatents.General.pairCharge_scalar_certificate") (uses := "") (tags := "partly kernel-verified")
 *Lemma PC5.2 (the scalar certificate).* For $`0\le s\le1` and $`1/16\le j\le1/2`,
 
 $$`
@@ -403,6 +415,8 @@ $$`
 :::
 
 :::proof "PC5.2"
+Lean proves: $`F_l>0`, $`F_m>0` and $`F_h>0` on their stated scalar domains, and $`3(1-s+sj)^2-G(s)\mathrm{Den}(s,j)>0` for $`0\le s\le1` and $`1/16\le j\le1/2`.
+
 Interpolate quadratically in the normalized quartic ratio and certify each edge quartic by exact rational positive decompositions. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#52-three-positive-quartics).
 :::
 
@@ -414,7 +428,7 @@ identities appear only in their proofs. `pairCharge_scalar_certificate` (same fi
 are `pairChargeProfile`, `pairChargeSlope`, `pairChargeWeight`, `pairChargeDenominator` and `pairChargeScalar` (same
 file).
 
-:::theorem "PC5.3" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_C, NaturalLatents.General.contact_moments, NaturalLatents.General.pairCharge_price, NaturalLatents.General.pairCharge_information_floor, NaturalLatents.General.pairCharge_quarticRatio_bounds, NaturalLatents.General.pairCharge_scalar_certificate, stoch_to_det.Knat_nonneg") (uses := "PC4.0, PC4.5, PC5.1, PC5.2") (tags := "kernel-verified")
+:::theorem "PC5.3" (parent := "pair-charge") (lean := "NaturalLatents.General.pairCharge_C, NaturalLatents.General.contact_moments, NaturalLatents.General.pairCharge_price, NaturalLatents.General.pairCharge_information_floor, NaturalLatents.General.pairCharge_quarticRatio_bounds, NaturalLatents.General.pairCharge_scalar_certificate, stoch_to_det.Knat_nonneg") (uses := "PC4.0, PC4.5, PC5.1, PC5.2") (tags := "partly kernel-verified")
 *Theorem PC5.3 (the pair charge C).* For every finite nonempty $`X,Y`, every nonempty $`S` with all rows and columns
 used, every feasible $`w>0` on $`S`, and every pair of distinct positive contacts $`P,R` of $`w`,
 
@@ -424,6 +438,8 @@ $$`
 :::
 
 :::proof "PC5.3"
+Lean proves: $`(I(P)+I(R))/2+(23/250)\Psi(s)\ge7/60` for distinct positive contacts of a common feasible kernel, the non-strict charge `HasPairCharge CommonSupportPair (23/250) (7/60)`.
+
 For separation at most one, combine the information floor, positive scalar certificate, and price; above one, the price and nonnegative information suffice. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/pair-charge.md#52-three-positive-quartics).
 :::
 

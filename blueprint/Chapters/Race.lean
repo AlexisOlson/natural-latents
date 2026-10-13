@@ -108,7 +108,7 @@ stated only for the shifted power sums the race uses: `race_shifted_arrival_lapl
 process, interval theorem or Campbell formula; it obtains the transform from a renewal equation
 (`race_arrival_laplace_renewal` and `race_renewal_unique`).
 
-:::theorem "R2" (parent := "race") (lean := "NaturalLatents.General.race_frullani_log_one_add, NaturalLatents.General.race_expected_log_one_add_laplace") (uses := "") (tags := "kernel-verified")
+:::theorem "R2" (parent := "race") (lean := "NaturalLatents.General.race_frullani_log_one_add, NaturalLatents.General.race_expected_log_one_add_laplace") (uses := "") (tags := "partly kernel-verified")
 *Lemma R2 (Frullani logarithm identities).* For every $`x \ge 0` and every $`r > 0`,
 
 $$`
@@ -126,6 +126,8 @@ $$`
 :::
 
 :::proof "R2"
+Lean proves: the $`\ln(1+x)` identity of (R4) for $`x\ge0` and its expected-log analogue for measurable $`V\ge0` with integrable $`\ln(1+V)`, both as extended nonnegative integrals.
+
 Differentiate the scalar integrals under domination, then apply Tonelli and Fubini using absolute log integrability. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#2-analytic-facts).
 :::
 
@@ -135,7 +137,7 @@ almost surely with $`\mathbb E\ln(1+V)<\infty`, also in extended nonnegative int
 both in `NaturalLatents/General/ExponentialRace.lean`. The identity for $`\ln r` and (R5) for a general positive $`R` are not
 stated.
 
-:::theorem "R3" (parent := "race") (lean := "NaturalLatents.General.race_scalar_exp_log_integrable_mean, Real.Gamma_eq_integral, Real.GammaIntegral_convergent, NaturalLatents.General.race_exp_rpow_moment") (uses := "") (tags := "kernel-verified")
+:::theorem "R3" (parent := "race") (lean := "NaturalLatents.General.race_scalar_exp_log_integrable_mean, Real.Gamma_eq_integral, Real.GammaIntegral_convergent, NaturalLatents.General.race_exp_rpow_moment") (uses := "") (tags := "partly kernel-verified")
 *Lemma R3 (Gamma integral and Euler's logarithmic integral).* Let $`b > 0`, and let
 $`\gamma_E = \lim_{N\to\infty}\left(\sum_{k=1}^N 1/k-\ln N\right)` be Euler's constant. The classical identities
 needed in the race calculation are
@@ -149,6 +151,8 @@ $$`
 :::
 
 :::proof "R3"
+Lean proves: the Gamma integral and its convergence for $`b>0`, $`\mathbb E\ln T=-\gamma_E` with integrable $`\ln T` for $`T\sim\mathrm{Exp}(1)`, and $`\mathbb ET^p=\Gamma(1+p)` for $`p>-1`.
+
 Use Euler’s Gamma and logarithmic integrals, checking absolute convergence separately at zero and infinity. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#2-analytic-facts).
 :::
 
@@ -160,7 +164,7 @@ the three integrals.
 
 # 3. The race
 
-:::theorem "R4" (parent := "race") (lean := "NaturalLatents.General.race_clock_probability, NaturalLatents.General.race_seed_probability, NaturalLatents.General.race_map_calibrated, NaturalLatents.General.race_selected_coordinate_average") (uses := "") (tags := "kernel-verified")
+:::theorem "R4" (parent := "race") (lean := "NaturalLatents.General.race_clock_probability, NaturalLatents.General.race_seed_probability, NaturalLatents.General.race_map_calibrated, NaturalLatents.General.race_selected_coordinate_average") (uses := "") (tags := "partly kernel-verified")
 *Lemma R4 (calibrated exponential winner).* Let $`r = (r_i)_{i=1}^n` be a strictly positive probability vector and let
 $`E_1, \ldots, E_n` be independent rate-one exponential variables. With any fixed ordering to resolve ties, put
 $`W = \arg\min_i E_i/r_i` and $`T = \min_i E_i/r_i`. Then
@@ -178,6 +182,8 @@ independent of the source, are calibrated.
 :::
 
 :::proof "R4"
+Lean proves: $`\Pr(W=i)=r_i`, calibration of the map-valued race seed, and the selected-clock averaging identity $`\mathbb Ef_W(E_W,\Omega_W)=\sum_i r_i\mathbb E_{T,\Omega}f_i(r_iT,\Omega)` for measurable integrable statistics.
+
 Multiply the winner density by the other clocks’ survival probabilities and exclude the finite union of tie events. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#3-the-race).
 :::
 
@@ -189,7 +195,7 @@ Gumbel coordinates $`G_i=-\ln E_i` under `stoch_to_det.seedLaw` (`NaturalLatents
 density (R7) and the independence of $`W` and $`T` are not stated; their consequence for averages of a statistic of the
 winning clock is `race_selected_coordinate_average` (`NaturalLatents/General/ExponentialRace.lean`).
 
-:::theorem "R5" (parent := "race") (lean := "NaturalLatents.General.race_arrival_mass_ae_summable, NaturalLatents.General.race_reference_isPMF") (uses := "R1") (tags := "kernel-verified")
+:::theorem "R5" (parent := "race") (lean := "NaturalLatents.General.race_arrival_mass_ae_summable, NaturalLatents.General.race_reference_isPMF") (uses := "R1") (tags := "partly kernel-verified")
 *Lemma R5 (appended reference masses are finite).* Let $`a > 1`, let $`\pi = (\pi_i)_{i=1}^n` be a strictly positive
 probability vector, and let $`E_i` be independent rate-one exponential variables. Append to each $`E_i` independent
 rate-one exponential spacings, independent across labels and of all $`E_i`. Let $`T_{i1} = E_i, T_{i2}, \ldots` be the
@@ -224,6 +230,8 @@ $$`
 :::
 
 :::proof "R5"
+Lean proves: the shifted arrival power sums are almost surely summable for $`a>1`, and the totalized reference $`Q` is a strictly positive probability vector at every seed.
+
 Use Campbell’s formula for the appended process; finite conditional expectation gives almost sure finiteness and the first arrival gives positivity. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#3-the-race).
 :::
 
@@ -233,7 +241,7 @@ finiteness of the appended sums, and `race_reference_isPMF` (`NaturalLatents/Gen
 $`Q` is a strictly positive probability vector. Lean totalizes the reference: it uses $`1+\max(0,V_t)`, and a divergent
 series has value zero, so $`Q` is a positive probability vector at every seed. The mean (R10) is not stated.
 
-:::theorem "R6" (parent := "race") (lean := "NaturalLatents.General.race_logGain_zero, NaturalLatents.General.race_logGain_nonneg, NaturalLatents.General.race_gain_scaling_of_shifted_transform, NaturalLatents.General.race_tailSum_laplace_of_shifted_transform, NaturalLatents.General.race_expected_log_gain_scaling_of_laplace, NaturalLatents.General.race_laplace_gain_scalar_concavity, NaturalLatents.General.race_unit_log_integrable, NaturalLatents.General.race_scalar_log_integrable_of_stable_laplace") (uses := "R1, R2, R5") (tags := "kernel-verified")
+:::theorem "R6" (parent := "race") (lean := "NaturalLatents.General.race_logGain_zero, NaturalLatents.General.race_logGain_nonneg, NaturalLatents.General.race_gain_scaling_of_shifted_transform, NaturalLatents.General.race_tailSum_laplace_of_shifted_transform, NaturalLatents.General.race_expected_log_gain_scaling_of_laplace, NaturalLatents.General.race_laplace_gain_scalar_concavity, NaturalLatents.General.race_unit_log_integrable, NaturalLatents.General.race_scalar_log_integrable_of_stable_laplace") (uses := "R1, R2, R5") (tags := "partly kernel-verified")
 *Lemma R6 (concave gain and absolute log integrability).* Let $`a > 1` and define $`V_t, m_a` by (R9). Then
 $`m_a(0) = 0`, $`0 \le m_a(t) \le t/(a-1)` for $`t \ge 0`, $`m_a` is concave on $`[0,\infty)`, and
 
@@ -248,6 +256,8 @@ $`\mathbb E\lvert\ln S\rvert < \infty`.
 :::
 
 :::proof "R6"
+Lean proves: $`m_a(0)=0`, $`m_a(t)\ge0` for $`t\ge0`, the scaling inequality (R11), and log-integrability of the unit appended mass and of positive measurable variables with the stated stable Laplace transform.
+
 Use the Laplace functional and Frullani identity to obtain concavity; bound the positive and negative logarithmic parts separately. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#3-the-race).
 :::
 
@@ -279,7 +289,7 @@ restriction $`\alpha<1` and keeps measurability, positivity and log-integrabilit
 independent rate-one exponential variable $`E`, the law of $`\ln E-\ln R` is the law of $`(\ln E-\ln c)/\alpha`,
 and the mean follows from the logarithmic integral of (R6); neither (R5) nor integration by parts is used.
 
-:::theorem "R8" (parent := "race") (lean := "NaturalLatents.General.race_gamma_price, NaturalLatents.General.race_unit_log_mean_eq_gammaPriceET, NaturalLatents.General.race_unit_arrival_laplace, NaturalLatents.General.race_gamma_price_of_unit_laplace, NaturalLatents.General.race_superposition_pi_laplace, NaturalLatents.General.race_superposition_clock_append_laplace") (uses := "R1, R3, R6, R7") (tags := "kernel-verified")
+:::theorem "R8" (parent := "race") (lean := "NaturalLatents.General.race_gamma_price, NaturalLatents.General.race_unit_log_mean_eq_gammaPriceET, NaturalLatents.General.race_unit_arrival_laplace, NaturalLatents.General.race_gamma_price_of_unit_laplace, NaturalLatents.General.race_superposition_pi_laplace, NaturalLatents.General.race_superposition_clock_append_laplace") (uses := "R1, R3, R6, R7") (tags := "partly kernel-verified")
 *Lemma R8 (identification of the race price).* Let $`a > 1`, $`\alpha = 1/a`, $`G = \Gamma(1-\alpha)`, and let
 $`S_i, S, J_i` be constructed from a strictly positive probability vector $`\pi` and independent original and appended
 exponential clocks as in (R8). With $`m_a` from (R9),
@@ -293,6 +303,8 @@ $$`
 :::
 
 :::proof "R8"
+Lean proves: $`\mathbb E_{T\sim\mathrm{Exp}(1)}m_a(T)=j(a)` (the third identity of (R19)), the unit appended-mass log mean $`a\gamma_E+\mathrm{gammaPriceET}(a)`, and the unit and superposition Laplace transforms.
+
 Evaluate the power-sum Laplace exponent, multiply the independent transforms, and subtract their log means. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#3-the-race).
 :::
 
@@ -348,10 +360,10 @@ Lean: `race_single_law` (`NaturalLatents/General/ExponentialRace.lean`) states (
 positive rows wherever $`\nu(z)>0`, so $`\nu` may vanish at some atoms; like `exists_race` it is stated in nats, through
 `sharedRaceEntropyNat` and `MINat` (`NaturalLatents/General/Nats.lean`). The Gibbs step (R26) is `race_gibbs_nats` and the averaging (R27) is
 `race_entropy_from_reference`, both in `NaturalLatents/General/RaceTransport.lean`, with the integrability of the
-fixed-seed entropy from `stoch_to_det.SharedRace.integrable_sharedWinner_code`
+fixed-seed entropy from `stoch_to_det.SharedRace.integrable_sharedWinner_code` (from pull request #5 by Satya Benson)
 (`NaturalLatents/Upstream/CoordinateRace.lean`).
 
-:::theorem "R11" (parent := "race") (lean := "NaturalLatents.General.exists_race, NaturalLatents.General.race_of_single_law, NaturalLatents.General.race_map_calibrated, stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound, NaturalLatents.General.race_condMI_transport, NaturalLatents.General.race_condMI_coordinate_sum") (uses := "R10") (tags := "kernel-verified")
+:::theorem "R11" (parent := "race") (lean := "NaturalLatents.General.exists_race, NaturalLatents.General.race_of_single_law, NaturalLatents.General.race_map_calibrated, stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound, NaturalLatents.General.race_condMI_transport, NaturalLatents.General.race_condMI_coordinate_sum") (uses := "R10") (tags := "partly kernel-verified")
 *Lemma R11 (the race bound, with the original clocks on both fibers).* Let $`X, Y, L` be finite random variables, let
 $`Z = (X,Y)`, write $`p(z)=\Pr(Z=z)`, and suppose $`r_z(i) = \Pr(L = i \mid Z = z) > 0` for every $`z` with
 $`p(z) > 0`; then $`\pi_i = \Pr(L = i) = \sum_zp(z)r_z(i) > 0`, since the support of $`p` is nonempty. Let
@@ -368,6 +380,8 @@ with the same calibration and the same $`h`.
 :::
 
 :::proof "R11"
+Lean proves: there exists a finite map-valued `CalibratedSeededFamily` with $`h\le aB+2j(a)d`, and separately identifies the law of a calibrated map-valued seed as the pushforward of the shared Gumbel winner.
+
 Apply the single-source entropy estimate on both coordinate fibers with the same clocks, then pass to the finite map-valued seed. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/race.md#3-the-race).
 :::
 
@@ -376,7 +390,7 @@ Lean: `exists_race` (`NaturalLatents/General/ExponentialRace.lean`): for every f
 $`h\le aB+2j(a)d`. It states existence only: that the
 family is the race map with the original clocks on both fibers is in the proof, not in the statement. The proof is
 `race_of_single_law` (`NaturalLatents/General/RaceTransport.lean`), which takes the family from `race_map_calibrated`,
-conditions Lemma R10 on $`X` and on $`Y` through `stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound`
+conditions Lemma R10 on $`X` and on $`Y` through `stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound` (from pull request #5 by Satya Benson)
 (`NaturalLatents/Upstream/CoordinateRace.lean`), and identifies the two conditional mutual informations with $`B` by
 `race_condMI_transport` and `race_condMI_coordinate_sum`.
 

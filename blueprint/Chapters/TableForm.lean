@@ -18,8 +18,7 @@ The table form.
 This page describes how `NaturalLatents/Main.lean` derives the two propositions of `NaturalLatents/Statement.lean`,
 `TableClaim` and `ScoreClaim`, from the bound in nats $`T(p)\le c\,\tau(p)` that the assembly
 `NaturalLatents.General.T_le_of_connected` (`NaturalLatents/General/Pricing.lean`) proves on connected supports,
-`bits_of_nats` converts to bits and `extension_of_connected` extends to every finite law. It is step 10 of the [route](https://github.com/AlexisOlson/natural-latents/blob/main/docs/overview.md#the-route). **It is a description of
-the formal argument, written directly from the Lean.** Its last section states exactly what the Lean proves about the
+`bits_of_nats` converts to bits and `extension_of_connected` extends to every finite law. It is step 10 of the [route](https://github.com/AlexisOlson/natural-latents/blob/main/docs/overview.md#the-route). This chapter describes the formal argument. Its last section states exactly what the Lean proves about the
 frozen optima and definitions. The bridge files in `NaturalLatents/Upstream/` are adapted from pull request #6 by Jeremy
 Gillen to DLorell/stoch_to_det (see the [upstream page](https://github.com/AlexisOlson/natural-latents/blob/main/docs/upstream.md)). Here $`c=13999/2000`, the constant
 `NaturalLatents.c`.

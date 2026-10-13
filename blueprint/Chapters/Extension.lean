@@ -53,7 +53,7 @@ Splitting at the common component label preserves the two leakage terms and isol
 mutual information. This gives an additive proof for every nonnegative coefficient, with no positivity assumption on the
 resulting value of $`\tau`.
 
-:::theorem "E3.1" (parent := "extension") (lean := "stoch_to_det.ComponentDecomp, stoch_to_det.exists_componentDecomp") (uses := "") (tags := "kernel-verified")
+:::theorem "E3.1" (parent := "extension") (lean := "stoch_to_det.ComponentDecomp, stoch_to_det.exists_componentDecomp") (uses := "") (tags := "partly kernel-verified")
 *Lemma E3.1 (component laws and their common label).* For every probability law $`p` on finite nonempty alphabets
 $`\mathcal X\times\mathcal Y`, let $`S=\mathrm{supp}\,p` and let $`(S_k)_{k\in\mathcal K}` be its connected components
 in the bipartite row-column graph. Put
@@ -71,6 +71,8 @@ $`Z\in S_k`, then $`K` is a function of $`X` alone and of $`Y` alone, almost sur
 :::
 
 :::proof "E3.1"
+Lean proves: every finite probability law admits a `ComponentDecomp` whose nonnegative weights form a probability vector, whose parts are connected probability laws reconstructing $`p`, and whose distinct parts share neither rows nor columns.
+
 Split the row-column support graph into components and normalize each positive component mass; either coordinate determines its component label. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/extension.md#3-the-extension-by-component-split).
 :::
 
@@ -81,7 +83,7 @@ $`p`, such that support cells of two distinct parts share neither a row nor a co
 $`\bar p_k`. The structure allows a zero weight, although the construction in `exists_componentDecomp` makes every
 weight positive, and the label $`K` is the private function `componentIndex`.
 
-:::theorem "E3.2" (parent := "extension") (lean := "_private.NaturalLatents.Upstream.Connected.0.stoch_to_det.restrict_score_gap, _private.NaturalLatents.Upstream.Connected.0.stoch_to_det.glueLatent_score") (uses := "E3.1") (tags := "kernel-verified")
+:::theorem "E3.2" (parent := "extension") (lean := "_private.NaturalLatents.Upstream.Connected.0.stoch_to_det.restrict_score_gap, _private.NaturalLatents.Upstream.Connected.0.stoch_to_det.glueLatent_score") (uses := "E3.1") (tags := "partly kernel-verified")
 *Lemma E3.2 (the three conditional mutual informations split).* For every $`p` and component label $`K` of
 Lemma E3.1, and every finite latent $`L` of $`p`, let $`L^{(k)}` denote the same finite label under the conditional
 joint law given $`K=k`. By (E3.B) it is a finite latent of $`\bar p_k`. Write $`\mathrm{cost}_p(L)=M_L+B_L`. Then
@@ -94,6 +96,8 @@ $$`
 :::
 
 :::proof "E3.2"
+Lean proves: $`\sum_k\rho_k\,\mathrm{score}(L^{(k)})=\mathrm{score}(L)-\sum_i\pi_iH(\mathrm{fiberWeight}_i)` and $`\mathrm{score}(\mathrm{glueLatent})=\sum_k\rho_k\,\mathrm{score}(L_k)` in bits, through the two private declarations in `Connected.lean`.
+
 Apply the entropy chain rule using the component label’s determinism from each coordinate to isolate its conditional entropy. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/extension.md#3-the-extension-by-component-split).
 :::
 
@@ -115,11 +119,11 @@ $$`
 T(p)\le\sum_k\rho_k T(\bar p_k).
 \qquad \text{(E3.F)}
 `
-
-The page and the Lean prove the same two directions, and the extension uses only these.
 :::
 
 :::proof "E3.3"
+The page and the Lean prove the same two directions, and the extension uses only these.
+
 Restrict each stochastic latent to the components and glue minimizing deterministic codes with their component tags. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/extension.md#3-the-extension-by-component-split).
 :::
 

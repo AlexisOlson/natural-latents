@@ -196,7 +196,7 @@ expectation, and conditional identities are asserted only on used symbols. The f
 `stoch_to_det.contactSecantX` and `stoch_to_det.contactSecantY` (`NaturalLatents/Upstream/Floor.lean`), with
 `rootRatioX` defined as `contactSecantX + 1`.
 
-:::theorem "C1.1" (parent := "contact") (lean := "NaturalLatents.General.contact_ratio_mul, NaturalLatents.General.contact_cond_rootRatioY_square, NaturalLatents.General.contact_cond_rootRatioX_square, NaturalLatents.General.contact_rootRatioX_cube, NaturalLatents.General.contact_rootRatioY_cube, NaturalLatents.General.contact_rootRatioX_square, NaturalLatents.General.contact_rootRatioY_square") (uses := "") (tags := "kernel-verified")
+:::theorem "C1.1" (parent := "contact") (lean := "NaturalLatents.General.contact_ratio_mul, NaturalLatents.General.contact_cond_rootRatioY_square, NaturalLatents.General.contact_cond_rootRatioX_square, NaturalLatents.General.contact_rootRatioX_cube, NaturalLatents.General.contact_rootRatioY_cube, NaturalLatents.General.contact_rootRatioX_square, NaturalLatents.General.contact_rootRatioY_square") (uses := "") (tags := "partly kernel-verified")
 *Lemma C1.1 (contact ratios and conditional moments).* For every finite nonempty $`X,Y`, every nonempty
 $`S\subseteq X\times Y` with all rows and columns used, every feasible kernel $`w>0` on $`S`, and every pair of
 positive contacts $`P,R` of $`w`, the fields in (C1.3) satisfy, at every cell of $`S` and every used conditioning
@@ -211,6 +211,8 @@ E_Pf^3=E_Pg^3=1,\qquad E_Pf^2=E_Pg,\quad E_Pg^2=E_Pf.
 :::
 
 :::proof "C1.1"
+Lean proves: $`R=Pf^2g^2`, the two conditional identities, the two cube moments and the two second-moment identities of (C1.4) for distinct positive contacts (`CommonSupportPair`).
+
 Divide the contact equations and sum along rows and columns, using normalization and the conditional expectation tower rule. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/contact.md#1-contact-moments-and-the-feasible-hessian).
 :::
 
@@ -220,7 +222,7 @@ Lean: `contact_ratio_mul` (the ratio identity, stated as $`R=Pf^2g^2` at every c
 $`P\ne R`. The proof above uses neither feasibility nor distinctness; the stated lemma retains feasibility to match the
 common contact domain.
 
-:::theorem "C1.2" (parent := "contact") (lean := "NaturalLatents.General.contact_energy_identities, NaturalLatents.General.contact_quartic_identity, NaturalLatents.General.contact_separation, NaturalLatents.General.contact_upper_separation, NaturalLatents.General.pairCharge_separation_reverse") (uses := "C1.1") (tags := "kernel-verified")
+:::theorem "C1.2" (parent := "contact") (lean := "NaturalLatents.General.contact_energy_identities, NaturalLatents.General.contact_quartic_identity, NaturalLatents.General.contact_separation, NaturalLatents.General.contact_upper_separation, NaturalLatents.General.pairCharge_separation_reverse") (uses := "C1.1") (tags := "partly kernel-verified")
 *Lemma C1.2 (separation and the quartic moment list).* For every finite nonempty $`X,Y`, every nonempty common
 support $`S` with all rows and columns used, every feasible $`w>0` on $`S`, and every pair of positive contacts
 $`P,R`, the quantities in (C1.3) satisfy
@@ -236,6 +238,8 @@ If $`P\ne R`, then $`0<s<2`. If $`P=R`, then $`f=g=1` and $`s=J=0`.
 :::
 
 :::proof "C1.2"
+Lean proves: the energy and quartic identities of (C1.9), $`s<2`, and, for distinct positive contacts, $`s>0` and $`s(P,R)=s(R,P)`.
+
 Apply strict Jensen for separation, expand the quadratic and quartic moments, and change measure for reversal symmetry. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/contact.md#1-contact-moments-and-the-feasible-hessian).
 :::
 
@@ -254,7 +258,7 @@ nonnegativity of $`f,g` with positivity wherever $`P` is positive. Neither the e
 feasibility. The equal-pair conclusions are not collected into a separate Lean statement, and $`A_0,B_0\ge0` is not
 stated separately, though it follows from the two energy identities.
 
-:::theorem "C1.3" (parent := "contact") (lean := "stoch_to_det.contact_hypercontractive, NaturalLatents.General.contact_hessian_cube_test") (uses := "") (tags := "kernel-verified")
+:::theorem "C1.3" (parent := "contact") (lean := "stoch_to_det.contact_hypercontractive, NaturalLatents.General.contact_hessian_cube_test") (uses := "") (tags := "partly kernel-verified")
 *Lemma C1.3 (feasibility for nonnegative marginal fields).* For every finite nonempty $`X,Y`, every nonempty
 $`S\subseteq X\times Y` with all rows and columns used, every feasible $`w>0` on $`S`, every positive contact $`P` of
 $`w`, and every pair of fields $`A:X\to[0,\infty)`, $`B:Y\to[0,\infty)`,
@@ -266,6 +270,8 @@ E_P[A(X)^2B(Y)^2]\leq(E_PA^3)^{2/3}(E_PB^3)^{2/3}.
 :::
 
 :::proof "C1.3"
+Lean proves: $`E_P[FG]\le(E_PF^{3/2})^{2/3}(E_PG^{3/2})^{2/3}` for nonnegative marginal fields $`F,G` (`contact_hypercontractive`), whose $`F=A^2,G=B^2` specialization gives (C1.15).
+
 Handle a zero normalizer separately, then insert the normalized cubed marginal fields into feasibility. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/contact.md#1-contact-moments-and-the-feasible-hessian).
 :::
 

@@ -40,7 +40,7 @@ probability vectors and $`c` is their Bhattacharyya coefficient, not the race ex
 
 # 5. The mismatch payment
 
-:::theorem "P5.1" (parent := "payment") (lean := "NaturalLatents.General.payment_pairMass_comm, NaturalLatents.General.payment_pairMass_rows, NaturalLatents.General.payment_pairMass_nonneg, NaturalLatents.General.payment_condMI_KL, NaturalLatents.General.payment_midpoint_profile, NaturalLatents.General.payment_pairMass_pos") (uses := "Q3.1") (tags := "kernel-verified")
+:::theorem "P5.1" (parent := "payment") (lean := "NaturalLatents.General.payment_pairMass_comm, NaturalLatents.General.payment_pairMass_rows, NaturalLatents.General.payment_pairMass_nonneg, NaturalLatents.General.payment_condMI_KL, NaturalLatents.General.payment_midpoint_profile, NaturalLatents.General.payment_pairMass_pos") (uses := "Q3.1") (tags := "partly kernel-verified")
 *Lemma P5.1 (replica symmetry and the relative-entropy profile).* Let
 $`p=\sum_i \pi_i q_i` be any finite latent with positive priors, and construct the
 replicas by (Q3.2). Put $`\mu_{ij}=\Pr(L_1=i,L_2=j)` and
@@ -85,6 +85,8 @@ I(L_2;Y\mid L_1)
 :::
 
 :::proof "P5.1"
+Lean proves: symmetry, nonnegativity and row sums $`\sum_j\mu_{ij}=\pi_i` of the pair masses, the first relative-entropy expression of (P5.2) when every pair mass is positive, and the resulting midpoint-profile inequality under replica symmetry.
+
 Expand the posterior pair masses and conditional relative entropies, then interchange the replica labels and average. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/payment.md#5-the-mismatch-payment).
 :::
 
@@ -95,7 +97,7 @@ positive, and the symmetrization is a step inside `payment_midpoint_profile`. Le
 $`\Omega`: on the setup latent every posterior is positive, so every $`\mu_{ij}` is positive (`payment_pairMass_pos`) and
 $`\Omega` contains every pair.
 
-:::theorem "P5.2" (parent := "payment") (lean := "stoch_to_det.bhattacharyya_le") (uses := "") (tags := "kernel-verified")
+:::theorem "P5.2" (parent := "payment") (lean := "stoch_to_det.bhattacharyya_le") (uses := "") (tags := "partly kernel-verified")
 *Lemma P5.2 (normalized midpoint; Gibbs' inequality).* Let $`a,b,t` be
 probability vectors on a finite nonempty set, with $`a_x>0` and $`b_x>0` wherever
 $`t_x>0`. Put $`c=BC(a,b)=\sum_x \sqrt{\smash[b]{a_x b_x}}` and $`v_x=\sqrt{\smash[b]{a_x b_x}}/c`.
@@ -123,6 +125,8 @@ $$`
 :::
 
 :::proof "P5.2"
+Lean proves: $`-2\log_2BC(a,b)\le D_2(t\Vert a)+D_2(t\Vert b)` under absolute continuity of $`t` with respect to both $`a` and $`b`, the bit-valued inequality of (P5.4).
+
 Normalize the geometric midpoint, expand its relative entropy, and apply the finite Gibbs inequality. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/payment.md#5-the-mismatch-payment).
 :::
 
@@ -130,7 +134,7 @@ Lean: `stoch_to_det.bhattacharyya_le` (`NaturalLatents/Upstream/Toolkit.lean`) s
 $`-2\log_2BC(a,b)\le D_2(t\Vert a)+D_2(t\Vert b)` with $`D_2` the relative entropy in bits, under absolute continuity
 of $`t` with respect to $`a` and $`b`; the reference $`v` and the identity (P5.3) appear only inside its proof.
 
-:::theorem "P5.3" (parent := "payment") (lean := "NaturalLatents.General.payment_profile_payment, NaturalLatents.General.payment_coordinate_payment, NaturalLatents.General.payment_midpoint_profile, NaturalLatents.General.payment_bhattacharyya_self") (uses := "P5.1, P5.2, A2.2") (tags := "kernel-verified")
+:::theorem "P5.3" (parent := "payment") (lean := "NaturalLatents.General.payment_profile_payment, NaturalLatents.General.payment_coordinate_payment, NaturalLatents.General.payment_midpoint_profile, NaturalLatents.General.payment_bhattacharyya_self") (uses := "P5.1, P5.2, A2.2") (tags := "partly kernel-verified")
 *Lemma P5.3 (separation-profile payment).* Let $`X,Y,L` be finite random
 variables with latent decomposition $`p=\sum_i\pi_iq_i`, positive priors and
 distinct components that are positive contacts of one feasible kernel on a
@@ -148,6 +152,8 @@ K\ge\sum_{\substack{(i,j)\in\Omega\\i\ne j}}
 :::
 
 :::proof "P5.3"
+Lean proves: $`\sum_{i\ne j}\mu_{ij}\Psi(s_{ij})\le K` for the setup latent under the distinct-pair affinity hypothesis, the coordinate midpoint-profile inequalities, and $`BC(q_i,q_i)=1`.
+
 Delete the nonnegative diagonal relative entropy terms, apply the midpoint inequality, and then use the affinity bound. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/payment.md#5-the-mismatch-payment).
 :::
 
@@ -157,7 +163,7 @@ time) and `payment_midpoint_profile` (the sum over all pairs of (P5.4)); the mid
 inside its proof. Lean keeps the diagonal pairs and applies (P5.4) to them too, where $`-\ln BC(q_i,q_i)=0`
 (`payment_bhattacharyya_self`), instead of deleting the diagonal relative-entropy summands.
 
-:::theorem "P5.4" (parent := "payment") (lean := "NaturalLatents.General.payment_mismatch, NaturalLatents.General.payment_mediation_average, NaturalLatents.General.payment_information_payment") (uses := "P5.1") (tags := "kernel-verified")
+:::theorem "P5.4" (parent := "payment") (lean := "NaturalLatents.General.payment_mismatch, NaturalLatents.General.payment_mediation_average, NaturalLatents.General.payment_information_payment") (uses := "P5.1") (tags := "partly kernel-verified")
 *Lemma P5.4 (mismatch mass and the exact information sum).* For every finite
 latent $`p=\sum_i \pi_i q_i` with positive priors and replicas (Q3.2), with $`d` as in (D3) and $`I(q_i)` as in (D2),
 
@@ -189,6 +195,8 @@ $$`
 :::
 
 :::proof "P5.4"
+Lean proves: $`d=\sum_i\sum_{j\ne i}\mu_{ij}`, $`M=\sum_i\pi_iI(q_i)`, and $`\sum_{i\ne j}\mu_{ij}(I(q_i)+I(q_j))/2\le M`.
+
 Expand the finite posterior square sum and use symmetric pair-mass row sums with nonnegative component information. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/payment.md#5-the-mismatch-payment).
 :::
 

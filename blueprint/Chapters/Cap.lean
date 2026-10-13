@@ -47,7 +47,7 @@ below are in the namespace `NaturalLatents.General`, in `NaturalLatents/General/
 
 # 4. The universal cap
 
-:::theorem "K12" (parent := "cap") (lean := "NaturalLatents.General.gamma_hasSum_product_remainder, NaturalLatents.General.gammaPriceCap_log_remainder_hasSum, NaturalLatents.General.cap_midpoint_three, NaturalLatents.General.cap_tail_three, NaturalLatents.General.cap_telescope_bound, NaturalLatents.General.cap_telescope_strict") (uses := "") (tags := "kernel-verified")
+:::theorem "K12" (parent := "cap") (lean := "NaturalLatents.General.gamma_hasSum_product_remainder, NaturalLatents.General.gammaPriceCap_log_remainder_hasSum, NaturalLatents.General.cap_midpoint_three, NaturalLatents.General.cap_tail_three, NaturalLatents.General.cap_telescope_bound, NaturalLatents.General.cap_telescope_strict") (uses := "") (tags := "partly kernel-verified")
 *Lemma K12 (log-Gamma series and strict midpoint bounds).* For $`0 < y < 1` and every $`a > 1`,
 respectively,
 
@@ -68,6 +68,8 @@ $$`
 :::
 
 :::proof "K12"
+Lean proves: $`\ln\Gamma(1-y)-\gamma_Ey=\sum_{n\ge1}[-\ln(1-y/n)-y/n]` for $`y<1`, $`-\ln(1-x)-x=\sum_{k\ge2}x^k/k` for $`0\le x<1`, $`x^{-3}<\frac12(x-1/2)^{-2}-\frac12(x+1/2)^{-2}` for $`x\ge1`, and $`\sum_{n\ge3}n^{-3}<2/25`.
+
 Expand log Gamma and the logarithm series; strict convexity on midpoint intervals bounds the zeta tail. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/cap.md#4-the-universal-cap).
 :::
 

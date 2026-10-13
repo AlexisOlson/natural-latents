@@ -129,7 +129,7 @@ Lean: `score_nats` (`NaturalLatents/General/Definitions.lean`), with `mediation_
 (`NaturalLatents/Upstream/Envelope.lean`), score $`=\Psi(p)-\sum_i\pi_i\Phi(q_i)`, by `nats`, rather than expanding
 the entropies as above.
 
-:::theorem "S1.2" (parent := "setup") (lean := "stoch_to_det.exists_tau_optimal_latent, stoch_to_det.tau_eq_Psi_sub_envelope, stoch_to_det.exists_common_contact_pair") (uses := "S1.1") (tags := "kernel-verified")
+:::theorem "S1.2" (parent := "setup") (lean := "stoch_to_det.exists_tau_optimal_latent, stoch_to_det.tau_eq_Psi_sub_envelope, stoch_to_det.exists_common_contact_pair") (uses := "S1.1") (tags := "partly kernel-verified")
 *Lemma S1.2 (attainment and a finite affine minorant).* For every finite nonempty $`X,Y` and every probability law
 $`p` on $`X\times Y`, there are a finite latent decomposition of $`p`, positive priors $`\pi_i`, pairwise distinct
 component laws $`q_i` supported on $`S=\mathrm{supp}\,p`, and a real vector $`\ell` on the whole rectangle, such
@@ -148,6 +148,8 @@ over finite mixtures in $`\Delta_S` with barycenter $`p`, attained in the proof 
 :::
 
 :::proof "S1.2"
+Lean proves: every finite law has an attaining latent and $`\tau=\Psi-\mathrm{concaveEnvelopePhi}` in bits, and an attaining latent with a common feasible kernel whose positive-prior components are contacts.
+
 Use compactness and Carathéodory for attainment, merge equal components, and obtain the minorant by a supporting hyperplane on the support face. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/setup.md#1-the-setup-on-a-connected-support).
 :::
 
@@ -180,7 +182,7 @@ from the page in five ways:
 - *The equality case.* The zero gaps (S1.N) are proved for an arbitrary optimal latent given by
   `exists_tau_optimal_latent`, not for the latent built in the proof.
 
-:::theorem "S1.3" (parent := "setup") (lean := "stoch_to_det.exists_common_contact_pair, stoch_to_det.exists_seedSetup, stoch_to_det.Gdef_nonneg") (uses := "S1.2") (tags := "kernel-verified")
+:::theorem "S1.3" (parent := "setup") (lean := "stoch_to_det.exists_common_contact_pair, stoch_to_det.exists_seedSetup, stoch_to_det.Gdef_nonneg") (uses := "S1.2") (tags := "partly kernel-verified")
 *Lemma S1.3 (normalization gives one feasible kernel and its contacts).* For every finite nonempty $`X,Y`, every
 probability law $`p` on $`X\times Y`, and every vector $`\ell` and optimal latent furnished by Lemma S1.2, the masked
 kernel, defined by the two cases on and off the support,
@@ -199,6 +201,8 @@ $`q\in\Delta_S`, equality $`\phi(q)=\ell\cdot q` holds if and only if $`q` is a 
 :::
 
 :::proof "S1.3"
+Lean proves: an attaining latent has a common feasible kernel with contacts at positive-prior labels, connected support admits a positive-prior `SeedSetup`, and $`Gdef\ge0` for every supported probability law.
+
 Normalize the exponential kernel and use Gibbs inequality to prove feasibility and identify the zero-gap contacts. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/setup.md#1-the-setup-on-a-connected-support).
 :::
 

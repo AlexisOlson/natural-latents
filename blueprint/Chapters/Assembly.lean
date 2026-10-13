@@ -92,7 +92,7 @@ termwise substitution is displayed in section 5 of the [cap page](https://github
 Lean: `racePrice_lt_capC3b` at `211/45` followed by `norm_num [gammaPriceCap]` inside `T_le_of_connected`, the step
 `hj`.
 
-:::theorem "M5.4" (parent := "assembly") (lean := "NaturalLatents.General.T_le_of_connected") (uses := "S1.4, L4.1, R11, K13, A2.2, Q3.1, P5.5, PC5.3, M5.1") (tags := "kernel-verified")
+:::theorem "M5.4" (parent := "assembly") (lean := "NaturalLatents.General.T_le_of_connected") (uses := "S1.4, L4.1, R11, K13, A2.2, Q3.1, P5.5, PC5.3, M5.1") (tags := "partly kernel-verified")
 *Lemma M5.4 (the specialization).* For every finite law with connected support, satisfying the setup, ledger, race,
 payment and cap inputs, the pair charge $`PC(23/250,7/60)` gives
 
@@ -115,6 +115,8 @@ T(p)&\le\frac{13999}{2000}\,\tau(p).
 :::
 
 :::proof "M5.4"
+Lean proves: $`T(p)\le(13999/2000)\tau(p)` in nats for every finite probability law with connected support.
+
 Evaluate the cap at the selected exponent and compute both pricing coefficients exactly, then use their positive margins below the stated constant. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/assembly.md#5-the-pricing).
 :::
 

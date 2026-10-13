@@ -31,7 +31,7 @@ sums range over positive-probability conditioning events, and nonnegativity of c
 inequality. The budgets $`M`, $`B` of (Q3.1) are those of (D3); the remainders $`C` and $`N` of (Q3.3) are local to
 this page, and $`C` is not the constant of the theorem.
 
-:::theorem "Q3.1" (parent := "replica") (lean := "NaturalLatents.General.replica_budget, NaturalLatents.General.replica_total_chain_bound, NaturalLatents.General.replica_replica_markov, NaturalLatents.General.replica_push_first, NaturalLatents.General.replica_push_second") (uses := "") (tags := "kernel-verified")
+:::theorem "Q3.1" (parent := "replica") (lean := "NaturalLatents.General.replica_budget, NaturalLatents.General.replica_total_chain_bound, NaturalLatents.General.replica_replica_markov, NaturalLatents.General.replica_push_first, NaturalLatents.General.replica_push_second") (uses := "") (tags := "partly kernel-verified")
 *Lemma Q3.1 (exact replica budget; the mutual-information chain rule).* Let $`X,Y,L` be random variables on finite
 nonempty alphabets, let $`Z=(X,Y)`, write $`p(z)=\Pr(Z=z)` for its law, and put
 
@@ -63,6 +63,8 @@ Then $`K=2M+B-C-2N`, and hence $`K\le2M+B`.
 :::
 
 :::proof "Q3.1"
+Lean proves: $`K\le2M+B`, $`I(L_1;L_2\mid Z)=0`, and equality of each replica source-label marginal with the original latent joint law.
+
 Expand the mutual information chain rule in two orders on both coordinates, use replica conditional independence, and discard the nonnegative remainders. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/replica.md#3-the-replica-budget).
 :::
 

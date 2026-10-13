@@ -18,3 +18,9 @@ export flag to the cached MD4Lean configuration at its pinned revision; Linux an
 The site is written to `blueprint/_out/site/html-multi/index.html`. Dependency updates belong to this nested package;
 the root manifest and toolchain stay fixed. CI builds and checks the blueprint on pushes and pull requests; publishing
 it to Pages is a separate, manually dispatched workflow job.
+
+Node tags describe the scope of the cited declaration names:
+
+- `kernel-verified`: the cited Lean declarations together prove the whole statement.
+- `partly kernel-verified`: the cited Lean declarations prove only the scope named at the start of the proof.
+- `paper proof`: the node has no cited Lean declaration and relies on the paper proof.
