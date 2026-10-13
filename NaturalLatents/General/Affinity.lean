@@ -161,117 +161,29 @@ lemma affinity_row_X {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) (x : X) :
     stoch_to_det.mX P x * (Real.sqrt (f P R x) - 1)^2 ≤
       ∑ y, P (x,y) * (g P R y - 1)^2 := by
-<<<<<<< HEAD
-  rw [contact_mX_eq_sum]
+  rw [stoch_to_det.mX_eq_sum]
   apply affinity_row (fun y => P (x, y)) (g P R) (f P R x) (x ∈ XSupport S)
     (fun y => hpair.2.1.1.nonneg (x, y))
-  · simpa only [← contact_mX_eq_sum P x] using contact_mem_XSupport_of_mX_pos hpair.2.1
+  · simpa only [← stoch_to_det.mX_eq_sum P x] using contact_mem_XSupport_of_mX_pos hpair.2.1
   · exact contact_f_pos hpair
   · intro hx
-    rw [← contact_mX_eq_sum P x]
+    rw [← stoch_to_det.mX_eq_sum P x]
     simpa only [mul_comm] using
       (div_eq_iff (contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx).ne').mp (hmoments.cond_g2 x hx)
-||||||| merged common ancestors
-  by_cases hx : x ∈ XSupport S
-  · have hm := contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx
-    have hsecond : (∑ y, P (x,y) * (g P R y)^2) =
-        (∑ y, P (x,y)) * f P R x := by
-      rw [← contact_mX_eq_sum P x]
-      have he := (div_eq_iff hm.ne').mp (hmoments.cond_g2 x hx)
-      simpa only [mul_comm] using he
-    simpa only [← contact_mX_eq_sum P x] using
-      affinity_conditional_square (fun y => P (x,y)) (g P R) (f P R x)
-        (fun y => hpair.2.1.1.nonneg (x,y))
-        (by simpa only [← contact_mX_eq_sum P x] using hm) (contact_f_pos hpair hx) hsecond
-  · have hm : stoch_to_det.mX P x = 0 := by
-      rw [contact_mX_eq_sum]
-      apply Finset.sum_eq_zero
-      intro y _
-      apply hpair.2.1.2.1
-      intro hz
-      exact hx (Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩)
-    rw [hm, zero_mul]
-    exact Finset.sum_nonneg (fun y _ => mul_nonneg (hpair.2.1.1.nonneg (x,y)) (sq_nonneg _))
-=======
-  by_cases hx : x ∈ XSupport S
-  · have hm := contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx
-    have hsecond : (∑ y, P (x,y) * (g P R y)^2) =
-        (∑ y, P (x,y)) * f P R x := by
-      rw [← stoch_to_det.mX_eq_sum P x]
-      have he := (div_eq_iff hm.ne').mp (hmoments.cond_g2 x hx)
-      simpa only [mul_comm] using he
-    simpa only [← stoch_to_det.mX_eq_sum P x] using
-      affinity_conditional_square (fun y => P (x,y)) (g P R) (f P R x)
-        (fun y => hpair.2.1.1.nonneg (x,y))
-        (by simpa only [← stoch_to_det.mX_eq_sum P x] using hm) (contact_f_pos hpair hx) hsecond
-  · have hm : stoch_to_det.mX P x = 0 := by
-      rw [stoch_to_det.mX_eq_sum]
-      apply Finset.sum_eq_zero
-      intro y _
-      apply hpair.2.1.2.1
-      intro hz
-      exact hx (Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩)
-    rw [hm, zero_mul]
-    exact Finset.sum_nonneg (fun y _ => mul_nonneg (hpair.2.1.1.nonneg (x,y)) (sq_nonneg _))
->>>>>>> lane/cleanup-low
 
 lemma affinity_row_Y {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) (y : Y) :
     stoch_to_det.mY P y * (Real.sqrt (g P R y) - 1)^2 ≤
       ∑ x, P (x,y) * (f P R x - 1)^2 := by
-<<<<<<< HEAD
-  rw [contact_mY_eq_sum]
+  rw [stoch_to_det.mY_eq_sum]
   apply affinity_row (fun x => P (x, y)) (f P R) (g P R y) (y ∈ YSupport S)
     (fun x => hpair.2.1.1.nonneg (x, y))
-  · simpa only [← contact_mY_eq_sum P y] using contact_mem_YSupport_of_mY_pos hpair.2.1
+  · simpa only [← stoch_to_det.mY_eq_sum P y] using contact_mem_YSupport_of_mY_pos hpair.2.1
   · exact contact_g_pos hpair
   · intro hy
-    rw [← contact_mY_eq_sum P y]
+    rw [← stoch_to_det.mY_eq_sum P y]
     simpa only [mul_comm] using
       (div_eq_iff (contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy).ne').mp (hmoments.cond_f2 y hy)
-||||||| merged common ancestors
-  by_cases hy : y ∈ YSupport S
-  · have hm := contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy
-    have hsecond : (∑ x, P (x,y) * (f P R x)^2) =
-        (∑ x, P (x,y)) * g P R y := by
-      rw [← contact_mY_eq_sum P y]
-      have he := (div_eq_iff hm.ne').mp (hmoments.cond_f2 y hy)
-      simpa only [mul_comm] using he
-    simpa only [← contact_mY_eq_sum P y] using
-      affinity_conditional_square (fun x => P (x,y)) (f P R) (g P R y)
-        (fun x => hpair.2.1.1.nonneg (x,y))
-        (by simpa only [← contact_mY_eq_sum P y] using hm) (contact_g_pos hpair hy) hsecond
-  · have hm : stoch_to_det.mY P y = 0 := by
-      rw [contact_mY_eq_sum]
-      apply Finset.sum_eq_zero
-      intro x _
-      apply hpair.2.1.2.1
-      intro hz
-      exact hy (Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩)
-    rw [hm, zero_mul]
-    exact Finset.sum_nonneg (fun x _ => mul_nonneg (hpair.2.1.1.nonneg (x,y)) (sq_nonneg _))
-=======
-  by_cases hy : y ∈ YSupport S
-  · have hm := contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy
-    have hsecond : (∑ x, P (x,y) * (f P R x)^2) =
-        (∑ x, P (x,y)) * g P R y := by
-      rw [← stoch_to_det.mY_eq_sum P y]
-      have he := (div_eq_iff hm.ne').mp (hmoments.cond_f2 y hy)
-      simpa only [mul_comm] using he
-    simpa only [← stoch_to_det.mY_eq_sum P y] using
-      affinity_conditional_square (fun x => P (x,y)) (f P R) (g P R y)
-        (fun x => hpair.2.1.1.nonneg (x,y))
-        (by simpa only [← stoch_to_det.mY_eq_sum P y] using hm) (contact_g_pos hpair hy) hsecond
-  · have hm : stoch_to_det.mY P y = 0 := by
-      rw [stoch_to_det.mY_eq_sum]
-      apply Finset.sum_eq_zero
-      intro x _
-      apply hpair.2.1.2.1
-      intro hz
-      exact hy (Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩)
-    rw [hm, zero_mul]
-    exact Finset.sum_nonneg (fun x _ => mul_nonneg (hpair.2.1.1.nonneg (x,y)) (sq_nonneg _))
->>>>>>> lane/cleanup-low
 
 lemma affinity_BC_X_le {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) :
@@ -339,10 +251,10 @@ lemma affinity_affinities_pos {S : Finset (X × Y)} {w P R : Law X Y}
     linarith
   obtain ⟨z, hz⟩ := hexists
   have hx : z.1 ∈ XSupport S := contact_mem_XSupport_of_mX_pos hpair.2.1 <| hz.trans_le <| by
-    rw [contact_mX_eq_sum]
+    rw [stoch_to_det.mX_eq_sum]
     exact Finset.single_le_sum (fun y _ => hpair.2.1.1.nonneg (z.1, y)) (Finset.mem_univ z.2)
   have hy : z.2 ∈ YSupport S := contact_mem_YSupport_of_mY_pos hpair.2.1 <| hz.trans_le <| by
-    rw [contact_mY_eq_sum]
+    rw [stoch_to_det.mY_eq_sum]
     exact Finset.single_le_sum (fun x _ => hpair.2.1.1.nonneg (x, z.2)) (Finset.mem_univ z.1)
   constructor
   · have ht : 0 < Real.sqrt (stoch_to_det.mX P z.1 * stoch_to_det.mX R z.1) :=

@@ -1748,7 +1748,7 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
     by_cases hv : L.prior v = 0
     · simp [hv]
     · exact mul_nonneg (L.prior_isPMF.nonneg v)
-        (Gdef_nonneg_aux hw (L.comp_isPMF v) (hcompS v hv))
+        (Gdef_nonneg hw (L.comp_isPMF v) (hcompS v hv))
   refine ⟨L, w, hw, hLopt, ?_⟩
   intro v hv
   have htermZero :

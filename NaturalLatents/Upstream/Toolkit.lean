@@ -57,56 +57,7 @@ omit [DecidableEq ω] in
 /-- Finite Gibbs inequality for the bits-valued `KL`. -/
 private lemma KL_nonneg {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
     (hac : AbsCont P Q) : 0 ≤ KL P Q := by
-<<<<<<< HEAD
   have hnats := gibbs_nonneg hP hQ (fun a hPa hQa => hPa (hac a hQa))
-||||||| merged common ancestors
-  have hterm : ∀ a : ω, P a - Q a ≤ P a * Real.log (P a / Q a) := by
-    intro a
-    by_cases hPa : P a = 0
-    · simp [hPa, hQ.nonneg a]
-    · have hPa_pos : 0 < P a := lt_of_le_of_ne (hP.nonneg a) (Ne.symm hPa)
-      have hQa : Q a ≠ 0 := fun h ↦ hPa (hac a h)
-      have hQa_pos : 0 < Q a := lt_of_le_of_ne (hQ.nonneg a) (Ne.symm hQa)
-      have hlog := Real.log_le_sub_one_of_pos (div_pos hQa_pos hPa_pos)
-      have hmul := mul_le_mul_of_nonneg_left hlog hPa_pos.le
-      have hlog_eq : Real.log (Q a / P a) = -Real.log (P a / Q a) := by
-        rw [Real.log_div hQa hPa, Real.log_div hPa hQa]
-        ring
-      calc
-        P a - Q a = -(Q a - P a) := by ring
-        _ = -(P a * (Q a / P a - 1)) := by field_simp
-        _ ≤ -(P a * Real.log (Q a / P a)) := neg_le_neg hmul
-        _ = P a * Real.log (P a / Q a) := by rw [hlog_eq]; ring
-  have hnats : 0 ≤ ∑ a, P a * Real.log (P a / Q a) := by
-    calc
-      0 = ∑ a, (P a - Q a) := by
-        rw [sum_sub_distrib, ← mass, ← mass, hP.total, hQ.total]
-        norm_num
-      _ ≤ ∑ a, P a * Real.log (P a / Q a) := sum_le_sum fun a _ ↦ hterm a
-=======
-  have hterm : ∀ a : ω, P a - Q a ≤ P a * Real.log (P a / Q a) := by
-    intro a
-    by_cases hPa : P a = 0
-    · simp [hPa, hQ.nonneg a]
-    · have hPa_pos : 0 < P a := lt_of_le_of_ne (hP.nonneg a) (Ne.symm hPa)
-      have hQa_pos : 0 < Q a := absCont_pos hQ hac hPa
-      have hlog := Real.log_le_sub_one_of_pos (div_pos hQa_pos hPa_pos)
-      have hmul := mul_le_mul_of_nonneg_left hlog hPa_pos.le
-      have hlog_eq : Real.log (Q a / P a) = -Real.log (P a / Q a) := by
-        rw [Real.log_div hQa_pos.ne' hPa, Real.log_div hPa hQa_pos.ne']
-        ring
-      calc
-        P a - Q a = -(Q a - P a) := by ring
-        _ = -(P a * (Q a / P a - 1)) := by field_simp
-        _ ≤ -(P a * Real.log (Q a / P a)) := neg_le_neg hmul
-        _ = P a * Real.log (P a / Q a) := by rw [hlog_eq]; ring
-  have hnats : 0 ≤ ∑ a, P a * Real.log (P a / Q a) := by
-    calc
-      0 = ∑ a, (P a - Q a) := by
-        rw [sum_sub_distrib, ← mass, ← mass, hP.total, hQ.total]
-        norm_num
-      _ ≤ ∑ a, P a * Real.log (P a / Q a) := sum_le_sum fun a _ ↦ hterm a
->>>>>>> lane/cleanup-low
   rw [KL]
   change 0 ≤ ∑ a, P a * (Real.log (P a / Q a) / Real.log 2)
   simp_rw [← mul_div_assoc]

@@ -347,17 +347,6 @@ noncomputable def condMI (f : α → γ) (g : α → δ) (h : α → ε) (m : α
 
 /-! #### Basic properties -/
 
-<<<<<<< HEAD
-||||||| merged common ancestors
-/-- Re-encoding a random variable by an equivalence preserves its entropy. -/
-lemma Hvar_equiv {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (e : γ ≃ δ) :
-    Hvar (fun a => e (f a)) m = Hvar f m := by
-  unfold Hvar
-  change H (push (e ∘ f) m) = H (push f m)
-  rw [← push_push f e m]
-  exact H_push_equiv e (push f m) (isPMF_push hm)
-
-=======
 theorem condMI_push_source
     {Ω Ω' K D E : Type*} [Fintype Ω] [Fintype Ω'] [DecidableEq Ω']
     [Fintype K] [DecidableEq K] [Fintype D] [DecidableEq D]
@@ -367,15 +356,6 @@ theorem condMI_push_source
     condMI a b c (push e m) = condMI (a ∘ e) (b ∘ e) (c ∘ e) m := by
   simp only [condMI, Hvar, push_push, Function.comp_def]
 
-/-- Re-encoding a random variable by an equivalence preserves its entropy. -/
-lemma Hvar_equiv {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (e : γ ≃ δ) :
-    Hvar (fun a => e (f a)) m = Hvar f m := by
-  unfold Hvar
-  change H (push (e ∘ f) m) = H (push f m)
-  rw [← push_push f e m]
-  exact H_push_equiv e (push f m) (isPMF_push hm)
-
->>>>>>> lane/cleanup-low
 /-- Entropy cannot increase after applying a deterministic function. -/
 lemma Hvar_comp_le {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (u : γ → δ) :
     Hvar (u ∘ f) m ≤ Hvar f m := by
