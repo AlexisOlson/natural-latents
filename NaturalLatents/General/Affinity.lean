@@ -76,15 +76,6 @@ lemma affinity_conditional_square {ι : Type} [Fintype ι] (q G : ι → ℝ) (a
   have hsweight := congrArg (fun t => (∑ i, q i) * t) hs
   nlinarith only [hraw, hsweight]
 
-lemma affinity_sqrt_cube (p a r : ℝ) (hp : 0 ≤ p) (ha : 0 ≤ a)
-    (hcube : p * a^3 = r) : Real.sqrt (p * r) = p * a * Real.sqrt a := by
-  have hs : (p * a * Real.sqrt a)^2 = p * r := by
-    calc
-      (p * a * Real.sqrt a)^2 = p^2 * a^2 * (Real.sqrt a)^2 := by ring
-      _ = p * (p * a^3) := by rw [Real.sq_sqrt ha]; ring
-      _ = p * r := by rw [hcube]
-  rw [← hs, Real.sqrt_sq (mul_nonneg (mul_nonneg hp ha) (Real.sqrt_nonneg a))]
-
 /-- A finite marginal form of the Hellinger comparison; `D` is the unnormalized conditional energy. -/
 lemma affinity_marginal_affinity {ι : Type} [Fintype ι]
     (p r F D : ι → ℝ) (t : ℝ)
@@ -97,7 +88,15 @@ lemma affinity_marginal_affinity {ι : Type} [Fintype ι]
     stoch_to_det.BC p r ≤ b t := by
   have hBC : stoch_to_det.BC p r = ∑ i, p i * F i * Real.sqrt (F i) := by
     unfold stoch_to_det.BC
-    exact Finset.sum_congr rfl (fun i _ => affinity_sqrt_cube (p i) (F i) (r i) (hp.nonneg i) (hF i) (hcube i))
+    apply Finset.sum_congr rfl
+    intro i _
+    have hs : (p i * F i * Real.sqrt (F i))^2 = p i * r i := by
+      calc
+        _ = (p i)^2 * (F i)^2 * (Real.sqrt (F i))^2 := by ring
+        _ = p i * (p i * (F i)^3) := by rw [Real.sq_sqrt (hF i)]; ring
+        _ = p i * r i := by rw [hcube i]
+    rw [← hs, Real.sqrt_sq (mul_nonneg (mul_nonneg (hp.nonneg i) (hF i))
+      (Real.sqrt_nonneg (F i)))]
   have henergy : (∑ i, p i * (F i * Real.sqrt (F i) - 1)^2) =
       2 - 2 * stoch_to_det.BC p r := by
     have hexpand : (∑ i, p i * (F i * Real.sqrt (F i) - 1)^2) =
@@ -256,17 +255,15 @@ lemma affinity_affinities_pos {S : Finset (X × Y)} {w P R : Law X Y}
   have hy : z.2 ∈ YSupport S := contact_mem_YSupport_of_mY_pos hpair.2.1 <| hz.trans_le <| by
     rw [stoch_to_det.mY_eq_sum]
     exact Finset.single_le_sum (fun x _ => hpair.2.1.1.nonneg (x, z.2)) (Finset.mem_univ z.1)
-  constructor
-  · have ht : 0 < Real.sqrt (stoch_to_det.mX P z.1 * stoch_to_det.mX R z.1) :=
-      Real.sqrt_pos.2 (mul_pos (contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx)
-        (contact_mX_pos hpair.2.2.1 hpair.2.2.2.2.1 hx))
-    exact ht.trans_le (Finset.single_le_sum (fun x _ => Real.sqrt_nonneg
-      (stoch_to_det.mX P x * stoch_to_det.mX R x)) (Finset.mem_univ z.1))
-  · have ht : 0 < Real.sqrt (stoch_to_det.mY P z.2 * stoch_to_det.mY R z.2) :=
-      Real.sqrt_pos.2 (mul_pos (contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy)
-        (contact_mY_pos hpair.2.2.1 hpair.2.2.2.2.1 hy))
-    exact ht.trans_le (Finset.single_le_sum (fun y _ => Real.sqrt_nonneg
-      (stoch_to_det.mY P y * stoch_to_det.mY R y)) (Finset.mem_univ z.2))
+  have affinity_pos {ι : Type} [Fintype ι] (p r : ι → ℝ) (i : ι)
+      (hi : 0 < p i) (hir : 0 < r i) : 0 < ∑ j, Real.sqrt (p j * r j) := by
+    have ht := Real.sqrt_pos.2 (mul_pos hi hir)
+    exact ht.trans_le (Finset.single_le_sum
+      (fun j _ => Real.sqrt_nonneg (p j * r j)) (Finset.mem_univ i))
+  exact ⟨affinity_pos _ _ z.1 (contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx)
+      (contact_mX_pos hpair.2.2.1 hpair.2.2.2.2.1 hx),
+    affinity_pos _ _ z.2 (contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy)
+      (contact_mY_pos hpair.2.2.1 hpair.2.2.2.2.1 hy)⟩
 
 /-- The separation price is paid by the marginal Bhattacharyya affinities of two contacts. -/
 theorem affinity_bound {S : Finset (X × Y)} {w P R : Law X Y}

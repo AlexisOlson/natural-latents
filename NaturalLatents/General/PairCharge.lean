@@ -203,22 +203,6 @@ lemma pairCharge_sq_rpow_three_halves (t : ℝ) :
   rw [← sq_abs, ← Real.rpow_natCast_mul (abs_nonneg t) 2 ((3 : ℝ) / 2)]
   norm_num
 
-lemma pairCharge_contact_DX_cube {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) :
-    E P (fun z => ((∑ y, P (z.1,y) * (V P R y)^2) / stoch_to_det.mX P z.1)^3) ≤
-      (E P (fun z => |V P R z.2|^3))^2 := by
-  have h := pairCharge_cond_X_cube_bound hpair.1 hpair.2.1
-    (fun y => (V P R y)^2) (fun _ => sq_nonneg _)
-  simpa only [pairCharge_sq_rpow_three_halves] using h
-
-lemma pairCharge_contact_DY_cube {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) :
-    E P (fun z => ((∑ x, P (x,z.2) * (U P R x)^2) / stoch_to_det.mY P z.2)^3) ≤
-      (E P (fun z => |U P R z.1|^3))^2 := by
-  have h := pairCharge_cond_Y_cube_bound hpair.1 hpair.2.1
-    (fun x => (U P R x)^2) (fun _ => sq_nonneg _)
-  simpa only [pairCharge_sq_rpow_three_halves] using h
-
 lemma pairCharge_cond_Y_second_moment {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (y : Y) :
     ((∑ x, P (x,y)*F x)/stoch_to_det.mY P y)^2 ≤
@@ -375,8 +359,7 @@ lemma pairCharge_cubic_error_payment {S : Finset (X × Y)} {w P R : Law X Y}
     let DY : Y → ℝ := fun y => (∑ x, P (x,y)*(U P R x)^2)/stoch_to_det.mY P y
     (-(71/100:ℝ))*contactj P R*s P R ≤
       E P (fun z => U P R z.1*V P R z.2*DX z.1*DY z.2)/(2*(s P R)^2) := by
-  let DX : X → ℝ := fun x => (∑ y, P (x,y)*(V P R y)^2)/stoch_to_det.mX P x
-  let DY : Y → ℝ := fun y => (∑ x, P (x,y)*(U P R x)^2)/stoch_to_det.mY P y
+  intro DX DY
   let MU := E P (fun z => |U P R z.1|^3)
   let MV := E P (fun z => |V P R z.2|^3)
   let A := E P (fun z => (DX z.1)^3)
@@ -403,7 +386,14 @@ lemma pairCharge_cubic_error_payment {S : Finset (X × Y)} {w P R : Law X Y}
     simpa only [Z,D,mul_assoc,mul_pow,J] using h
   have herr := pairCharge_cubic_error_scalar (contact_moments hpair).s_pos (pairCharge_J_nonneg hpair)
     (le_trans (contact_moments hpair).J_bound (contact_moments hpair).scalar_bound)
-    hMU hMV hA hB hD (pairCharge_contact_DX_cube hpair) (pairCharge_contact_DY_cube hpair)
+    hMU hMV hA hB hD (by
+      have h := pairCharge_cond_X_cube_bound hpair.1 hpair.2.1
+        (fun y => (V P R y)^2) (fun _ => sq_nonneg _)
+      simpa only [pairCharge_sq_rpow_three_halves] using h)
+    (by
+      have h := pairCharge_cond_Y_cube_bound hpair.1 hpair.2.1
+        (fun x => (U P R x)^2) (fun _ => sq_nonneg _)
+      simpa only [pairCharge_sq_rpow_three_halves] using h)
     (pairCharge_absolute_cubic_moments hpair) hhc hcs
   exact herr
 
@@ -424,13 +414,9 @@ lemma pairCharge_residual_information {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     let N := (E (productLaw P) (fun z => F z*C z)+E P (fun z => F z*C z))/12
     let W := E (productLaw P) (fun z => (C z)^2)/30+E P (fun z => (C z)^2)/20
     0 < D-2*lam*N+lam^2*W ∧ gap^2/(4*(D-2*lam*N+lam^2*W)) ≤ I P := by
+  intro gap D N W
   let Q := productLaw P
   let B : X × Y → ℝ := fun z => -lam*C z
-  let gap := E P F-E Q F
-  let D := E Q (fun z => (F z-E Q F)^2)/3 +
-    E P (fun z => (F z-E P F)^2)/6+gap^2/12
-  let N := (E Q (fun z => F z*C z)+E P (fun z => F z*C z))/12
-  let W := E Q (fun z => (C z)^2)/30+E P (fun z => (C z)^2)/20
   let residual := D-2*lam*N+lam^2*W
   change 0 < residual ∧ gap^2/(4*residual) ≤ I P
   have hQ := pairCharge_product_isPMF hP
@@ -443,7 +429,7 @@ lemma pairCharge_residual_information {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     rw [contact_q_E_scale,hCQ]
     ring
   have he : (∑ z, (P z-Q z)*F z) = gap := by
-    dsimp [gap,E]
+    dsimp [gap, Q, E]
     simp only [sub_mul,Finset.sum_sub_distrib]
   have hB : (∑ z, (P z-Q z)*B z) = 0 := by
     simp only [sub_mul,Finset.sum_sub_distrib]
@@ -551,25 +537,11 @@ lemma pairCharge_HC_average_identity {S : Finset (X × Y)} {w P R : Law X Y}
       12 * ((1/4 : ℝ) - A0 P R * B0 P R / (s P R)^2) +
       s P R * (contactj P R / 4 - 2 * (A0 P R * B0 P R / (s P R)^2)) +
       M / 2 + Z / (2 * (s P R)^2) := by
-  let C : X × Y → ℝ := fun z =>
-    ((DX z.1 + DY z.2) / s P R - 1) + ((PX z.1 + PY z.2) / s P R - 1)
-  let Cp : X × Y → ℝ := fun z =>
-    ((DXp z.1 + DYp z.2) / s R P - 1) + ((PXp z.1 + PYp z.2) / s R P - 1)
-  let NH := ((E (productLaw P) (fun z => U P R z.1 * V P R z.2 / s P R * C z) +
-    E P (fun z => U P R z.1 * V P R z.2 / s P R * C z)) / 12 +
-    (E (productLaw R) (fun z => U R P z.1 * V R P z.2 / s R P * Cp z) +
-      E R (fun z => U R P z.1 * V R P z.2 / s R P * Cp z)) / 12) / 2
-  let x := ((E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
-    E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2 +
-    (E R (fun z => (DXp z.1 - (2 * B0 R P - A0 R P))^2) +
-      E R (fun z => (DYp z.2 - (2 * A0 R P - B0 R P))^2)) / (s R P)^2) / 2
+  intro C Cp NH x M Z
   let HX := E P (fun z => (DX z.1)^2)
   let HY := E P (fun z => (DY z.2)^2)
   let HXp := E R (fun z => (DXp z.1)^2)
   let HYp := E R (fun z => (DYp z.2)^2)
-  let M := (A0 P R * HX + B0 P R * HY + B0 P R * HXp + A0 P R * HYp) /
-    (2 * (s P R)^2)
-  let Z := E P (fun z => U P R z.1 * V P R z.2 * DX z.1 * DY z.2)
   let lam := E P (fun z => U P R z.1 * (DX z.1)^2) +
     E P (fun z => V P R z.2 * (DY z.2)^2)
   let lamp := E R (fun z => U R P z.1 * (DXp z.1)^2) +
@@ -700,34 +672,15 @@ lemma pairCharge_actual_covariance_payment {S : Finset (X × Y)} {w P R : Law X 
     ((contactj P R - (1/4 : ℝ) +
       s P R * ((1/4 : ℝ) - 171 * contactj P R / 100) - (s P R)^2 / 160) +
       ((1/2 : ℝ) - 5 * s P R / 12) * x) / 12 ≤ N := by
-  let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-  let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-  let DXp : X → ℝ := fun x => (∑ y, R (x,y) * (V R P y)^2) / stoch_to_det.mX R x
-  let DYp : Y → ℝ := fun y => (∑ x, R (x,y) * (U R P x)^2) / stoch_to_det.mY R y
-  let PX : X → ℝ := fun x => (∑ y, P (x,y) * DY y) / stoch_to_det.mX P x
-  let PY : Y → ℝ := fun y => (∑ x, P (x,y) * DX x) / stoch_to_det.mY P y
-  let PXp : X → ℝ := fun x => (∑ y, R (x,y) * DYp y) / stoch_to_det.mX R x
-  let PYp : Y → ℝ := fun y => (∑ x, R (x,y) * DXp x) / stoch_to_det.mY R y
-  let C : X × Y → ℝ := fun z =>
-    ((DX z.1 + DY z.2) / s P R - 1) + ((PX z.1 + PY z.2) / s P R - 1)
-  let Cp : X × Y → ℝ := fun z =>
-    ((DXp z.1 + DYp z.2) / s R P - 1) + ((PXp z.1 + PYp z.2) / s R P - 1)
+  intro DX DY DXp DYp PX PY PXp PYp C Cp F Fp N x
   let H : X × Y → ℝ := fun z => U P R z.1 * V P R z.2 / s P R
   let Hp : X × Y → ℝ := fun z => U R P z.1 * V R P z.2 / s R P
   let L : X × Y → ℝ := fun z => U P R z.1 + V P R z.2 + s P R
   let Lp : X × Y → ℝ := fun z => U R P z.1 + V R P z.2 + s R P
-  let F : X × Y → ℝ := fun z => H z + L z / 3
-  let Fp : X × Y → ℝ := fun z => Hp z + Lp z / 3
-  let N := ((E (productLaw P) (fun z => F z * C z) + E P (fun z => F z * C z)) / 12 +
-    (E (productLaw R) (fun z => Fp z * Cp z) + E R (fun z => Fp z * Cp z)) / 12) / 2
   let NH := ((E (productLaw P) (fun z => H z * C z) + E P (fun z => H z * C z)) / 12 +
     (E (productLaw R) (fun z => Hp z * Cp z) + E R (fun z => Hp z * Cp z)) / 12) / 2
   let NL := ((E (productLaw P) (fun z => L z * C z) + E P (fun z => L z * C z)) / 12 +
     (E (productLaw R) (fun z => Lp z * Cp z) + E R (fun z => Lp z * Cp z)) / 12) / 2
-  let x := ((E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
-    E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2 +
-    (E R (fun z => (DXp z.1 - (2 * B0 R P - A0 R P))^2) +
-      E R (fun z => (DYp z.2 - (2 * A0 R P - B0 R P))^2)) / (s R P)^2) / 2
   let z := (A0 P R - B0 P R) / s P R
   let v := A0 P R * B0 P R / (s P R)^2
   let t := (1/2 : ℝ) - contactj P R
@@ -837,15 +790,9 @@ lemma pairCharge_high_fixed_data {S : Finset (X × Y)} {w P R : Law X Y}
     (1-t+t*jj)/4 ≤ gap ∧
       192*D ≤ 15+32*jj-((50/9:ℝ)+70*jj/3)*t+
         ((5/9:ℝ)+46*jj/9-jj^2)*t^2 := by
-  let t := s P R
-  let jj := contactj P R
+  intro t jj F gap D
   let vv := A0 P R*B0 P R/t^2
   let hh := (1+t*jj)/4
-  let F : X × Y → ℝ := fun z => U P R z.1*V P R z.2/t+
-    (U P R z.1+V P R z.2+t)/3
-  let gap := E P F-E (productLaw P) F
-  let D := E (productLaw P) (fun z => (F z-E (productLaw P) F)^2)/3+
-    E P (fun z => (F z-E P F)^2)/6+gap^2/12
   let rawD := (9*vv-2)/3+jj/6-t^2*vv^2/4-t*vv*hh/6-hh^2/12
   let CL := t*((3/8:ℝ)-2*vv-jj/6+t*(vv/3+jj/24))
   let EL := t*((7/12:ℝ)-t/2+2*t*vv/3+t*jj/12)
@@ -1072,21 +1019,13 @@ lemma pairCharge_elementary_complement {S : Finset (X × Y)} {w P R : Law X Y}
   have hc := pairCharge_cubic_price hm.s_pos.le hs1
   linarith
 
-/-- Region 1: the small-`s`, high-`j` averaged charge. The fixed-coefficient projection and exact scalar
-payment close this region. -/
-lemma pairCharge_region1_averaged {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R)
-    (hsmall : s P R ≤ (1/3:ℝ)) (hhigh : (5/16:ℝ) ≤ contactj P R) :
-    (3:ℝ)/25 ≤ (I P+I R)/2+(1/10)*Psi (s P R) := by
-  exact pairCharge_region1_charge hpair hsmall hhigh
-
 /-- The pair charge: on every pair of distinct positive contacts of a common feasible kernel,
 `(I P + I R) / 2 + (1/10) * Psi (s P R) ≥ 3/25`, that is `PC CommonSupportPairs (1/10) (3/25)`. -/
 theorem pairCharge_A : PC (X := X) (Y := Y) CommonSupportPairs (1/10) (3/25) := by
   intro S w P R hpair
   by_cases hs : s P R ≤ (1/3:ℝ)
   · by_cases hj : (5/16:ℝ) ≤ contactj P R
-    · exact pairCharge_region1_averaged hpair hs hj
+    · exact pairCharge_region1_charge hpair hs hj
     · exact pairCharge_elementary_complement hpair (by linarith) (fun _ => le_of_lt (lt_of_not_ge hj))
   · by_cases hs1 : s P R ≤ 1
     · exact pairCharge_elementary_complement hpair hs1 (fun h => False.elim (hs h))
