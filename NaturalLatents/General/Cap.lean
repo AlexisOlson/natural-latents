@@ -1,5 +1,7 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.RaceLaplace
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.NumberTheory.ZetaValues
@@ -8,7 +10,7 @@ import Mathlib.NumberTheory.ZetaValues
 # Caps on the race price
 
 A closed-form upper bound on the race price, from a series for `log Γ (1 - 1/a)`:
-`racePrice_lt_capC3b` proves `j a < C3b a` for `a > 1`.
+`racePrice_lt_capC3b` proves `gammaPrice a < gammaPriceCap a` for `a > 1`.
 
 The proofs use the partial-fraction identity for `log Γ`, a telescoping bound with midpoint and
 tail estimates for the three remainders, and the zeta values at two, three, four and five
@@ -16,10 +18,10 @@ bracketed by rational bounds.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
 -/
 
 namespace NaturalLatents.General
@@ -198,7 +200,7 @@ lemma cap_zeta_four :
   nlinarith [sq_nonneg (Real.pi ^ 2)]
 
 /-- The part of the logarithm's power series after its linear term. -/
-lemma c3b_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
+lemma gammaPriceCap_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
     HasSum (fun n : ℕ => x ^ (n + 2) / ((n : ℝ) + 2))
       (-Real.log (1 - x) - x) := by
   have hx : |x| < 1 := by simpa only [abs_of_nonneg hx0] using hx1
@@ -208,10 +210,10 @@ lemma c3b_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
   exact ht
 
 /-- Keep the quadratic and cubic terms, then dominate the tail by a geometric series. -/
-lemma c3b_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
+lemma gammaPriceCap_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
     -Real.log (1 - x) - x ≤ x ^ 2 / 2 + x ^ 3 / 3 + x ^ 4 / (4 * (1 - x)) := by
   have hx : |x| < 1 := by simpa only [abs_of_nonneg hx0] using hx1
-  have hs := c3b_log_remainder_hasSum hx0 hx1
+  have hs := gammaPriceCap_log_remainder_hasSum hx0 hx1
   have htail : Summable (fun n : ℕ => x ^ (n + 4) / ((n : ℝ) + 4)) := by
     have ht := (summable_nat_add_iff 2).mpr hs.summable
     norm_num [add_assoc] at ht
@@ -240,7 +242,7 @@ lemma c3b_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
   rw [hgeom_eq] at hle
   linarith
 
-lemma c3b_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
+lemma gammaPriceCap_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     (hs : HasSum (fun n : ℕ => -Real.log (1 - y / (n + 1)) - y / (n + 1))
       (Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y)) :
     Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y <
@@ -259,7 +261,7 @@ lemma c3b_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     have hd : 0 < (n + 1 : ℝ) := by positivity
     have hd1 : 1 ≤ (n + 1 : ℝ) := by linarith [show (0 : ℝ) ≤ n from Nat.cast_nonneg n]
     have hxy : y / (n + 1 : ℝ) ≤ y := div_le_self hy0.le hd1
-    have h := c3b_log_remainder_le (x := y / (n + 1)) (by positivity)
+    have h := gammaPriceCap_log_remainder_le (x := y / (n + 1)) (by positivity)
       (hxy.trans_lt hy1)
     have hdenom :
         (y / (n + 1 : ℝ)) ^ 4 / (4 * (1 - y / (n + 1))) ≤
@@ -291,7 +293,7 @@ lemma c3b_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
       y ^ 4 / (4 * (1 - y)) * (6503 / 6000) := by linarith
     _ = _ := by simp only [div_eq_mul_inv, mul_inv_rev]; ring
 
-lemma c3b_reciprocal_conversion (a : ℝ) (ha : 1 < a)
+lemma gammaPriceCap_reciprocal_conversion (a : ℝ) (ha : 1 < a)
     (h : Real.log (Real.Gamma (1 - 1 / a)) - Real.eulerMascheroniConstant * (1 / a) <
       533 / 648 * (1 / a) ^ 2 + 241 / 600 * (1 / a) ^ 3 +
         6503 / 24000 * (1 / a) ^ 4 / (1 - 1 / a)) :
@@ -317,14 +319,14 @@ lemma c3b_reciprocal_conversion (a : ℝ) (ha : 1 < a)
   rw [hl, hr]
   exact hm
 
-/-- The Gamma-form race price lies below its three-term cap: `j a < C3b a` for `a > 1`. -/
-theorem racePrice_lt_capC3b (a : ℝ) (ha : 1 < a) : j a < C3b a := by
+/-- The Gamma-form race price lies below its three-term cap: `gammaPrice a < gammaPriceCap a` for `a > 1`. -/
+theorem racePrice_lt_capC3b (a : ℝ) (ha : 1 < a) : gammaPrice a < gammaPriceCap a := by
   have ha0 : 0 < a := by linarith
   have hy0 : 0 < 1 / a := by positivity
   have hy1 : 1 / a < 1 := (div_lt_one ha0).mpr ha
-  have h := c3b_assemble_remainders hy0 hy1
+  have h := gammaPriceCap_assemble_remainders hy0 hy1
     (gamma_hasSum_product_remainder hy1)
-  simpa only [j, C3b] using c3b_reciprocal_conversion a ha h
+  simpa only [gammaPrice, gammaPriceCap] using gammaPriceCap_reciprocal_conversion a ha h
 
 end
 

@@ -1,5 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/SharedRace/Information.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- Source: pull request #5 by Satya Benson, included in pull request #6 by Jeremy Gillen at the revision above.
+-- Local changes: Retained and reorganised the cross-entropy and posterior-information identities required by the General race.
 import NaturalLatents.Upstream.SharedRace.Definitions
 
 /-!

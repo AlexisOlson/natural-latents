@@ -1,5 +1,6 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/SourceCoarsening.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- Source: pull request #6 by Jeremy Gillen (powered-reference race coding and the coordinate/table bridges).
 import NaturalLatents.Upstream.Envelope
 
 /-! Lifting a latent of a coordinatewise coarsening back to the original source. -/

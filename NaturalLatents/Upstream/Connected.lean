@@ -1,5 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Connected.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
+-- Local changes: Added sum_components_tau_le and T_le_sum_components; re-proved reduce_to_connected from these two one-sided inequalities instead of upstream component equalities.
 import NaturalLatents.Upstream.Duality
 
 /-!

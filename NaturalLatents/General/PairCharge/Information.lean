@@ -1,6 +1,8 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
-import NaturalLatents.General.PairCharge.Scalar
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
+import NaturalLatents.General.PairCharge.MomentBounds
 
 /-!
 # Pair charge: entropy payments
@@ -12,10 +14,10 @@ cells with zero joint mass and positive product mass.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
 -/
 
 namespace NaturalLatents.General

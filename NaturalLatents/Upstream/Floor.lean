@@ -1,5 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Floor.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- Source: the main branch and the shared-race/contact additions of pull request #5 by Satya Benson, as included in pull request #6 by Jeremy Gillen.
+-- Local changes: Added ratio_rpow_two_thirds and mul_ratio_rpow; retained and reorganised the contact-secant helpers, with required lemmas public.
 import Mathlib.Analysis.SpecialFunctions.Log.Base
 import Mathlib.NumberTheory.Harmonic.EulerMascheroni
 import Mathlib.Tactic.NormNum

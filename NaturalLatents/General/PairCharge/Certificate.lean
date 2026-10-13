@@ -1,9 +1,20 @@
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.Definitions
 
 /-!
 # Scalar certificates for pair charge C
 
 The price and polynomial inequalities used by the pair charge C.
+
+## Attribution
+
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
+[`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
 -/
 
 namespace NaturalLatents.General
@@ -29,21 +40,21 @@ abbrev pairChargeDenominator (s j : ℝ) : ℝ :=
 abbrev pairChargeScalar (s j : ℝ) : ℝ :=
   3 * (1 - s + s * j)^2 - pairChargeProfile s * pairChargeDenominator s j
 
-/-- C8, (PRICE) and (PRICE-INTEGRAL): `(103/1000) t + (23/1000) t^2 ≤ (23/250) Psi t` on `[0, 2]`.
-The derivative of `(23/250) Psi - 103 t/1000 - 23 t^2/1000` is
-`((1071/64000)(t - 170/1071)^2 + 1343/17136000 + (69/32000) t^2 (2 - t)) / b t ≥ 0`. -/
+/-- C8, (PRICE) and (PRICE-INTEGRAL): `(103/1000) t + (23/1000) t^2 ≤ (23/250) separationPrice t` on `[0, 2]`.
+The derivative of `(23/250) separationPrice - 103 t/1000 - 23 t^2/1000` is
+`((1071/64000)(t - 170/1071)^2 + 1343/17136000 + (69/32000) t^2 (2 - t)) / affinityPoly t ≥ 0`. -/
 lemma pairCharge_price {t : ℝ} (ht : 0 ≤ t) (ht2 : t ≤ 2) :
-    103 * t / 1000 + 23 * t^2 / 1000 ≤ (23/250 : ℝ) * Psi t := by
-  let F : ℝ → ℝ := fun x => (23/250) * (-2 * Real.log (b x)) -
+    103 * t / 1000 + 23 * t^2 / 1000 ≤ (23/250 : ℝ) * separationPrice t := by
+  let F : ℝ → ℝ := fun x => (23/250) * (-2 * Real.log (affinityPoly x)) -
     (103*x/1000 + 23*x^2/1000)
   have hd (x : ℝ) (hx : x ∈ Set.Icc (0 : ℝ) 2) :
       HasDerivAt F (((1071/64000) * (x - 170/1071)^2 + 1343/17136000 +
-        (69/32000) * x^2 * (2 - x)) / b x) x := by
-    have hb : b x ≠ 0 := (b_pos x hx.2).ne'
-    have hbd : HasDerivAt b (-9/16 + 3*x/32) x := by
-      have hid : b = (fun y : ℝ => 1 - (9/16)*y + (3/64)*y^2) := by
+        (69/32000) * x^2 * (2 - x)) / affinityPoly x) x := by
+    have hb : affinityPoly x ≠ 0 := (affinityPoly_pos x hx.2).ne'
+    have hbd : HasDerivAt affinityPoly (-9/16 + 3*x/32) x := by
+      have hid : affinityPoly = (fun y : ℝ => 1 - (9/16)*y + (3/64)*y^2) := by
         funext y
-        unfold b
+        unfold affinityPoly
         ring
       rw [hid]
       apply (((hasDerivAt_const x (1:ℝ)).sub ((hasDerivAt_id x).const_mul (9/16))).add
@@ -53,7 +64,7 @@ lemma pairCharge_price {t : ℝ} (ht : 0 ≤ t) (ht2 : t ≤ 2) :
     have hp := (((hbd.log hb).const_mul (-2)).const_mul (23/250)).sub
       (((hasDerivAt_id x).const_mul (103/1000)).add
         (((hasDerivAt_id x).pow 2).const_mul (23/1000)))
-    have hid : F = ((fun y : ℝ => (23/250) * (-2*Real.log (b y))) -
+    have hid : F = ((fun y : ℝ => (23/250) * (-2*Real.log (affinityPoly y))) -
       ((fun y : ℝ => (103/1000)*id y) + (fun y : ℝ => (23/1000)*(id^2) y))) := by
       funext y
       dsimp [F]
@@ -62,7 +73,7 @@ lemma pairCharge_price {t : ℝ} (ht : 0 ≤ t) (ht2 : t ≤ 2) :
     apply hp.congr_deriv
     norm_num only [id_eq, Nat.cast_ofNat, Nat.reduceSub, pow_one]
     field_simp [hb]
-    unfold b
+    unfold affinityPoly
     ring
   have hm : MonotoneOn F (Set.Icc (0:ℝ) 2) := by
     apply monotoneOn_of_deriv_nonneg (convex_Icc 0 2)
@@ -78,11 +89,11 @@ lemma pairCharge_price {t : ℝ} (ht : 0 ≤ t) (ht2 : t ≤ 2) :
         exact add_nonneg (add_nonneg (mul_nonneg (by norm_num) (sq_nonneg _))
           (by norm_num)) (mul_nonneg (mul_nonneg (by norm_num) (sq_nonneg x))
             (sub_nonneg.mpr hx'.2))
-      exact div_nonneg hp (b_pos x hx'.2).le
+      exact div_nonneg hp (affinityPoly_pos x hx'.2).le
   have h := hm (by simp) ⟨ht, ht2⟩ ht
-  have hzero : F 0 = 0 := by simp [F, b]
+  have hzero : F 0 = 0 := by simp [F, affinityPoly]
   rw [hzero] at h
-  dsimp [F, Psi] at h ⊢
+  dsimp [F, separationPrice] at h ⊢
   linarith
 
 /-- C9, edge `j = 1/16`: `F_l = M_l + (2907750 + 6796995 s + 137267 s^2 + 6234675 s^3 + 528825 s^4)/2880000000`. -/

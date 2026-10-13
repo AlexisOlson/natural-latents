@@ -1,13 +1,15 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.Definitions
 
 /-!
 # The replica budget
 
-For two independent posterior draws given the cell, the replica budget `K L` of a latent satisfies
+For two independent posterior draws given the cell, the replica budget `replicaBudget L` of a latent satisfies
 
-    K L ≤ 2 * M L + B L
+    replicaBudget L ≤ 2 * mediation L + redundancy L
 
 in nats (`replica_budget`). The proof expands the conditional mutual information over the
 fibers of the cell, uses that the two draws are conditionally independent and Markov given the
@@ -15,10 +17,10 @@ cell, and applies a chain rule coordinate by coordinate.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
 -/
 
 namespace NaturalLatents.General
@@ -32,37 +34,37 @@ variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
 open stoch_to_det in
 omit [DecidableEq X] [DecidableEq Y] in
-lemma replica_post_nonneg {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p)
-    (i : L.ι) (z : X × Y) : 0 ≤ post L i z := by
+lemma replica_posterior_nonneg {p : Law X Y} (hp : IsPMF p) (L : stoch_to_det.Latent p)
+    (i : L.ι) (z : X × Y) : 0 ≤ posterior L i z := by
   exact div_nonneg
     (mul_nonneg (L.prior_isPMF.nonneg i) ((L.comp_isPMF i).nonneg z))
     (hp.nonneg z)
 
 omit [DecidableEq X] [DecidableEq Y] in
-lemma replica_sum_post {p : Law X Y} (L : FiniteLatent p)
-    (z : X × Y) (hz : p z ≠ 0) : ∑ i, post L i z = 1 := by
-  unfold post
+lemma replica_sum_posterior {p : Law X Y} (L : stoch_to_det.Latent p)
+    (z : X × Y) (hz : p z ≠ 0) : ∑ i, posterior L i z = 1 := by
+  unfold posterior
   rw [← Finset.sum_div, L.mixture z, div_self hz]
 
 omit [DecidableEq X] [DecidableEq Y] in
-lemma replica_sum_domain {p : Law X Y} (L : FiniteLatent p)
+lemma replica_sum_domain {p : Law X Y} (L : stoch_to_det.Latent p)
     (F : L.ι × L.ι × (X × Y) → ℝ) :
     (∑ u, F u) = ∑ i, ∑ j, ∑ z, F (i, j, z) := by
   simp only [Fintype.sum_prod_type]
 
 omit [DecidableEq X] [DecidableEq Y] in
-lemma replica_sum_replica_second {p : Law X Y} (L : FiniteLatent p)
+lemma replica_sum_replica_second {p : Law X Y} (L : stoch_to_det.Latent p)
     (i : L.ι) (z : X × Y) :
     (∑ j, replicaJoint L (i, j, z)) = L.joint (i, z) := by
   by_cases hpz : p z = 0
   · have hzero : L.joint (i, z) = 0 := by
-      rw [← p_mul_post L i z, hpz, zero_mul]
+      rw [← mul_posterior_eq_joint L i z, hpz, zero_mul]
     simp [replicaJoint, hpz, hzero]
-  · change (∑ j, (p z * post L i z) * post L j z) = L.joint (i, z)
-    rw [← Finset.mul_sum, replica_sum_post L z hpz, mul_one, p_mul_post]
+  · change (∑ j, (p z * posterior L i z) * posterior L j z) = L.joint (i, z)
+    rw [← Finset.mul_sum, replica_sum_posterior L z hpz, mul_one, mul_posterior_eq_joint]
 
 omit [DecidableEq X] [DecidableEq Y] in
-lemma replica_sum_replica_first {p : Law X Y} (L : FiniteLatent p)
+lemma replica_sum_replica_first {p : Law X Y} (L : stoch_to_det.Latent p)
     (j : L.ι) (z : X × Y) :
     (∑ i, replicaJoint L (i, j, z)) = L.joint (j, z) := by
   have hswap : ∀ i, replicaJoint L (i, j, z) = replicaJoint L (j, i, z) := by
@@ -74,13 +76,13 @@ lemma replica_sum_replica_first {p : Law X Y} (L : FiniteLatent p)
 
 omit [DecidableEq X] [DecidableEq Y] in
 open stoch_to_det in
-lemma replica_replica_isPMF {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p) :
+lemma replica_replica_isPMF {p : Law X Y} (hp : IsPMF p) (L : stoch_to_det.Latent p) :
     IsPMF (replicaJoint L) := by
   refine ⟨?_, ?_⟩
   · intro u
     exact mul_nonneg
-      (mul_nonneg (hp.nonneg u.2.2) (replica_post_nonneg hp L u.1 u.2.2))
-      (replica_post_nonneg hp L u.2.1 u.2.2)
+      (mul_nonneg (hp.nonneg u.2.2) (replica_posterior_nonneg hp L u.1 u.2.2))
+      (replica_posterior_nonneg hp L u.2.1 u.2.2)
   · unfold mass
     rw [replica_sum_domain]
     calc
@@ -96,7 +98,7 @@ lemma replica_replica_isPMF {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p) :
             exact L.joint_isPMF.total
 
 open stoch_to_det in
-lemma replica_push_first {p : Law X Y} (L : FiniteLatent p) :
+lemma replica_push_first {p : Law X Y} (L : stoch_to_det.Latent p) :
     push (fun u : L.ι × L.ι × (X × Y) => (u.1, u.2.2)) (replicaJoint L) = L.joint := by
   funext v
   rcases v with ⟨i, z⟩
@@ -108,7 +110,7 @@ lemma replica_push_first {p : Law X Y} (L : FiniteLatent p) :
   exact replica_sum_replica_second L i z
 
 open stoch_to_det in
-lemma replica_push_second {p : Law X Y} (L : FiniteLatent p) :
+lemma replica_push_second {p : Law X Y} (L : stoch_to_det.Latent p) :
     push (Prod.snd : L.ι × L.ι × (X × Y) → L.ι × (X × Y)) (replicaJoint L) = L.joint := by
   funext v
   rcases v with ⟨j, z⟩
@@ -197,10 +199,10 @@ lemma replica_iidProduct_MI_zero
   ring
 
 open stoch_to_det in
-lemma replica_push_Zfiber_pair {p : Law X Y} (L : FiniteLatent p) (z : X × Y) :
+lemma replica_push_Zfiber_pair {p : Law X Y} (L : stoch_to_det.Latent p) (z : X × Y) :
     push (fun u : L.ι × L.ι × (X × Y) => (u.1, u.2.1))
         (fun u => if u.2.2 = z then replicaJoint L u else 0) =
-      fun v : L.ι × L.ι => p z * post L v.1 z * post L v.2 z := by
+      fun v : L.ι × L.ι => p z * posterior L v.1 z * posterior L v.2 z := by
   funext v
   rcases v with ⟨i, j⟩
   unfold push
@@ -210,11 +212,11 @@ lemma replica_push_Zfiber_pair {p : Law X Y} (L : FiniteLatent p) (z : X × Y) :
   simp [replicaJoint]
 
 open stoch_to_det in
-lemma replica_MI_Zfiber_zero {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p)
+lemma replica_MI_Zfiber_zero {p : Law X Y} (hp : IsPMF p) (L : stoch_to_det.Latent p)
     (z : X × Y) :
     MI (fun u : L.ι × L.ι × (X × Y) => u.1) (fun u => u.2.1)
       (fun u => if u.2.2 = z then replicaJoint L u else 0) = 0 := by
-  let n : L.ι × L.ι → ℝ := fun v => p z * post L v.1 z * post L v.2 z
+  let n : L.ι × L.ι → ℝ := fun v => p z * posterior L v.1 z * posterior L v.2 z
   have hpair :
       push (fun u : L.ι × L.ι × (X × Y) => (u.1, u.2.1))
           (fun u => if u.2.2 = z then replicaJoint L u else 0) =
@@ -228,12 +230,12 @@ lemma replica_MI_Zfiber_zero {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p)
   rw [hMI]
   by_cases hpz : p z = 0
   · simp [n, hpz, MI, Hvar, H, push, mass]
-  · let t : L.ι → ℝ := fun i => post L i z
+  · let t : L.ι → ℝ := fun i => posterior L i z
     have ht : IsPMF t := by
       constructor
       · intro i
-        exact replica_post_nonneg hp L i z
-      · simpa [mass, t] using replica_sum_post L z hpz
+        exact replica_posterior_nonneg hp L i z
+      · simpa [mass, t] using replica_sum_posterior L z hpz
     let q : L.ι × L.ι → ℝ := fun v => t v.1 * t v.2
     have hq : IsPMF q := product_isPMF_dom ht ht
     have hzero : MI Prod.fst Prod.snd q = 0 := replica_iidProduct_MI_zero ht
@@ -245,7 +247,7 @@ lemma replica_MI_Zfiber_zero {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p)
     rw [hn, hscale, hzero, mul_zero]
 
 open stoch_to_det in
-lemma replica_replica_markov {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p) :
+lemma replica_replica_markov {p : Law X Y} (hp : IsPMF p) (L : stoch_to_det.Latent p) :
     condMI (fun u : L.ι × L.ι × (X × Y) => u.1) (fun u => u.2.1)
       (fun u => u.2.2) (replicaJoint L) = 0 := by
   rw [stoch_to_det.coordinate_condMI_eq_sum (replica_replica_isPMF hp L)]
@@ -308,9 +310,9 @@ lemma replica_total_chain_bound
     stoch_to_det.condMI a b (fun w => (x w, y w)) q at hswap
   linarith
 
-/-- The replica budget of a latent is at most `2 * M L + B L`, in nats. -/
-theorem replica_budget {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLatent p) :
-    K L ≤ 2*M L + B L := by
+/-- The replica budget of a latent is at most `2 * mediation L + redundancy L`, in nats. -/
+theorem replica_budget {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : stoch_to_det.Latent p) :
+    replicaBudget L ≤ 2*mediation L + redundancy L := by
   have hq := replica_replica_isPMF hp L
   have hbits := replica_total_chain_bound hq
     (fun w => w.1) (fun w => w.2.1)
@@ -331,8 +333,9 @@ theorem replica_budget {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLate
   change stoch_to_det.condMI (fun w => w.1) (fun w => w.2.1)
     (fun w => (w.2.2.1, w.2.2.2)) (replicaJoint L) = 0 at hmarkov
   rw [hmarkov, mul_zero, add_zero, ← hM, ← hBX, ← hBY] at hbits
-  have h := mul_le_mul_of_nonneg_left hbits (le_of_lt (Real.log_pos one_lt_two))
-  unfold K M B
+  have h := nats_le_nats_iff.mpr hbits
+  simp only [nats] at h
+  unfold replicaBudget mediation redundancy condMINat nats
   nlinarith only [h]
 
 end

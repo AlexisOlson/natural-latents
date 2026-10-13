@@ -1,5 +1,7 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.Definitions
 
 /-!
@@ -12,10 +14,10 @@ the resulting positive priors, common support, and posterior rows.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
 -/
 
 namespace NaturalLatents.General
@@ -68,7 +70,7 @@ theorem exists_setup_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   classical
   obtain ⟨D⟩ := stoch_to_det.exists_seedSetup hp hconn
   obtain ⟨K⟩ := stoch_to_det.exists_clustering D
-  let L : FiniteLatent p := {
+  let L : stoch_to_det.Latent p := {
     ι := K.κ
     fin := inferInstance
     dec := inferInstance
@@ -88,7 +90,7 @@ theorem exists_setup_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   have hw_eq : ∀ z ∈ stoch_to_det.support p, w z = D.w z := by
     intro z hz
     simp only [w, ite_eq_left hz]
-  have hw : FeasibleKernel (stoch_to_det.support p) w := by
+  have hw : stoch_to_det.Feasible (stoch_to_det.support p) w := by
     constructor
     · intro z hz
       rw [hw_eq z hz]
@@ -124,12 +126,12 @@ theorem exists_setup_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     rows_pos := ?_
   }⟩
   · calc
-      M L + B L = c p + ∑ i, L.prior i * phi (L.comp i) := cost_identity p hp L
-      _ = c p + ∑ i, D.L.prior i * phi (D.L.comp i) := by
-        rw [show (∑ i, L.prior i * phi (L.comp i)) =
-          ∑ i, D.L.prior i * phi (D.L.comp i) from setupConn_sum_weighted K phi]
-      _ = M D.L + B D.L := (cost_identity p hp D.L).symm
-      _ = tau p := by rw [budgets_eq_score, D.optimal]; rfl
+      mediation L + redundancy L = psiNat p + ∑ i, L.prior i * negPhiNat (L.comp i) := score_nats p hp L
+      _ = psiNat p + ∑ i, D.L.prior i * negPhiNat (D.L.comp i) := by
+        rw [show (∑ i, L.prior i * negPhiNat (L.comp i)) =
+          ∑ i, D.L.prior i * negPhiNat (D.L.comp i) from setupConn_sum_weighted K negPhiNat]
+      _ = mediation D.L + redundancy D.L := (score_nats p hp D.L).symm
+      _ = tauNat p := by rw [mediation_add_redundancy_eq_score, D.optimal]; rfl
   · intro i
     refine ⟨(K.Q_isContact i).1, (K.Q_isContact i).2.1, ?_⟩
     intro z hz

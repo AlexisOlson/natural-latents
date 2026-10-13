@@ -1,5 +1,7 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.Upstream.Entropy
 import NaturalLatents.Upstream.Functionals
 import NaturalLatents.Upstream.Envelope
@@ -10,21 +12,21 @@ import NaturalLatents.General.Pricing
 import NaturalLatents.General.Extension
 
 /-!
-# The bound in nats
+# The bound for finite laws
 
-This module gathers the development under `NaturalLatents/General/`. For every finite law `p`
-on `X × Y` it provides, in nats,
+This module gathers the development under `NaturalLatents/General/`.
+`General.T_le_of_connected` proves the connected optimum bound in nats:
 
-    T p ≤ (13999/2000) * tau p,
+    TNat p ≤ (13999/2000) * tauNat p.
 
-as `General.T_le_of_connected` on connected supports together with
-`General.extension_of_connected`; `NaturalLatents.Main` converts the bound to bits.
+`NaturalLatents.Main` applies `bits_of_nats` once, then
+`General.extension_of_connected` extends the bound in bits to every finite law.
 The constant `13999/2000 = 6.9995` is below seven and is not claimed to be least.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
 -/

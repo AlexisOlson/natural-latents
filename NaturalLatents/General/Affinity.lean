@@ -1,21 +1,23 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.Contact
 
 /-!
 # Marginal affinities bound the separation price
 
-For two distinct positive contacts, `affinity_bound` shows `Psi (s P R) ≤ -log BC_X - log BC_Y`:
+For two distinct positive contacts, `affinity_bound` shows `separationPrice (separation P R) ≤ -log X-marginal Bhattacharyya affinity - log Y-marginal Bhattacharyya affinity`:
 the separation price is paid by the Bhattacharyya affinities of the two pairs of marginals.
 The proof bounds each affinity below by the Hellinger comparison of the cube-root secants,
-using the contact moments of `Contact` and a polynomial remainder.
+using the contact moments of `stoch_to_det.IsContact` and a polynomial remainder.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
 -/
 
 namespace NaturalLatents.General
@@ -83,7 +85,7 @@ lemma affinity_marginal_affinity {ι : Type} [Fintype ι]
     (hmoment : ∑ i, p i * (F i - 1)^2 * (F i + 1) = t)
     (hD : ∀ i, p i * (Real.sqrt (F i) - 1)^2 ≤ D i)
     (hquartic : ∑ i, (F i - 1)^2 * D i ≤ t^2 / 2) :
-    stoch_to_det.BC p r ≤ b t := by
+    stoch_to_det.BC p r ≤ affinityPoly t := by
   have hBC : stoch_to_det.BC p r = ∑ i, p i * F i * Real.sqrt (F i) := by
     unfold stoch_to_det.BC
     apply Finset.sum_congr rfl
@@ -126,7 +128,7 @@ lemma affinity_marginal_affinity {ι : Type} [Fintype ι]
   have hsum := Finset.sum_le_sum (s := Finset.univ) (fun i _ => hpoint i)
   simp only [Finset.sum_sub_distrib, ← Finset.mul_sum] at hsum
   rw [hmoment, henergy] at hsum
-  unfold b
+  unfold affinityPoly
   nlinarith only [hsum, hquartic]
 
 lemma affinity_cubic_moment {ι : Type} [Fintype ι] (p F : ι → ℝ)
@@ -155,91 +157,91 @@ lemma affinity_row {ι : Type} [Fintype ι] (q G : ι → ℝ) (a : ℝ) (H : Pr
     exact Finset.sum_nonneg fun i _ => mul_nonneg (hq i) (sq_nonneg _)
 
 lemma affinity_row_X {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) (x : X) :
-    stoch_to_det.mX P x * (Real.sqrt (f P R x) - 1)^2 ≤
-      ∑ y, P (x,y) * (g P R y - 1)^2 := by
+    (hpair : CommonSupportPair S w P R) (hmoments : ContactMoments S P R) (x : X) :
+    stoch_to_det.mX P x * (Real.sqrt (rootRatioX P R x) - 1)^2 ≤
+      ∑ y, P (x,y) * (rootRatioY P R y - 1)^2 := by
   rw [stoch_to_det.mX_eq_sum]
-  apply affinity_row (fun y => P (x, y)) (g P R) (f P R x) (x ∈ XSupport S)
+  apply affinity_row (fun y => P (x, y)) (rootRatioY P R) (rootRatioX P R x) (x ∈ xSupport S)
     (fun y => hpair.2.1.1.nonneg (x, y))
-  · simpa only [← stoch_to_det.mX_eq_sum P x] using contact_mem_XSupport_of_mX_pos hpair.2.1
-  · exact contact_f_pos hpair
+  · simpa only [← stoch_to_det.mX_eq_sum P x] using contact_mem_xSupport_of_mX_pos hpair.2.1
+  · exact contact_rootRatioX_pos hpair
   · intro hx
     rw [← stoch_to_det.mX_eq_sum P x]
     simpa only [mul_comm] using
-      (div_eq_iff (contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx).ne').mp (hmoments.cond_g2 x hx)
+      (div_eq_iff (contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx).ne').mp (hmoments.cond_rootRatioY_square x hx)
 
 lemma affinity_row_Y {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) (y : Y) :
-    stoch_to_det.mY P y * (Real.sqrt (g P R y) - 1)^2 ≤
-      ∑ x, P (x,y) * (f P R x - 1)^2 := by
+    (hpair : CommonSupportPair S w P R) (hmoments : ContactMoments S P R) (y : Y) :
+    stoch_to_det.mY P y * (Real.sqrt (rootRatioY P R y) - 1)^2 ≤
+      ∑ x, P (x,y) * (rootRatioX P R x - 1)^2 := by
   rw [stoch_to_det.mY_eq_sum]
-  apply affinity_row (fun x => P (x, y)) (f P R) (g P R y) (y ∈ YSupport S)
+  apply affinity_row (fun x => P (x, y)) (rootRatioX P R) (rootRatioY P R y) (y ∈ ySupport S)
     (fun x => hpair.2.1.1.nonneg (x, y))
-  · simpa only [← stoch_to_det.mY_eq_sum P y] using contact_mem_YSupport_of_mY_pos hpair.2.1
-  · exact contact_g_pos hpair
+  · simpa only [← stoch_to_det.mY_eq_sum P y] using contact_mem_ySupport_of_mY_pos hpair.2.1
+  · exact contact_rootRatioY_pos hpair
   · intro hy
     rw [← stoch_to_det.mY_eq_sum P y]
     simpa only [mul_comm] using
-      (div_eq_iff (contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy).ne').mp (hmoments.cond_f2 y hy)
+      (div_eq_iff (contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy).ne').mp (hmoments.cond_rootRatioX_square y hy)
 
-lemma affinity_BC_X_le {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) :
-    BC_X P R ≤ b (s P R) := by
+lemma affinity_bhattacharyyaX_le {S : Finset (X × Y)} {w P R : Law X Y}
+    (hpair : CommonSupportPair S w P R) (hmoments : ContactMoments S P R) :
+    (stoch_to_det.BC (stoch_to_det.mX P) (stoch_to_det.mX R)) ≤ affinityPoly (separation P R) := by
   have hpX := stoch_to_det.isPMF_push (f := Prod.fst) hpair.2.1.1
-  have hthird : (∑ x, stoch_to_det.mX P x * (f P R x)^3) = 1 := by
-    rw [← contact_E_fst]
-    exact hmoments.f3
-  apply affinity_marginal_affinity (stoch_to_det.mX P) (stoch_to_det.mX R) (f P R)
-    (fun x => ∑ y, P (x,y) * (g P R y - 1)^2) (s P R) hpX (contact_f_nonneg hpair)
-    (contact_f_cube hpair) hthird
-  · rw [affinity_cubic_moment _ _ hpX hthird, ← contact_E_fst, ← contact_E_fst, hmoments.f2]
-    unfold s A0 B0
+  have hthird : (∑ x, stoch_to_det.mX P x * (rootRatioX P R x)^3) = 1 := by
+    rw [← contact_expect_fst]
+    exact hmoments.rootRatioX_cube
+  apply affinity_marginal_affinity (stoch_to_det.mX P) (stoch_to_det.mX R) (rootRatioX P R)
+    (fun x => ∑ y, P (x,y) * (rootRatioY P R y - 1)^2) (separation P R) hpX (contact_rootRatioX_nonneg hpair)
+    (contact_rootRatioX_cube_mul_marginal hpair) hthird
+  · rw [affinity_cubic_moment _ _ hpX hthird, ← contact_expect_fst, ← contact_expect_fst, hmoments.rootRatioX_square]
+    unfold separation defectX defectY
     ring
   · exact affinity_row_X hpair hmoments
-  · have htower : (∑ x, (f P R x - 1)^2 * (∑ y, P (x,y) * (g P R y - 1)^2)) =
-        J P R := by
-      unfold J E
+  · have htower : (∑ x, (rootRatioX P R x - 1)^2 * (∑ y, P (x,y) * (rootRatioY P R y - 1)^2)) =
+        quarticMoment P R := by
+      unfold quarticMoment expect
       rw [Fintype.sum_prod_type]
       apply Finset.sum_congr rfl
       intro x _
       rw [Finset.mul_sum]
       apply Finset.sum_congr rfl
       intro y _
-      dsimp only [f, g]
+      dsimp only [rootRatioX, rootRatioY]
       ring
     rw [htower]
-    exact hmoments.J_bound.trans hmoments.scalar_bound
+    exact hmoments.quarticMoment_bound.trans hmoments.scalar_bound
 
-lemma affinity_BC_Y_le {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) :
-    BC_Y P R ≤ b (s P R) := by
+lemma affinity_bhattacharyyaY_le {S : Finset (X × Y)} {w P R : Law X Y}
+    (hpair : CommonSupportPair S w P R) (hmoments : ContactMoments S P R) :
+    (stoch_to_det.BC (stoch_to_det.mY P) (stoch_to_det.mY R)) ≤ affinityPoly (separation P R) := by
   have hpY := stoch_to_det.isPMF_push (f := Prod.snd) hpair.2.1.1
-  have hthird : (∑ y, stoch_to_det.mY P y * (g P R y)^3) = 1 := by
-    rw [← contact_E_snd]
-    exact hmoments.g3
-  apply affinity_marginal_affinity (stoch_to_det.mY P) (stoch_to_det.mY R) (g P R)
-    (fun y => ∑ x, P (x,y) * (f P R x - 1)^2) (s P R) hpY (contact_g_nonneg hpair)
-    (contact_g_cube hpair) hthird
-  · rw [affinity_cubic_moment _ _ hpY hthird, ← contact_E_snd, ← contact_E_snd, hmoments.g2]
-    unfold s A0 B0
+  have hthird : (∑ y, stoch_to_det.mY P y * (rootRatioY P R y)^3) = 1 := by
+    rw [← contact_expect_snd]
+    exact hmoments.rootRatioY_cube
+  apply affinity_marginal_affinity (stoch_to_det.mY P) (stoch_to_det.mY R) (rootRatioY P R)
+    (fun y => ∑ x, P (x,y) * (rootRatioX P R x - 1)^2) (separation P R) hpY (contact_rootRatioY_nonneg hpair)
+    (contact_rootRatioY_cube_mul_marginal hpair) hthird
+  · rw [affinity_cubic_moment _ _ hpY hthird, ← contact_expect_snd, ← contact_expect_snd, hmoments.rootRatioY_square]
+    unfold separation defectX defectY
     ring
   · exact affinity_row_Y hpair hmoments
-  · have htower : (∑ y, (g P R y - 1)^2 * (∑ x, P (x,y) * (f P R x - 1)^2)) =
-        J P R := by
-      unfold J E
+  · have htower : (∑ y, (rootRatioY P R y - 1)^2 * (∑ x, P (x,y) * (rootRatioX P R x - 1)^2)) =
+        quarticMoment P R := by
+      unfold quarticMoment expect
       rw [Fintype.sum_prod_type, Finset.sum_comm]
       apply Finset.sum_congr rfl
       intro y _
       rw [Finset.mul_sum]
       apply Finset.sum_congr rfl
       intro x _
-      dsimp only [f, g]
+      dsimp only [rootRatioX, rootRatioY]
       ring
     rw [htower]
-    exact hmoments.J_bound.trans hmoments.scalar_bound
+    exact hmoments.quarticMoment_bound.trans hmoments.scalar_bound
 
 lemma affinity_affinities_pos {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) : 0 < BC_X P R ∧ 0 < BC_Y P R := by
+    (hpair : CommonSupportPair S w P R) : 0 < (stoch_to_det.BC (stoch_to_det.mX P) (stoch_to_det.mX R)) ∧ 0 < (stoch_to_det.BC (stoch_to_det.mY P) (stoch_to_det.mY R)) := by
   have hexists : ∃ z, 0 < P z := by
     by_contra! h
     have hzero : ∀ z, P z = 0 := fun z => le_antisymm (h z) (hpair.2.1.1.nonneg z)
@@ -247,10 +249,10 @@ lemma affinity_affinities_pos {S : Finset (X × Y)} {w P R : Law X Y}
     have ht : (∑ z, P z) = 1 := hpair.2.1.1.total
     linarith
   obtain ⟨z, hz⟩ := hexists
-  have hx : z.1 ∈ XSupport S := contact_mem_XSupport_of_mX_pos hpair.2.1 <| hz.trans_le <| by
+  have hx : z.1 ∈ xSupport S := contact_mem_xSupport_of_mX_pos hpair.2.1 <| hz.trans_le <| by
     rw [stoch_to_det.mX_eq_sum]
     exact Finset.single_le_sum (fun y _ => hpair.2.1.1.nonneg (z.1, y)) (Finset.mem_univ z.2)
-  have hy : z.2 ∈ YSupport S := contact_mem_YSupport_of_mY_pos hpair.2.1 <| hz.trans_le <| by
+  have hy : z.2 ∈ ySupport S := contact_mem_ySupport_of_mY_pos hpair.2.1 <| hz.trans_le <| by
     rw [stoch_to_det.mY_eq_sum]
     exact Finset.single_le_sum (fun x _ => hpair.2.1.1.nonneg (x, z.2)) (Finset.mem_univ z.1)
   have affinity_pos {ι : Type} [Fintype ι] (p r : ι → ℝ) (i : ι)
@@ -265,12 +267,12 @@ lemma affinity_affinities_pos {S : Finset (X × Y)} {w P R : Law X Y}
 
 /-- The separation price is paid by the marginal Bhattacharyya affinities of two contacts. -/
 theorem affinity_bound {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) : AffinityBound P R := by
+    (hpair : CommonSupportPair S w P R) (hmoments : ContactMoments S P R) : AffinityBound P R := by
   obtain ⟨hX, hY⟩ := affinity_affinities_pos hpair
-  have hb := b_pos (s P R) hmoments.s_lt_two.le
-  have hlogX := (Real.log_le_log_iff hX hb).mpr (affinity_BC_X_le hpair hmoments)
-  have hlogY := (Real.log_le_log_iff hY hb).mpr (affinity_BC_Y_le hpair hmoments)
-  unfold AffinityBound Psi
+  have hb := affinityPoly_pos (separation P R) hmoments.separation_lt_two.le
+  have hlogX := (Real.log_le_log_iff hX hb).mpr (affinity_bhattacharyyaX_le hpair hmoments)
+  have hlogY := (Real.log_le_log_iff hY hb).mpr (affinity_bhattacharyyaY_le hpair hmoments)
+  unfold AffinityBound separationPrice
   linarith only [hlogX, hlogY]
 
 end

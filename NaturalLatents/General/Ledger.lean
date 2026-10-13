@@ -1,5 +1,7 @@
--- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
+-- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.Definitions
 
 /-!
@@ -8,7 +10,7 @@ import NaturalLatents.General.Definitions
 For a latent `L` of a probability law `p` and a calibrated seeded family `F`, the deterministic
 optimum is controlled by the seed-averaged fixed-map scores:
 
-    T p ≤ M L - B L / 2 + 3 h F / 2,
+    TNat p ≤ mediation L - redundancy L / 2 + 3 seedEntropy F / 2,
 
 in nats (`T_le_ledger`). The proof averages the deterministic scores of the complete maps over
 the seed law, writes each as a coordinate identity in the information budgets of the
@@ -17,10 +19,13 @@ arbitrary-latent budget.
 
 ## Attribution
 
-The upstream ancestor is
+Original work by Alexis Olson, first developed in
+github.com/AlexisOlson/stochastic-to-deterministic-latents.
+This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-This file retains that source's definitions and lemmas where cited, together with
-material adapted from the author's earlier repository.
+
+The method is powered-reference race coding with a coordinate ledger, from
+[pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen.
 -/
 
 namespace NaturalLatents.General
@@ -135,7 +140,7 @@ lemma ledger_MI_seed_source_zero {S Z K : Type*}
   linarith
 
 lemma ledger_calibrated_graph {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) (F : CalibratedSeededFamily L) :
+    (L : stoch_to_det.Latent p) (F : CalibratedSeededFamily L) :
     stoch_to_det.push (fun w : (X × Y → L.ι) × (X × Y) => (w.1 w.2,w.2))
       (seedSourceJoint F) = L.joint := by
   classical
@@ -163,9 +168,9 @@ lemma ledger_calibrated_graph {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
   rw [hfactor]
   by_cases hz : p z = 0
   · rw [hz, zero_mul]
-    simpa [hz] using p_mul_post L i z
+    simpa [hz] using mul_posterior_eq_joint L i z
   · rw [F.calibrated z (by simpa [stoch_to_det.support] using hz) i]
-    exact p_mul_post L i z
+    exact mul_posterior_eq_joint L i z
 
 /- Fixed-map scores and arbitrary-latent information balance. -/
 lemma ledger_detScore_coordinate_identity {γ : Type*} [Fintype γ] [DecidableEq γ]
@@ -197,8 +202,8 @@ lemma ledger_detScore_coordinate_identity {γ : Type*} [Fintype γ] [DecidableEq
   ring
 
 lemma ledger_information_balance {p : Law X Y} (hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) :
-    M L - B L / 2 = Real.log 2 * (stoch_to_det.Ixy p -
+    (L : stoch_to_det.Latent p) :
+    mediation L - redundancy L / 2 = nats (stoch_to_det.Ixy p -
       (stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.1) L.joint +
        stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.2) L.joint) / 2) := by
   have hs := stoch_to_det.Latent.score_sub_Ixy hp L
@@ -246,13 +251,14 @@ lemma ledger_information_balance {p : Law X Y} (hp : stoch_to_det.IsPMF p)
         (stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.1) L.joint +
          stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.2) L.joint) / 2 := by
     linarith only [hs, hb]
-  have hscaled := congrArg (fun t : ℝ => Real.log 2 * t) hbits
-  unfold M B
+  have hscaled := congrArg nats hbits
+  simp only [nats] at hscaled
+  unfold mediation redundancy condMINat nats
   convert hscaled using 1
   all_goals ring
 
 lemma ledger_average_MI_lower {p : Law X Y} (hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) (F : CalibratedSeededFamily L)
+    (L : stoch_to_det.Latent p) (F : CalibratedSeededFamily L)
     {Γ : Type} [Fintype Γ] [DecidableEq Γ] (g : X × Y → Γ) :
     stoch_to_det.MI Prod.fst (fun w : L.ι × (X × Y) => g w.2) L.joint ≤
       ∑ A, F.seedLaw A * stoch_to_det.MI A g p := by
@@ -284,38 +290,40 @@ lemma ledger_average_MI_lower {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   rw [hcal]
   linarith only [hfirst, hsecond, hnonneg, havg]
 
-/-- The ledger inequality, in nats: `T p ≤ M L - B L / 2 + 3 h F / 2` for a calibrated seeded family `F`
+/-- The ledger inequality, in nats: `TNat p ≤ mediation L - redundancy L / 2 + 3 seedEntropy F / 2` for a calibrated seeded family `F`
 of a latent `L` of a probability law `p`. -/
-theorem T_le_ledger {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLatent p)
-    (F : CalibratedSeededFamily L) : T p ≤ M L - B L/2 + 3*h F/2 := by
+theorem T_le_ledger {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : stoch_to_det.Latent p)
+    (F : CalibratedSeededFamily L) : TNat p ≤ mediation L - redundancy L/2 + 3*seedEntropy F/2 := by
   classical
-  have hlog : 0 ≤ Real.log 2 := le_of_lt (Real.log_pos (by norm_num))
   have htotal : ∑ A, F.seedLaw A = 1 := F.seed_isPMF.total
-  have hT : T p ≤ ∑ A, F.seedLaw A * (Real.log 2 * stoch_to_det.detScore p A) := by
-    have hpoint : ∀ A : X × Y → L.ι, T p ≤ Real.log 2 * stoch_to_det.detScore p A := by
+  have hT : TNat p ≤ ∑ A, F.seedLaw A * (detScoreNat p A) := by
+    have hpoint : ∀ A : X × Y → L.ι, TNat p ≤ detScoreNat p A := by
       intro A
       have hb := stoch_to_det.T_le_score (stoch_to_det.Latent.ofFunction hp A)
         (stoch_to_det.functionLatent_isDet hp A)
       rw [stoch_to_det.Latent.ofFunction_score_eq_detScore hp A] at hb
-      exact mul_le_mul_of_nonneg_left hb hlog
+      exact nats_le_nats_iff.mpr hb
     calc
-      T p = ∑ A, F.seedLaw A * T p := by rw [← Finset.sum_mul, htotal, one_mul]
-      _ ≤ ∑ A, F.seedLaw A * (Real.log 2 * stoch_to_det.detScore p A) :=
+      TNat p = ∑ A, F.seedLaw A * TNat p := by rw [← Finset.sum_mul, htotal, one_mul]
+      _ ≤ ∑ A, F.seedLaw A * (detScoreNat p A) :=
         Finset.sum_le_sum fun A _ => mul_le_mul_of_nonneg_left (hpoint A) (F.seed_isPMF.nonneg A)
-  have havg : (∑ A, F.seedLaw A * (Real.log 2 * stoch_to_det.detScore p A)) =
-      Real.log 2 * (stoch_to_det.Ixy p -
+  have havg : (∑ A, F.seedLaw A * (detScoreNat p A)) =
+      nats (stoch_to_det.Ixy p -
         ((∑ A, F.seedLaw A * stoch_to_det.MI A Prod.fst p) +
-         (∑ A, F.seedLaw A * stoch_to_det.MI A Prod.snd p)) / 2) + 3 * h F / 2 := by
+         (∑ A, F.seedLaw A * stoch_to_det.MI A Prod.snd p)) / 2) + 3 * seedEntropy F / 2 := by
+    simp only [detScoreNat_eq]
     simp_rw [ledger_detScore_coordinate_identity hp]
-    unfold h
+    unfold seedEntropy
+    simp only [condHNat_eq, nats]
     simp only [mul_add, mul_sub, mul_left_comm, Finset.sum_add_distrib,
       Finset.sum_sub_distrib, ← Finset.mul_sum, ← Finset.sum_mul, htotal, one_mul]
     ring
   have hx := ledger_average_MI_lower hp L F Prod.fst
   have hy := ledger_average_MI_lower hp L F Prod.snd
-  have hxy := mul_le_mul_of_nonneg_left (add_le_add hx hy) hlog
+  have hxy := nats_le_nats_iff.mpr (add_le_add hx hy)
   have hbalance := ledger_information_balance hp L
   rw [havg] at hT
+  simp only [nats] at hT hxy hbalance
   nlinarith only [hT, hxy, hbalance]
 
 end

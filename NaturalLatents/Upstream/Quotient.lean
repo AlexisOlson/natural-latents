@@ -1,5 +1,6 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Quotient.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
 import NaturalLatents.Upstream.Seed
 import Mathlib.Analysis.SpecialFunctions.Log.Base
 import Mathlib.NumberTheory.Harmonic.EulerMascheroni
@@ -8,12 +9,11 @@ import NaturalLatents.Upstream.Prelude
 import Mathlib.NumberTheory.Harmonic.GammaDeriv
 
 /-!
-# Duplicate clustering and the race interface
+# Duplicate clustering
 
 This file defines `Clustering`, which groups latent labels having identical
 component laws, and develops the resulting cluster-level posterior identities.
-It also defines `RaceQuantities`, the numerical interface through which the
-race construction supplies entropy, scalar-channel, and residual bounds.
+The retained declarations supply the merged components and their posterior identities.
 -/
 
 namespace stoch_to_det
