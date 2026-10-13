@@ -27,8 +27,11 @@ modules, the clock-race lemmas in Race.lean, the contact secants in
 Floor.lean, and first versions of DomFloorCore.lean and PhiBounds.lean, which
 pull request #6 revises.
 
-The remaining files are the author's own work. Together, the files under
-NaturalLatents/General/ build on the upstream definitions, which
+The proof development under NaturalLatents/General/ and the rest of the
+repository, apart from the standard Apache License text, are the author's own
+work, building on the upstream definitions and the method credited above.
+Together, the files under NaturalLatents/General/ build on the upstream
+definitions, which
 NaturalLatents/General/Definitions.lean imports, and most of them use those
 definitions under their upstream names in the namespace stoch_to_det. Each
 of them states in its first lines that it was first developed in the

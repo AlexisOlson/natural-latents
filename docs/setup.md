@@ -414,9 +414,9 @@ Lean differs from the page in three ways:
 
 **Lemma S1.4 (positivity propagation and the setup on a connected support).** For every finite nonempty $`X,Y`$, every
 law $`p`$ with connected support $`S`$, every feasible kernel $`w`$ positive on $`S`$ and zero off $`S`$, and every
-contact probability law $`q`$ on $`S`$, one has $`q(z)>0`$ for every $`z\in S`$. In particular, there is a latent and a kernel with
-the latent attaining $`\tau(p)`$ and having positive priors, distinct components, and positive posterior rows
-throughout $`S`$.
+contact probability law $`q`$ on $`S`$, one has $`q(z)>0`$ for every $`z\in S`$. In particular, there are a latent attaining $`\tau(p)`$
+and a feasible kernel on $`S`$ such that the latent has positive priors, distinct components, each a contact of the
+kernel positive on $`S`$, and positive posterior rows throughout $`S`$.
 
 *Proof.* The contact equation and normalization give
 

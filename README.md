@@ -1,7 +1,7 @@
 # Natural Latents
 
-A Lean 4 proof, depending on Mathlib only, that a deterministic natural latent is never worse than a stochastic one
-by more than a factor $`13999/2000 < 7`$: the best function of the observations has error at most $`13999/2000`$ times
+A Lean 4 proof, depending on Mathlib only, that for every probability law on two finite alphabets some deterministic
+natural latent is within a factor $`13999/2000 < 7`$ of every stochastic one: the best function of the observations has error at most $`13999/2000`$ times
 the infimum $`\tau(p)`$ of the errors of finite stochastic latents, with both errors as defined below.
 
 ## The theorem
@@ -59,9 +59,11 @@ $`\Pr[L = i \mid (X,Y) = z]`$ positive on the support. Split its error into the 
 $`B = I(L;X \mid Y) + I(L;Y \mid X)`$, so that $`M + B = \tau(p)`$, and let $`d`$ be the probability that two labels
 drawn independently from the posterior at a cell $`z \sim p`$ disagree.
 
-1. **Ledger and race.** An exponential race among the labels, with exponent $`a > 1`$ and clocks shared by all cells,
-   gives a random deterministic code with $`T(p) \le M - B/2 + 3h/2`$ and $`h \le aB + 2\,j(a)\,d`$, where
-   $`j(a) = a \ln \Gamma(1 - 1/a) - \gamma_{\mathrm{E}}`$ (`T_le_ledger`, `exists_race`).
+1. **Ledger and race.** An exponential race among the labels, with clocks shared by all cells and analyzed with a
+   powered reference of exponent $`a > 1`$, gives a random deterministic code $`f`$ with $`T(p) \le M - B/2 + 3h/2`$
+   and $`h \le aB + 2\,j(a)\,d`$ (`T_le_ledger`, `exists_race`). Here $`h`$ is the average over the race of
+   $`H(f(X,Y) \mid X) + H(f(X,Y) \mid Y)`$ with $`f`$ fixed, in nats, and $`j(a) = a \ln \Gamma(1 - 1/a) - \gamma_{\mathrm{E}}`$,
+   where $`\Gamma`$ is the Gamma function and $`\gamma_{\mathrm{E}}`$ is Euler's constant.
 2. **Cap.** $`j(a) < \frac{533}{648a} + \frac{241}{600a^2} + \frac{6503}{24000a^2(a-1)}`$ for $`a > 1`$
    (`racePrice_lt_capC3b`); at $`a = 211/45`$ the right side is below $`u = 3941/20000`$, an exact comparison made by
    the `norm_num [gammaPriceCap]` step in `T_le_of_connected`.
@@ -104,7 +106,8 @@ The written proof, in reading order:
 ## Verify
 
 Install [elan](https://github.com/leanprover/elan), then run from the repository root the steps that continuous
-integration runs:
+integration runs. The recipe assumes a Bash shell with `python3`, `git`, `grep` and the usual shell utilities on
+`PATH`, as on the Ubuntu runner that continuous integration uses:
 
 ```sh
 python3 scripts/check_statement.py

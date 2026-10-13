@@ -1,0 +1,4 @@
+# The frozen statement is checked byte for byte, and the scripts run under bash:
+# keep LF line endings on every checkout, including Windows with core.autocrlf=true.
+NaturalLatents/Statement.lean text eol=lf
+*.sh text eol=lf
