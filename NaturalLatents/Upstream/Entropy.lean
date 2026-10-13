@@ -133,19 +133,14 @@ lemma gibbs_nonneg {p q : α → ℝ} (hp : IsPMF p) (hq : IsPMF q)
     intro a
     by_cases hpa : p a = 0
     · simp [hpa, hq.nonneg a]
-    · have hppos : 0 < p a := lt_of_le_of_ne (hp.nonneg a) (Ne.symm hpa)
-      have hqa := hsupp a hpa
-      have hqpos : 0 < q a := lt_of_le_of_ne (hq.nonneg a) (Ne.symm hqa)
-      have hlog := Real.log_le_sub_one_of_pos (div_pos hqpos hppos)
-      have hmul := mul_le_mul_of_nonneg_left hlog (hp.nonneg a)
-      have hident : p a * (q a / p a - 1) = q a - p a := by
-        field_simp [hpa]
-      have hswap : p a * Real.log (q a / p a) =
-          -(p a * Real.log (p a / q a)) := by
-        rw [Real.log_div hqa hpa, Real.log_div hpa hqa]
-        ring
-      rw [hswap, hident] at hmul
-      linarith
+    · have hqa := hsupp a hpa
+      have hratio : 0 ≤ p a / q a := div_nonneg (hp.nonneg a) (hq.nonneg a)
+      have h := mul_le_mul_of_nonneg_left
+        (Real.self_sub_one_le_mul_log hratio) (hq.nonneg a)
+      calc
+        p a - q a = q a * (p a / q a - 1) := by field_simp
+        _ ≤ q a * ((p a / q a) * Real.log (p a / q a)) := h
+        _ = p a * Real.log (p a / q a) := by field_simp
   have hp_sum : ∑ a, p a = 1 := by simpa [mass] using hp.total
   have hq_sum : ∑ a, q a = 1 := by simpa [mass] using hq.total
   calc
@@ -224,28 +219,13 @@ lemma push_push [Fintype γ] [DecidableEq δ] (f : α → γ) (g : γ → δ) (m
   rw [Finset.sum_fiberwise_eq_sum_filter]
   simp
 
-/-- Entropy is invariant under an equivalence of the output alphabet. -/
-lemma H_push_equiv [Fintype γ] [DecidableEq α] (e : α ≃ γ) (m : α → ℝ)
-    (hm : IsPMF m) : H (push e m) = H m := by
-  apply le_antisymm
-  · exact H_push_le hm
-  · have hp : IsPMF (push e m) := isPMF_push hm
-    have hback := H_push_le (f := e.symm) hp
-    rw [push_push] at hback
-    have hround : push (e.symm ∘ e) m = m := by
-      funext x
-      unfold push
-      apply Finset.sum_eq_single x
-      · intro b hb hbx
-        have hbeq : b = x := by
-          simpa [Function.comp_def] using (Finset.mem_filter.mp hb).2
-        exact (hbx hbeq).elim
-      · intro hx
-        exfalso
-        apply hx
-        simp
-    rw [hround] at hback
-    exact hback
+/-- Pushing along the identity function leaves a finite measure unchanged. -/
+@[simp] lemma push_id [DecidableEq α] (m : α → ℝ) : push id m = m := by
+  funext a
+  unfold push
+  rw [Finset.sum_eq_single a]
+  · simp
+  · simp
 
 /-- Pushforward is linear under scalar multiplication. -/
 lemma push_smul (f : α → γ) (m : α → ℝ) (c : ℝ) :
@@ -270,6 +250,18 @@ lemma sum_push_mul [Fintype γ] (f : α → γ) (m : α → ℝ) (k : γ → ℝ
           intro a ha
           rw [(Finset.mem_filter.mp ha).2]
     _ = ∑ a, m a * k (f a) := Finset.sum_fiberwise univ f _
+
+/-- The negative-log summand commutes with pushforward after integration. -/
+lemma sum_negMulLog_push [Fintype γ] (f : α → γ) (m : α → ℝ) :
+    ∑ c, Real.negMulLog (push f m c) = ∑ a, m a * (-Real.log (push f m (f a))) := by
+  calc
+    ∑ c, Real.negMulLog (push f m c) =
+        ∑ c, push f m c * (-Real.log (push f m c)) := by
+      apply Finset.sum_congr rfl
+      intro c _
+      rw [Real.negMulLog]
+      ring
+    _ = ∑ a, m a * (-Real.log (push f m (f a))) := sum_push_mul f m _
 
 end Push
 
@@ -358,14 +350,6 @@ noncomputable def condMI (f : α → γ) (g : α → δ) (h : α → ε) (m : α
 
 /-! #### Basic properties -/
 
-/-- Re-encoding a random variable by an equivalence preserves its entropy. -/
-lemma Hvar_equiv {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (e : γ ≃ δ) :
-    Hvar (fun a => e (f a)) m = Hvar f m := by
-  unfold Hvar
-  change H (push (e ∘ f) m) = H (push f m)
-  rw [← push_push f e m]
-  exact H_push_equiv e (push f m) (isPMF_push hm)
-
 /-- Entropy cannot increase after applying a deterministic function. -/
 lemma Hvar_comp_le {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (u : γ → δ) :
     Hvar (u ∘ f) m ≤ Hvar f m := by
@@ -385,6 +369,16 @@ lemma Hvar_eq_of_leftInverse {m : α → ℝ} (hm : IsPMF m) (f : α → γ)
       exact huv (f a)
     rw [hfun] at hback
     exact hback
+
+/-- Re-encoding a random variable by an equivalence preserves its entropy. -/
+lemma Hvar_equiv {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (e : γ ≃ δ) :
+    Hvar (fun a => e (f a)) m = Hvar f m :=
+  Hvar_eq_of_leftInverse hm f e e.symm e.left_inv
+
+/-- Entropy is invariant under an equivalence of the output alphabet. -/
+lemma H_push_equiv [DecidableEq α] (e : α ≃ γ) (m : α → ℝ)
+    (hm : IsPMF m) : H (push e m) = H m := by
+  simpa [Hvar, Function.comp_def] using Hvar_equiv hm id e
 
 /-- Conditional-entropy chain rule written as a sum of unnormalized fibres. -/
 lemma Hvar_pair_eq_sum_fibers {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (h : α → δ) :
@@ -474,28 +468,13 @@ lemma MI_nonneg {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (g : α → δ) 
     rw [hrx_eq, hry_eq]
   have hliftx : ∑ x, Real.negMulLog (rx x) =
       ∑ z, r z * (-Real.log (rx z.1)) := by
-    calc
-      ∑ x, Real.negMulLog (rx x) = ∑ x, rx x * (-Real.log (rx x)) := by
-        apply Finset.sum_congr rfl
-        intro x _
-        rw [Real.negMulLog]
-        ring
-      _ = ∑ z, r z * (-Real.log (rx z.1)) := sum_push_mul Prod.fst r _
+    simpa [rx] using sum_negMulLog_push Prod.fst r
   have hlifty : ∑ y, Real.negMulLog (ry y) =
       ∑ z, r z * (-Real.log (ry z.2)) := by
-    calc
-      ∑ y, Real.negMulLog (ry y) = ∑ y, ry y * (-Real.log (ry y)) := by
-        apply Finset.sum_congr rfl
-        intro y _
-        rw [Real.negMulLog]
-        ring
-      _ = ∑ z, r z * (-Real.log (ry z.2)) := sum_push_mul Prod.snd r _
+    simpa [ry] using sum_negMulLog_push Prod.snd r
   have hliftr : ∑ z, Real.negMulLog (r z) =
       ∑ z, r z * (-Real.log (r z)) := by
-    apply Finset.sum_congr rfl
-    intro z _
-    rw [Real.negMulLog]
-    ring
+    simpa using sum_negMulLog_push id r
   have hEntropyKL :
       (∑ x, Real.negMulLog (rx x)) + (∑ y, Real.negMulLog (ry y))
           - ∑ z, Real.negMulLog (r z) =
