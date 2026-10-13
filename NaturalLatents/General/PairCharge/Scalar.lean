@@ -120,12 +120,26 @@ lemma pairCharge_region5 {S : Finset (X × Y)} {w P R : Law X Y}
   linarith
 
 -- Each identity below is an exact degree-(5,2) Bernstein decomposition.
+/-- The cubic part of the charge left after paying the logarithmic price. -/
+abbrev pairChargeCubicRemainder (s : ℝ) : ℝ :=
+  (3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160
+
+/-- The common denominator polynomial in the low-`j` rectangle certificates. -/
+abbrev pairChargeLowDenominator (s j : ℝ) : ℝ :=
+  15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2
+
+/-- Turn a nonnegative Bernstein remainder and a positive reserved payment into
+the strict inequality used by the rectangle certificates. -/
+lemma pairCharge_of_bernstein_reserve {value reserve : ℝ}
+    (hremainder : 0 ≤ value - reserve) (hreserve : 0 < reserve) : 0 < value := by
+  linarith
+
 /-- Exact rational Bernstein certificate on the region region_small_low. -/
 lemma pairCharge_region_small_low (s j : ℝ)
     (hspos : 0 < s) (hshi : s ≤ (1 / 3 : ℝ))
     (hjlo : (1 / 16 : ℝ) ≤ j) (hjhi : j ≤ (5 / 16 : ℝ)) :
-    ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
+    pairChargeCubicRemainder s *
+      pairChargeLowDenominator s j
       < 3 * (1 - s + s * j) ^ 2 := by
   let x : ℝ := 3 * (s - 0)
   let y : ℝ := 4 * (j - (1 / 16 : ℝ))
@@ -135,8 +149,8 @@ lemma pairCharge_region_small_low (s j : ℝ)
   have hyc : 0 ≤ 1 - y := by dsimp [y]; linarith
   have hcert :
       3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 10 : ℝ) * s =
         (24 / 25 : ℝ) * (1 - x) ^ 5 * (1 - y) ^ 2
         + (24 / 25 : ℝ) * (1 - x) ^ 5 * y * (1 - y)
@@ -159,20 +173,21 @@ lemma pairCharge_region_small_low (s j : ℝ)
     ring
   have hnonneg :
       0 ≤ 3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 10 : ℝ) * s := by
     rw [hcert]
     positivity
   have hpaid : 0 < (1 / 10 : ℝ) * s := by positivity
-  linarith only [hnonneg, hpaid]
+  have hpositive := pairCharge_of_bernstein_reserve hnonneg hpaid
+  linarith only [hpositive]
 
 /-- Exact rational Bernstein certificate on the region region_middle. -/
 lemma pairCharge_region_middle (s j : ℝ)
     (hslo : (1 / 3 : ℝ) ≤ s) (hshi : s ≤ (1 / 2 : ℝ))
     (hjlo : (1 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
-    ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
+    pairChargeCubicRemainder s *
+      pairChargeLowDenominator s j
       < 3 * (1 - s + s * j) ^ 2 := by
   let x : ℝ := 6 * (s - (1 / 3 : ℝ))
   let y : ℝ := (16 / 7 : ℝ) * (j - (1 / 16 : ℝ))
@@ -182,8 +197,8 @@ lemma pairCharge_region_middle (s j : ℝ)
   have hyc : 0 ≤ 1 - y := by dsimp [y]; linarith
   have hcert :
       3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 100 : ℝ) =
         (68233763 / 265420800 : ℝ) * (1 - x) ^ 5 * (1 - y) ^ 2
         + (2449787 / 12441600 : ℝ) * (1 - x) ^ 5 * y * (1 - y)
@@ -207,19 +222,20 @@ lemma pairCharge_region_middle (s j : ℝ)
     ring
   have hnonneg :
       0 ≤ 3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 100 : ℝ) := by
     rw [hcert]
     positivity
-  linarith only [hnonneg]
+  have hpositive := pairCharge_of_bernstein_reserve hnonneg (by positivity)
+  linarith only [hpositive]
 
 /-- Exact rational Bernstein certificate on the region region_high_lower. -/
 lemma pairCharge_region_high_lower (s j : ℝ)
     (hslo : (1 / 2 : ℝ) ≤ s) (hshi : s ≤ (3 / 4 : ℝ))
     (hjlo : (1 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
-    ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
+    pairChargeCubicRemainder s *
+      pairChargeLowDenominator s j
       < 3 * (1 - s + s * j) ^ 2 := by
   let x : ℝ := 4 * (s - (1 / 2 : ℝ))
   let y : ℝ := (16 / 7 : ℝ) * (j - (1 / 16 : ℝ))
@@ -229,8 +245,8 @@ lemma pairCharge_region_high_lower (s j : ℝ)
   have hyc : 0 ≤ 1 - y := by dsimp [y]; linarith
   have hcert :
       3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 100 : ℝ) =
         (4039723 / 52428800 : ℝ) * (1 - x) ^ 5 * (1 - y) ^ 2
         + (418951 / 1638400 : ℝ) * (1 - x) ^ 5 * y * (1 - y)
@@ -254,19 +270,20 @@ lemma pairCharge_region_high_lower (s j : ℝ)
     ring
   have hnonneg :
       0 ≤ 3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 100 : ℝ) := by
     rw [hcert]
     positivity
-  linarith only [hnonneg]
+  have hpositive := pairCharge_of_bernstein_reserve hnonneg (by positivity)
+  linarith only [hpositive]
 
 /-- Exact rational Bernstein certificate on the region region_high_upper. -/
 lemma pairCharge_region_high_upper (s j : ℝ)
     (hslo : (3 / 4 : ℝ) ≤ s) (hshi : s ≤ 1)
     (hjlo : (1 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
-    ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
+    pairChargeCubicRemainder s *
+      pairChargeLowDenominator s j
       < 3 * (1 - s + s * j) ^ 2 := by
   let x : ℝ := 4 * (s - (3 / 4 : ℝ))
   let y : ℝ := (16 / 7 : ℝ) * (j - (1 / 16 : ℝ))
@@ -276,8 +293,8 @@ lemma pairCharge_region_high_upper (s j : ℝ)
   have hyc : 0 ≤ 1 - y := by dsimp [y]; linarith
   have hcert :
       3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 100 : ℝ) =
         (14760583 / 838860800 : ℝ) * (1 - x) ^ 5 * (1 - y) ^ 2
         + (11522713 / 26214400 : ℝ) * (1 - x) ^ 5 * y * (1 - y)
@@ -301,23 +318,33 @@ lemma pairCharge_region_high_upper (s j : ℝ)
     ring
   have hnonneg :
       0 ≤ 3 * (1 - s + s * j) ^ 2 -
-        ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-          (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+        pairChargeCubicRemainder s *
+          pairChargeLowDenominator s j -
         (1 / 100 : ℝ) := by
     rw [hcert]
     positivity
-  linarith only [hnonneg]
+  have hpositive := pairCharge_of_bernstein_reserve hnonneg (by positivity)
+  linarith only [hpositive]
 
 /-- One scalar split combines the exact rectangle certificates. -/
 lemma pairCharge_region_high (s j : ℝ)
     (hslo : (1 / 2 : ℝ) ≤ s) (hshi : s ≤ 1)
     (hjlo : (1 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
-    ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
+    pairChargeCubicRemainder s *
+      pairChargeLowDenominator s j
       < 3 * (1 - s + s * j) ^ 2 := by
   by_cases hsmid : s ≤ (3 / 4 : ℝ)
   · exact pairCharge_region_high_lower s j hslo hsmid hjlo hjhi
   · exact pairCharge_region_high_upper s j (le_of_lt (lt_of_not_ge hsmid)) hshi hjlo hjhi
+
+/-- The denominator polynomial shared by the high-`j` payment certificates. -/
+abbrev pairChargeHighDenominator (s j : ℝ) : ℝ :=
+  15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
+    ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
+    (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
+      ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
+        s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
+        ((1 / 2 : ℝ) - 5 * s / 12) * ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))
 
 /-- Exact polynomial certificate on `s ∈ [0, 1/6]`. -/
 lemma pairCharge_scalar_high_payment_lower (s j : ℝ)
@@ -325,14 +352,8 @@ lemma pairCharge_scalar_high_payment_lower (s j : ℝ)
     (hjlo : (5 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
     (1 / 100 : ℝ) + 49 * s ^ 2 / 12800 <
       3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) := by
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j := by
   let x : ℝ := 6 * (s - 0)
   let y : ℝ := (16 / 3 : ℝ) * (j - (5 / 16 : ℝ))
   have hx : 0 ≤ x := by dsimp [x]; linarith
@@ -341,14 +362,8 @@ lemma pairCharge_scalar_high_payment_lower (s j : ℝ)
   have hyc : 0 ≤ 1 - y := by dsimp [y]; linarith
   have hcert :
       3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) =
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) =
         (55621 / 529000 : ℝ) * (1 - x) ^ 6 * (1 - y) ^ 2
         + (55261 / 264500 : ℝ) * (1 - x) ^ 6 * y * (1 - y)
         + (2387 / 23000 : ℝ) * (1 - x) ^ 6 * y ^ 2
@@ -374,17 +389,12 @@ lemma pairCharge_scalar_high_payment_lower (s j : ℝ)
     ring
   have hnonneg :
       0 ≤ 3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) := by
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) := by
     rw [hcert]
     positivity
-  linarith only [hnonneg]
+  have hpositive := pairCharge_of_bernstein_reserve hnonneg (by positivity)
+  linarith only [hpositive]
 
 /-- Exact polynomial certificate on `s ∈ [1/6, 1/3]`. -/
 lemma pairCharge_scalar_high_payment_upper (s j : ℝ)
@@ -392,14 +402,8 @@ lemma pairCharge_scalar_high_payment_upper (s j : ℝ)
     (hjlo : (5 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
     (1 / 100 : ℝ) + 49 * s ^ 2 / 12800 <
       3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) := by
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j := by
   let x : ℝ := 6 * (s - (1 / 6 : ℝ))
   let y : ℝ := (16 / 3 : ℝ) * (j - (5 / 16 : ℝ))
   have hx : 0 ≤ x := by dsimp [x]; linarith
@@ -408,14 +412,8 @@ lemma pairCharge_scalar_high_payment_upper (s j : ℝ)
   have hyc : 0 ≤ 1 - y := by dsimp [y]; linarith
   have hcert :
       3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) =
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) =
         (1399241310791 / 101093474304000 : ℝ) * (1 - x) ^ 6 * (1 - y) ^ 2
         + (52809058481 / 1263668428800 : ℝ) * (1 - x) ^ 6 * y * (1 - y)
         + (2127437197 / 68677632000 : ℝ) * (1 - x) ^ 6 * y ^ 2
@@ -441,17 +439,12 @@ lemma pairCharge_scalar_high_payment_upper (s j : ℝ)
     ring
   have hnonneg :
       0 ≤ 3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) := by
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j - (1 / 100 : ℝ) - 49 * s ^ 2 / 12800 - (1 / 1000 : ℝ) := by
     rw [hcert]
     positivity
-  linarith only [hnonneg]
+  have hpositive := pairCharge_of_bernstein_reserve hnonneg (by positivity)
+  linarith only [hpositive]
 
 /-- The scalar high-`j` payment, with one extra rational rectangle split. -/
 lemma pairCharge_scalar_high_payment (s j : ℝ)
@@ -459,14 +452,8 @@ lemma pairCharge_scalar_high_payment (s j : ℝ)
     (hjlo : (5 / 16 : ℝ) ≤ j) (hjhi : j ≤ (1 / 2 : ℝ)) :
     (1 / 100 : ℝ) + 49 * s ^ 2 / 12800 <
       3 * (1 - s + s * j) ^ 2 -
-      ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-        (15 + 32 * j - ((50 / 9 : ℝ) + 70 * j / 3) * s +
-          ((5 / 9 : ℝ) + 46 * j / 9 - j ^ 2) * s ^ 2 -
-          (5120 / 529 : ℝ) * ((1 / 2 : ℝ) - 5 * s / 12) *
-            ((23 / 4 : ℝ) * (j - (1 / 4 : ℝ) +
-              s * ((1 / 4 : ℝ) - 171 * j / 100) - s ^ 2 / 160) -
-              ((1 / 2 : ℝ) - 5 * s / 12) *
-                ((17 / 10 : ℝ) * ((1 / 2 : ℝ) - j)))) := by
+      pairChargeCubicRemainder s *
+        pairChargeHighDenominator s j := by
   by_cases hsmid : s ≤ (1 / 6 : ℝ)
   · exact pairCharge_scalar_high_payment_lower s j hslo hsmid hjlo hjhi
   · exact pairCharge_scalar_high_payment_upper s j
@@ -599,7 +586,7 @@ lemma pairCharge_fixed_floor_variance (s j v h D C E : ℝ)
     192 * (D + C / 2 + E / 16) ≤
       15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2 := by
   have hcert :
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) -
+      pairChargeLowDenominator s j -
         192 * (D + C / 2 + E / 16) =
       (1 - 4 * v) * (144 - 50 * s + (7 - 2 * j - 12 * v) * s ^ 2) := by
     rw [hD, hC, hE, hh]
@@ -616,9 +603,9 @@ lemma pairCharge_fixed_floor_information (s j ibar : ℝ)
     (hden : 0 <
       15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
     (hfloor : 3 * (1 - s + s * j) ^ 2 /
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2) ≤ ibar)
-    (hpay : ((3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160) *
-      (15 - 7 * s + s ^ 2 + (32 - 18 * s + 3 * s ^ 2) * j - s ^ 2 * j ^ 2)
+      pairChargeLowDenominator s j ≤ ibar)
+    (hpay : pairChargeCubicRemainder s *
+      pairChargeLowDenominator s j
       < 3 * (1 - s + s * j) ^ 2) :
     (3 / 25 : ℝ) - 9 * s / 80 - 57 * s ^ 2 / 2560 - s ^ 3 / 160 < ibar := by
   exact lt_of_lt_of_le ((lt_div_iff₀ hden).2 hpay) hfloor
@@ -1051,6 +1038,34 @@ lemma pairCharge_cubic_UV {S : Finset (X × Y)} {w P R : Law X Y}
   rw [hm.g3, hm.V2, (pairCharge_mean_UV hpair).2] at hV
   constructor <;> linarith
 
+omit [DecidableEq X] [DecidableEq Y] in
+/-- Expansion shared by the two orientations of the mixed shifted moment. -/
+lemma pairCharge_E_shift_mixed {P : Law X Y} (hP : stoch_to_det.IsPMF P)
+    (F G : X × Y → ℝ) :
+    E P (fun z => (F z + 1) * (G z + 1)^2) =
+      E P (fun z => F z * (G z)^2) + 2 * E P (fun z => F z * G z) +
+      E P F + E P (fun z => (G z)^2) + 2 * E P G + 1 := by
+  calc
+    _ = E P (fun z => (((((F z * (G z)^2) + 2 * (F z * G z)) + F z) +
+        (G z)^2) + 2 * G z) + 1) := by
+      congr 1
+      funext z
+      ring
+    _ = _ := by
+      simp only [contact_q_E_add, contact_q_E_scale, contact_q_E_const hP]
+
+omit [DecidableEq X] [DecidableEq Y] in
+/-- Expansion shared by the `U` and `V` weighted energies. -/
+lemma pairCharge_E_weighted_cube (P : Law X Y) (F : X × Y → ℝ) :
+    E P (fun z => (F z)^2 * (2 + F z)) =
+      2 * E P (fun z => (F z)^2) + E P (fun z => (F z)^3) := by
+  calc
+    _ = E P (fun z => 2 * (F z)^2 + (F z)^3) := by
+      congr 1
+      funext z
+      ring
+    _ = _ := by rw [contact_q_E_add, contact_q_E_scale]
+
 lemma pairCharge_mixed_UV {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
     E P (fun z => U P R z.1 * (V P R z.2)^2) =
@@ -1060,36 +1075,23 @@ lemma pairCharge_mixed_UV {S : Finset (X × Y)} {w P R : Law X Y}
   have hm := contact_moments hpair
   have hmeans := pairCharge_mean_UV hpair
   have hmix := contact_q_mixed_moments (contact_cond_g2_mul hpair) (contact_cond_f2_mul hpair)
-  have hU : E P (fun z => f P R z.1 * (g P R z.2)^2) =
-      E P (fun z => U P R z.1 * (V P R z.2)^2) +
-      2 * E P (fun z => U P R z.1 * V P R z.2) +
-      E P (fun z => U P R z.1) + E P (fun z => (V P R z.2)^2) +
-      2 * E P (fun z => V P R z.2) + 1 := by
-    calc
-      _ = E P (fun z => (((((U P R z.1 * (V P R z.2)^2) +
-          2 * (U P R z.1 * V P R z.2)) + U P R z.1) +
-          (V P R z.2)^2) + 2 * V P R z.2) + 1) := by
-        congr 1
-        funext z
-        unfold f g
-        ring
-      _ = _ := by
-        simp only [contact_q_E_add, contact_q_E_scale, contact_q_E_const hpair.2.1.1]
+  have hU := pairCharge_E_shift_mixed hpair.2.1.1
+    (fun z => U P R z.1) (fun z => V P R z.2)
+  change E P (fun z => f P R z.1 * (g P R z.2)^2) = _ at hU
+  have hVraw := pairCharge_E_shift_mixed hpair.2.1.1
+    (fun z => V P R z.2) (fun z => U P R z.1)
   have hV : E P (fun z => (f P R z.1)^2 * g P R z.2) =
       E P (fun z => (U P R z.1)^2 * V P R z.2) +
       2 * E P (fun z => U P R z.1 * V P R z.2) +
       E P (fun z => V P R z.2) + E P (fun z => (U P R z.1)^2) +
       2 * E P (fun z => U P R z.1) + 1 := by
     calc
-      _ = E P (fun z => ((((((U P R z.1)^2 * V P R z.2) +
-          2 * (U P R z.1 * V P R z.2)) + V P R z.2) +
-          (U P R z.1)^2) + 2 * U P R z.1) + 1) := by
+      _ = E P (fun z => (V P R z.2 + 1) * (U P R z.1 + 1)^2) := by
         congr 1
         funext z
         unfold f g
         ring
-      _ = _ := by
-        simp only [contact_q_E_add, contact_q_E_scale, contact_q_E_const hpair.2.1.1]
+      _ = _ := by simpa only [mul_comm] using hVraw
   rw [hmix.2, hm.f2, hmeans.1, hmeans.2, hm.V2] at hU
   rw [hmix.1, hm.g2, hmeans.1, hmeans.2, hm.U2] at hV
   have hEf : E P (fun z => f P R z.1) = 1 - A0 P R := by unfold A0; ring
@@ -1106,22 +1108,8 @@ lemma pairCharge_UV_weighted_energy {S : Finset (X × Y)} {w P R : Law X Y}
       E P (fun z => (V P R z.2)^2 * (2 + V P R z.2)) = s P R := by
   have hm := contact_moments hpair
   have hc := pairCharge_cubic_UV hpair
-  have hU : E P (fun z => (U P R z.1)^2 * (2 + U P R z.1)) =
-      2 * E P (fun z => (U P R z.1)^2) + E P (fun z => (U P R z.1)^3) := by
-    calc
-      _ = E P (fun z => 2 * (U P R z.1)^2 + (U P R z.1)^3) := by
-        congr 1
-        funext z
-        ring
-      _ = _ := by rw [contact_q_E_add, contact_q_E_scale]
-  have hV : E P (fun z => (V P R z.2)^2 * (2 + V P R z.2)) =
-      2 * E P (fun z => (V P R z.2)^2) + E P (fun z => (V P R z.2)^3) := by
-    calc
-      _ = E P (fun z => 2 * (V P R z.2)^2 + (V P R z.2)^3) := by
-        congr 1
-        funext z
-        ring
-      _ = _ := by rw [contact_q_E_add, contact_q_E_scale]
+  have hU := pairCharge_E_weighted_cube P (fun z => U P R z.1)
+  have hV := pairCharge_E_weighted_cube P (fun z => V P R z.2)
   rw [hm.U2, hc.1] at hU
   rw [hm.V2, hc.2] at hV
   have hs := pairCharge_s_eq_A0_add_B0 P R
