@@ -1,7 +1,8 @@
 # Natural Latents
 
-A Lean 4 proof, depending on Mathlib only, that a stochastic natural latent can be replaced by a deterministic one
-at a constant factor below seven.
+A Lean 4 proof, depending on Mathlib only, that a deterministic natural latent is never worse than a stochastic one
+by more than a factor $`2789/400 < 7`$: the best function of the observations has error at most $`2789/400`$ times
+the best error of any finite stochastic latent, with both errors as defined below.
 
 ## The theorem
 
@@ -46,21 +47,32 @@ proofs:
 
 ## The idea of the proof
 
-The proof has four parts. An optimal stochastic latent yields a race code: a seeded family of deterministic codes
-whose labels follow the posterior rows of the latent, chosen by an exponential race. A ledger prices that code
-against the budgets of the latent. A mismatch payment, funded by a charge on pairs of contacts of one feasible
-kernel, controls where the posterior rows and the race disagree. A cap on the race's entropy price closes the account.
-The parts are assembled at the race exponent $`a = 93/20`$, the cap $`u = 199/1000`$ and the pair-charge parameters
-$`(\beta, \gamma) = (1/10, 3/25)`$, which give the constant
+Work in nats, and fix a finite stochastic latent $`L`$ that attains $`\tau(p)`$. Split its error into the two budgets
+$`M = I(X;Y \mid L)`$ and $`B = I(L;X \mid Y) + I(L;Y \mid X)`$, so that $`M + B = \tau(p)`$. The proof chains four
+inequalities, each a theorem in `NaturalLatents/General/`.
+
+1. **Ledger** (`T_le_ledger`). Let $`g`$ be a random code whose label at each cell $`z`$ is distributed as the
+   posterior of $`L`$ given $`(X,Y) = z`$, and let $`h`$ be the average over the randomness of
+   $`H(g \mid X) + H(g \mid Y)`$. Then $`T(p) \le M - B/2 + 3h/2`$.
+2. **Race** (`exists_race`). For every $`a > 1`$, an exponential race among the labels of $`L`$ gives such a code
+   with $`h \le aB + 2\,j(a)\,d`$. Here $`d`$ is the probability that two independent draws from the posterior at
+   the same cell disagree, and $`j(a)`$ is an explicit price of the race.
+3. **Cap** (`racePrice_lt_capC3a`). $`j(a)`$ is below an explicit three-term bound; at $`a = 93/20`$ this gives
+   $`j(a) < u = 199/1000`$.
+4. **Payment** (`mismatch_payment`). $`\gamma\,d \le (1+2\beta)M + \beta B`$ with $`(\beta, \gamma) = (1/10, 3/25)`$,
+   from a charge on pairs of components of $`L`$. These components are contacts of one feasible kernel, a dual
+   object supplied by the optimality conditions for $`L`$.
+
+Combining the four,
 
 ```math
-\max\left\{1 + \frac{3u(1+2\beta)}{\gamma},\ \frac{3a-1}{2} + \frac{3u\beta}{\gamma}\right\}
-= \max\left\{\frac{697}{100},\ \frac{2789}{400}\right\} = \frac{2789}{400}.
+T(p) \le \left(1 + \frac{3u(1+2\beta)}{\gamma}\right) M + \left(\frac{3a-1}{2} + \frac{3u\beta}{\gamma}\right) B
+= \frac{697}{100}\,M + \frac{2789}{400}\,B \le \frac{2789}{400}\,\tau(p).
 ```
 
-The argument is first carried out for laws whose support is connected (as a bipartite graph between the values of
-$`X`$ and the values of $`Y`$), and then extended to every finite law, because $`T`$ and $`\tau`$ both split over the
-connected components of the support.
+The race and the payment need every component of $`L`$ to be positive on the support of $`p`$. This holds when the
+support is connected, as a bipartite graph between the values of $`X`$ and the values of $`Y`$. The bound then
+extends to every finite law, because $`T`$ and $`\tau`$ both split over the connected components of the support.
 
 ## Verify
 
@@ -75,8 +87,9 @@ python3 scripts/check_statement.py
 
 The audit passes when the last two commands exit with code 0 and print nothing. [Verify.lean](Verify.lean) pins the
 type of each headline theorem and pins its axioms to exactly `[propext, Classical.choice, Quot.sound]`;
-`scripts/check_statement.py` checks the SHA-256 of `Statement.lean`. Continuous integration runs the same steps,
-together with a scan of every Lean file for `sorry`, `axiom`, `native_decide` and other trust shortcuts.
+`scripts/check_statement.py` checks the SHA-256 of `Statement.lean`. Continuous integration checks the statement
+hash, scans the Lean files of the proof (`NaturalLatents/`, `NaturalLatents.lean` and `Verify.lean`) for `sorry`,
+`axiom`, `native_decide` and other trust shortcuts, fetches the Mathlib cache, builds, and runs the same silent audit.
 
 ## Acknowledgments
 
@@ -85,9 +98,11 @@ formalized the problem and a proof of a finite constant. The files under `Natura
 that project at the head of its [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen:
 the finite information theory, the duality and the existence of optimal latents, the shared and coordinate races,
 and the passage from latents to probability tables. The proof here follows pull request #6's method,
-powered-reference race coding with a coordinate ledger, and the shape of the probability-table statement follows
-its readable theorem. See [NOTICE](NOTICE) for the license terms; each adapted file names its source and revision in
-its first line.
+powered-reference race coding with a coordinate ledger, and the probability-table statement and its bridge to
+latents follow pull request #6's `TableInformationProof` and `TableBoundProof` (adapted here under
+`NaturalLatents/Upstream/`).
+See [LICENSE](LICENSE) for the Apache-2.0 terms and [NOTICE](NOTICE) for copyright and provenance; each adapted file
+names its source and revision in its first line.
 
 ## How this was made
 
