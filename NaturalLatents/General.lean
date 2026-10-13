@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
 import NaturalLatents.Upstream.Entropy
 import NaturalLatents.Upstream.Functionals
 import NaturalLatents.Upstream.Envelope

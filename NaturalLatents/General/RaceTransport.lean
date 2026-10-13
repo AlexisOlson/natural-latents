@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.Normed.Group.InfiniteSum
@@ -40,7 +40,7 @@ This file retains that source's definitions and lemmas where cited, together wit
 material adapted from the author's earlier repository.
 -/
 
-namespace StochasticToDeterministicLatents.General
+namespace NaturalLatents.General
 
 noncomputable section
 
@@ -430,4 +430,4 @@ lemma race_reference_isPMF {κ : Type} [Fintype κ] [Nonempty κ]
 
 end
 
-end StochasticToDeterministicLatents.General
+end NaturalLatents.General

@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
 import NaturalLatents.General.RaceLaplace
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.NumberTheory.ZetaValues
@@ -22,7 +22,7 @@ This file retains that source's definitions and lemmas where cited, together wit
 material adapted from the author's earlier repository.
 -/
 
-namespace StochasticToDeterministicLatents.General
+namespace NaturalLatents.General
 
 noncomputable section
 
@@ -328,4 +328,4 @@ theorem racePrice_lt_capC3a (a : ℝ) (ha : 1 < a) : j a < C3a a := by
 
 end
 
-end StochasticToDeterministicLatents.General
+end NaturalLatents.General

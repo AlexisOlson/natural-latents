@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
 import NaturalLatents.General.PairCharge.Gram
 
 /-!
@@ -17,7 +17,7 @@ This file retains that source's definitions and lemmas where cited, together wit
 material adapted from the author's earlier repository.
 -/
 
-namespace StochasticToDeterministicLatents.General
+namespace NaturalLatents.General
 
 noncomputable section
 
@@ -1123,4 +1123,4 @@ lemma pairCharge_E_cauchy {P : Law X Y} (hP : stoch_to_det.IsPMF P)
 
 end
 
-end StochasticToDeterministicLatents.General
+end NaturalLatents.General
