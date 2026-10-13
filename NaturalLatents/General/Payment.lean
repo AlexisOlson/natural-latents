@@ -58,16 +58,12 @@ lemma payment_mu_rows {p : Law X Y} (L : FiniteLatent p) (i : L.ι) :
   change (∑ z, ∑ j, replicaJoint L (i,j,z)) = L.prior i
   simp_rw [replica_sum_replica_second, stoch_to_det.Latent.joint]
   rw [← Finset.mul_sum]
-  have h := (L.comp_isPMF i).total
-  change (∑ z, L.comp i z) = 1 at h
-  rw [h, mul_one]
+  rw [(L.comp_isPMF i).sum_eq_one, mul_one]
 
 lemma payment_mu_pos {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     (D : CommonSetup p) (i j : D.L.ι) : 0 < mu D.L i j := by
   have ht : 0 < ∑ z, p z := by
-    have h := hp.total
-    change (∑ z, p z) = 1 at h
-    rw [h]
+    rw [hp.sum_eq_one]
     norm_num
   obtain ⟨z, _, hz⟩ := (Finset.sum_pos_iff_of_nonneg (fun z _ => hp.nonneg z)).mp ht
   have hzs : z ∈ stoch_to_det.support p := by
@@ -139,6 +135,17 @@ lemma payment_entropy_push {Ω A : Type*} [Fintype Ω] [Fintype A] [DecidableEq 
   rw [(stoch_to_det.isPMF_push hq).total]
   exact stoch_to_det.sum_push_mul _ _ _
 
+lemma payment_zero_of_row_zero {A C : Type*} [Fintype A]
+    (q : A × A × C → ℝ) (a : A → ℝ) (P : A → C → ℝ)
+    (hq : stoch_to_det.IsFinMeas q)
+    (hrow : ∀ i c, ∑ j, q (i,j,c) = a i * P i c) :
+    ∀ i j c, P i c = 0 → q (i,j,c) = 0 := by
+  intro i j c hc
+  have hle : q (i,j,c) ≤ ∑ j, q (i,j,c) :=
+    Finset.single_le_sum (fun j _ => hq (i,j,c)) (Finset.mem_univ j)
+  rw [hrow, hc, mul_zero] at hle
+  exact le_antisymm hle (hq _)
+
 /-- Conditional MI of a finite replica law is a weighted conditional KL sum (bits). -/
 lemma payment_condMI_KL {A C : Type*} [Fintype A] [Fintype C]
     [DecidableEq A] [DecidableEq C]
@@ -156,15 +163,8 @@ lemma payment_condMI_KL {A C : Type*} [Fintype A] [Fintype C]
     intro i
     rw [Finset.sum_comm]
     simp_rw [hrow, ← Finset.mul_sum]
-    have ht := (hP i).total
-    change (∑ c, P i c) = 1 at ht
-    rw [ht, mul_one]
-  have hac : ∀ i j c, P i c = 0 → q (i,j,c) = 0 := by
-    intro i j c hc
-    have hle : q (i,j,c) ≤ ∑ j, q (i,j,c) :=
-      Finset.single_le_sum (fun j _ => hq.nonneg (i,j,c)) (Finset.mem_univ j)
-    rw [hrow, hc, mul_zero] at hle
-    exact le_antisymm hle (hq.nonneg _)
+    rw [(hP i).sum_eq_one, mul_one]
+  have hac := payment_zero_of_row_zero q a P hq.nonneg hrow
   have hterm : ∀ i j c,
       q (i,j,c) * stoch_to_det.lg (1/m i j) +
       q (i,j,c) * stoch_to_det.lg (1/(a i * P i c)) -
@@ -236,11 +236,7 @@ lemma payment_midpoint_profile {A C : Type*} [Fintype A] [Fintype C]
       exact div_self (hm i j).ne'
   have hac : ∀ i j, stoch_to_det.AbsCont (t i j) (P i) := by
     intro i j c hc
-    have hle : q (i,j,c) ≤ ∑ j, q (i,j,c) :=
-      Finset.single_le_sum (fun j _ => hq.nonneg (i,j,c)) (Finset.mem_univ j)
-    rw [hrow, hc, mul_zero] at hle
-    have hz := le_antisymm hle (hq.nonneg _)
-    simp [t,hz]
+    simp [t, payment_zero_of_row_zero q a P hq.nonneg hrow i j c hc]
   have hright : (∑ i, ∑ j, m i j * stoch_to_det.KL (t i j) (P j)) =
       ∑ i, ∑ j, m i j * stoch_to_det.KL (t i j) (P i) := by
     rw [Finset.sum_comm]
@@ -280,16 +276,6 @@ lemma payment_midpoint_profile {A C : Type*} [Fintype A] [Fintype C]
   dsimp [m] at hmul
   linarith only [hmul]
 
-omit [DecidableEq X] [DecidableEq Y] in
-lemma payment_coordinate_cell {p : Law X Y} (L : FiniteLatent p)
-    {C : Type*} [Fintype C] [DecidableEq C] (f : X × Y → C)
-    (i j : L.ι) (c : C) :
-    stoch_to_det.push (fun u : L.ι × L.ι × (X × Y) => (u.1,u.2.1,f u.2.2))
-      (replicaJoint L) (i,j,c) =
-      ∑ z, if f z = c then replicaJoint L (i,j,z) else 0 := by
-  simp [stoch_to_det.push, Finset.sum_filter, replica_sum_domain,
-    ite_and]
-
 lemma payment_coordinate_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     (D : CommonSetup p) {C : Type*} [Fintype C] [DecidableEq C] (f : X × Y → C) :
     (∑ i, ∑ j, mu D.L i j * (-Real.log (stoch_to_det.BC
@@ -300,8 +286,9 @@ lemma payment_coordinate_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   let F := fun u : D.L.ι × D.L.ι × (X × Y) => (u.1,u.2.1,f u.2.2)
   let q := stoch_to_det.push F (replicaJoint D.L)
   let P := fun i => stoch_to_det.push f (D.L.comp i)
-  have hcell : ∀ i j c, q (i,j,c) = ∑ z, if f z = c then replicaJoint D.L (i,j,z) else 0 :=
-    payment_coordinate_cell D.L f
+  have hcell : ∀ i j c, q (i,j,c) = ∑ z, if f z = c then replicaJoint D.L (i,j,z) else 0 := by
+    intro i j c
+    simp [q, F, stoch_to_det.push, Finset.sum_filter, replica_sum_domain, ite_and]
   have hmass : ∀ i j, (∑ c, q (i,j,c)) = mu D.L i j := by
     intro i j
     simp_rw [hcell]
@@ -383,22 +370,12 @@ lemma payment_mismatch {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLate
     rw [← Finset.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro i _
-    rw [Finset.sum_filter]
-    have hh : ∀ j, (if i ≠ j then mu L i j else 0) + (if j = i then mu L i i else 0) = mu L i j := by
-      intro j
-      by_cases hi : i = j
-      · subst j; simp
-      · simp [hi,Ne.symm hi]
-    calc
-      (∑ j, mu L i j) = ∑ j, ((if i ≠ j then mu L i j else 0) + (if j = i then mu L i i else 0)) :=
-        Finset.sum_congr rfl (fun j _ => (hh j).symm)
-      _ = _ := by rw [Finset.sum_add_distrib]; simp
+    rw [Finset.filter_ne Finset.univ i]
+    exact (Finset.sum_erase_add Finset.univ (mu L i) (Finset.mem_univ i)).symm
   have hd : d L = 1 - ∑ i, mu L i i := by
     unfold d stoch_to_det.SharedRace.categoricalMismatch
     simp only [mul_sub, mul_one, Finset.sum_sub_distrib, Finset.mul_sum]
-    have ht := hp.total
-    change (∑ z, p z) = 1 at ht
-    rw [ht,Finset.sum_comm]
+    rw [hp.sum_eq_one,Finset.sum_comm]
     congr 1
     apply Finset.sum_congr rfl
     intro i _
@@ -474,7 +451,7 @@ lemma payment_information_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p)
 /-- The mismatch of a `CommonSetup` is paid by its budgets: `gamma * d L ≤ (1 + 2 * beta) * M L + beta * B L`,
 given the affinity bound for every pair, the replica budget and `PC beta gamma`. -/
 theorem mismatch_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p) (D : CommonSetup p)
-    (beta gamma : ℝ) (hbeta : 0 ≤ beta) (hgamma : 0 < gamma)
+    (beta gamma : ℝ) (hbeta : 0 ≤ beta) (hgamma : 0 ≤ gamma)
     (haffinity : ∀ i j, i ≠ j → AffinityBound (D.L.comp i) (D.L.comp j))
     (hreplica : K D.L ≤ 2*M D.L + B D.L)
     (hPC : PC (X := X) (Y := Y) CommonSupportPairs beta gamma) :
@@ -490,7 +467,7 @@ theorem mismatch_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p) (D : CommonSe
       beta*(∑ i, ∑ j ∈ Finset.univ.filter (fun j => i ≠ j),
         mu D.L i j * Psi (s (D.L.comp i) (D.L.comp j))) := by
     have hscaled : gamma*d D.L ≤ gamma*(∑ i, ∑ j ∈ Finset.univ.filter (fun j => i ≠ j), mu D.L i j) :=
-      mul_le_mul_of_nonneg_left (le_of_eq (payment_mismatch hp D.L)) hgamma.le
+      mul_le_mul_of_nonneg_left (le_of_eq (payment_mismatch hp D.L)) hgamma
     apply le_trans hscaled
     have hle : (∑ i, ∑ j ∈ Finset.univ.filter (fun j => i ≠ j), mu D.L i j * gamma) ≤
         ∑ i, ∑ j ∈ Finset.univ.filter (fun j => i ≠ j),

@@ -10,7 +10,6 @@ import Mathlib.NumberTheory.ZetaValues
 Closed-form upper bounds on the race price, from a series for `log Γ (1 - 1/a)`:
 
 * `racePrice_lt_capC3a`: `j a < C3a a` for `a > 1`;
-* `racePriceE_lt_capC4b`: `jET a < C4b a` for `a > 1`.
 
 The proofs use the partial-fraction identity for `log Γ`, a telescoping bound with midpoint and
 tail estimates for the three remainders, and the zeta values at two, three, four and five

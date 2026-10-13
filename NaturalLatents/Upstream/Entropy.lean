@@ -53,6 +53,10 @@ structure IsPMF (m : α → ℝ) : Prop where
   nonneg : ∀ a, 0 ≤ m a
   total : mass m = 1
 
+/-- The total-mass field of a PMF, projected to the underlying finite sum. -/
+lemma IsPMF.sum_eq_one {m : α → ℝ} (hm : IsPMF m) : ∑ a, m a = 1 := by
+  simpa only [mass] using hm.total
+
 /-- `𝖧(m) := ∑ m · lg(|m|/m)`, the 1-homogeneous entropy of §0, in bits.
 
 The convention `0 log 0 := 0` is automatic here: at `m a = 0` the

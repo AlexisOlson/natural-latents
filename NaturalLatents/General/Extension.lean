@@ -34,11 +34,10 @@ open MeasureTheory ProbabilityTheory
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
 /-- A bound `T q ≤ C * tau q` on laws with connected support extends to every probability law. -/
-theorem extension_of_connected (C : ℝ) (hC : 0 ≤ C)
+theorem extension_of_connected (C : ℝ)
     (hconnected : ∀ (q : Law X Y), stoch_to_det.IsPMF q →
       stoch_to_det.IsConnected (stoch_to_det.support q) → T q ≤ C*tau q)
     {p : Law X Y} (hp : stoch_to_det.IsPMF p) : T p ≤ C*tau p := by
-  have _hC := hC
   have hlog : 0 < Real.log 2 := Real.log_pos one_lt_two
   have hbits : stoch_to_det.T p ≤ C * stoch_to_det.tau p := by
     refine stoch_to_det.reduce_to_connected C ?_ p hp

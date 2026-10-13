@@ -25,8 +25,7 @@ Three routes:
   with the exponential-time price and the four-term cap; this route does not use
   `racePriceE_eq`.
 
-`constants_arithmetic` records the exact arithmetic: both caps at `93/20` lie below `199/1000`,
-the coefficient of `M` is `697/100`, and the coefficient of `B` is
+The cap at `93/20` lies below `199/1000`, the coefficient of `M` is `697/100`, and the coefficient of `B` is
 `(3 * (93/20) - 1) / 2 + 3 * (199/1000) * (1/10) / (3/25) = 2789/400`.
 
 ## Attribution
@@ -48,19 +47,6 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
-/-- Exact pricing arithmetic at `a = 93/20`: both caps lie below `199/1000`, the coefficient of `M` is
-`697/100` and the coefficient of `B` is `2789/400`. This is arithmetic, not an analytic cap proof. -/
-lemma constants_arithmetic :
-    C3a (93/20) = 3015167/15153048 ∧
-    (199/1000 : ℝ) - C3a (93/20) = 18097/947065500 ∧
-    C4b (93/20) = 2334323707/11743612200 ∧
-    (199/1000 : ℝ) - C4b (93/20) = 3318901/14679515250 ∧
-    C3a (93/20) < 199/1000 ∧ C4b (93/20) < 199/1000 ∧
-    (1 + 3*(199/1000)*(1+2*(1/10))/(3/25) : ℝ) = 697/100 ∧
-    (((3*(93/20)-1)/2) + 3*(199/1000)*(1/10)/(3/25) : ℝ) = 2789/400 ∧
-    (697/100 : ℝ) ≤ 2789/400 ∧ (2789/400 : ℝ) < 7 := by
-  norm_num [C3a, C4b]
-
 /-- `T p ≤ (2789/400) * tau p`, in nats, for a law with connected support. -/
 theorem T_le_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     (hconn : stoch_to_det.IsConnected (stoch_to_det.support p)) :
@@ -69,7 +55,7 @@ theorem T_le_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   obtain ⟨F, hF⟩ := exists_race hp D.L D.rows_pos (93/20) (by norm_num)
   have hT := T_le_ledger hp D.L F
   have hj : j (93/20) < (199/1000 : ℝ) :=
-    lt_trans (racePrice_lt_capC3a (93/20) (by norm_num)) constants_arithmetic.2.2.2.2.1
+    lt_trans (racePrice_lt_capC3a (93/20) (by norm_num)) (by norm_num [C3a])
   have hd : 0 ≤ d D.L :=
     stoch_to_det.SharedRace.categoricalMismatch_nonneg_of_support hp
       (fun z hz => race_post_isPMF hp D.L z hz)
@@ -89,14 +75,8 @@ theorem T_le_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     mul_nonneg (Real.log_pos one_lt_two).le
       (stoch_to_det.condMI_nonneg D.L.joint_isPMF
         (fun w => w.2.1) (fun w => w.2.2) (fun w => w.1))
-  have hprice : T p ≤ (697/100 : ℝ) * M D.L + (2789/400 : ℝ) * B D.L := by
-    linarith only [hT, hh, hcharge]
-  have hdom := mul_le_mul_of_nonneg_right
-    constants_arithmetic.2.2.2.2.2.2.2.2.1 hM
-  calc
-    T p ≤ (697/100 : ℝ) * M D.L + (2789/400 : ℝ) * B D.L := hprice
-    _ ≤ (2789/400 : ℝ) * (M D.L + B D.L) := by linarith only [hdom]
-    _ = (2789/400 : ℝ) * tau p := by rw [D.attained]
+  rw [← D.attained]
+  linarith only [hT, hh, hcharge, hM]
 
 end
 

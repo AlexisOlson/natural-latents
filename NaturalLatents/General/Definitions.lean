@@ -35,7 +35,7 @@ cancels at the endpoint in `General.lean`.
   one-cell marginals are the posteriors, and `h` is the seed-averaged conditional entropy of
   the fixed maps.
 * **Race prices.** `j a` is the Gamma form of the exponential-race price, `jET a` its
-  exponential-time form `∫ m a t dt` with `m a t = E log (1 + Vtail a t)`, and `C3a`, `C4b` are
+  exponential-time form `∫ m a t dt` with `m a t = E log (1 + Vtail a t)`, and `C3a` is
   the three-term and four-term caps on them.
 
 ## Attribution
@@ -258,10 +258,6 @@ def jET (a : ℝ) : ℝ := ∫ t, m a t ∂expOne
 
 /-- The three-term cap on the Gamma-form race price `j a`. -/
 def C3a (a : ℝ) : ℝ := 79/(96*a) + 241/(600*a^2) + 6503/(24000*a^2*(a-1))
-/-- The four-term cap on the exponential-time race price `jET a`. -/
-def C4b (a : ℝ) : ℝ :=
-  3291/(4000*a) + 241/(600*a^2) + 271/(1000*a^3) + 26/(125*a^3*(a-1))
-
 end
 
 end StochasticToDeterministicLatents.General
