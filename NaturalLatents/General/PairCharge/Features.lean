@@ -28,6 +28,24 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
+/-- The row defect field used throughout the raw pair-charge estimates. -/
+abbrev pairCharge_rawDX (P R : Law X Y) : X → ℝ := fun x =>
+  (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
+
+/-- The column defect field used throughout the raw pair-charge estimates. -/
+abbrev pairCharge_rawDY (P R : Law X Y) : Y → ℝ := fun y =>
+  (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
+
+/-- The combined raw feature built from the row and column defect fields. -/
+abbrev pairCharge_rawC (P R : Law X Y) : X × Y → ℝ := fun z =>
+  ((pairCharge_rawDX P R z.1 + pairCharge_rawDY P R z.2) / s P R - 1) +
+  (((∑ y, P (z.1,y) * pairCharge_rawDY P R y) / stoch_to_det.mX P z.1 +
+    (∑ x, P (x,z.2) * pairCharge_rawDX P R x) / stoch_to_det.mY P z.2) / s P R - 1)
+
+/-- The linear raw feature paired with `pairCharge_rawC`. -/
+abbrev pairCharge_rawL (P R : Law X Y) : X × Y → ℝ := fun z =>
+  U P R z.1 + V P R z.2 + s P R
+
 lemma pairCharge_raw_feature_operator_bridge {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R)
     (B : ((X → ℝ) × (Y → ℝ)) →ₗ[ℝ] ((X → ℝ) × (Y → ℝ)) →ₗ[ℝ] ℝ)
@@ -36,8 +54,8 @@ lemma pairCharge_raw_feature_operator_bridge {S : Finset (X × Y)} {w P R : Law 
       E P (fun z => p.2 z.2 * q.2 z.2))
     (hKX : ∀ p, (K p).1 = fun x => (∑ y, P (x,y) * p.2 y) / stoch_to_det.mX P x)
     (hKY : ∀ p, (K p).2 = fun y => (∑ x, P (x,y) * p.1 x) / stoch_to_det.mY P y) :
-    let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-    let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
+    let DX := pairCharge_rawDX P R
+    let DY := pairCharge_rawDY P R
     let u : (X → ℝ) × (Y → ℝ) := (fun x => U P R x + A0 P R, fun y => V P R y + B0 P R)
     let d := u - (2 : ℝ) • K u
     let p := d + K d
@@ -50,8 +68,8 @@ lemma pairCharge_raw_feature_operator_bridge {S : Finset (X × Y)} {w P R : Law 
     (∀ z ∈ MarginalRectangle S, (p.1 z.1 + p.2 z.2) / s P R = Craw z) ∧
     B d d = E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
       E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2) := by
-  let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-  let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
+  let DX := pairCharge_rawDX P R
+  let DY := pairCharge_rawDY P R
   let mX := 2 * B0 P R - A0 P R
   let mY := 2 * A0 P R - B0 P R
   let u : (X → ℝ) × (Y → ℝ) := (fun x => U P R x + A0 P R, fun y => V P R y + B0 P R)
@@ -129,23 +147,17 @@ lemma pairCharge_raw_feature_operator_bridge {S : Finset (X × Y)} {w P R : Law 
 
 lemma pairCharge_raw_additive_variance_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
-    let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-    let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-    let C : X × Y → ℝ := fun z =>
-      ((DX z.1 + DY z.2) / s P R - 1) +
-      (((∑ y, P (z.1,y) * DY y) / stoch_to_det.mX P z.1 +
-        (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) / s P R - 1)
+    let DX := pairCharge_rawDX P R
+    let DY := pairCharge_rawDY P R
+    let C := pairCharge_rawC P R
     let xP := (E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
       E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2
     let t0 := 6 * (A0 P R * B0 P R / (s P R)^2) - 1 - contactj P R
     60 * (E (productLaw P) (fun z => (C z)^2) / 30 +
       E P (fun z => (C z)^2) / 20) ≤ (17/10 : ℝ) * t0 + (23/4 : ℝ) * xP := by
-  let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-  let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-  let C : X × Y → ℝ := fun z =>
-    ((DX z.1 + DY z.2) / s P R - 1) +
-    (((∑ y, P (z.1,y) * DY y) / stoch_to_det.mX P z.1 +
-      (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) / s P R - 1)
+  let DX := pairCharge_rawDX P R
+  let DY := pairCharge_rawDY P R
+  let C := pairCharge_rawC P R
   let n := E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
     E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)
   let xP := n / (s P R)^2
@@ -183,13 +195,10 @@ lemma pairCharge_raw_additive_variance_bound {S : Finset (X × Y)} {w P R : Law 
 -- The raw fields on the whole marginal rectangle.
 lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
-    let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-    let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-    let C : X × Y → ℝ := fun z =>
-      ((DX z.1 + DY z.2) / s P R - 1) +
-      (((∑ y, P (z.1,y) * DY y) / stoch_to_det.mX P z.1 +
-        (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) / s P R - 1)
-    let L : X × Y → ℝ := fun z => U P R z.1 + V P R z.2 + s P R
+    let DX := pairCharge_rawDX P R
+    let DY := pairCharge_rawDY P R
+    let C := pairCharge_rawC P R
+    let L := pairCharge_rawL P R
     let n := E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
       E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)
     let e := E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R)) *
@@ -199,13 +208,10 @@ lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
     let t0 := 6 * (A0 P R * B0 P R / (s P R)^2) - 1 - contactj P R
     (E (productLaw P) (fun z => L z * C z) + E P (fun z => L z * C z)) / 12 =
       s P R / 48 * (15 * t0 - 7 * xP - 2 * cP) := by
-  let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-  let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-  let C : X × Y → ℝ := fun z =>
-    ((DX z.1 + DY z.2) / s P R - 1) +
-    (((∑ y, P (z.1,y) * DY y) / stoch_to_det.mX P z.1 +
-      (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) / s P R - 1)
-  let L : X × Y → ℝ := fun z => U P R z.1 + V P R z.2 + s P R
+  let DX := pairCharge_rawDX P R
+  let DY := pairCharge_rawDY P R
+  let C := pairCharge_rawC P R
+  let L := pairCharge_rawL P R
   let n := E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
     E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)
   let e := E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R)) *
@@ -253,7 +259,7 @@ lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
     rw [contact_q_E_add, hdY, hKd.2]
     ring
   have hL (z : X × Y) : L z = u.1 z.1 + u.2 z.2 := by
-    dsimp [L, u]
+    dsimp [L, u, pairCharge_rawL]
     rw [pairCharge_s_eq_A0_add_B0]
     ring
   have he := pairCharge_E_congr_rectangle hpair.2.1
@@ -315,13 +321,10 @@ lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
 
 lemma pairCharge_raw_LC_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
-    let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-    let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-    let C : X × Y → ℝ := fun z =>
-      ((DX z.1 + DY z.2) / s P R - 1) +
-      (((∑ y, P (z.1,y) * DY y) / stoch_to_det.mX P z.1 +
-        (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) / s P R - 1)
-    let L : X × Y → ℝ := fun z => U P R z.1 + V P R z.2 + s P R
+    let DX := pairCharge_rawDX P R
+    let DY := pairCharge_rawDY P R
+    let C := pairCharge_rawC P R
+    let L := pairCharge_rawL P R
     let xP := (E P (fun z => (DX z.1 - (2 * B0 P R - A0 P R))^2) +
       E P (fun z => (DY z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2
     let t0 := 6 * (A0 P R * B0 P R / (s P R)^2) - 1 - contactj P R
@@ -341,15 +344,10 @@ lemma pairCharge_raw_LC_bound {S : Finset (X × Y)} {w P R : Law X Y}
 
 lemma pairCharge_raw_LC_average_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
-    let DX (A B : Law X Y) : X → ℝ := fun x =>
-      (∑ y, A (x,y) * (V A B y)^2) / stoch_to_det.mX A x
-    let DY (A B : Law X Y) : Y → ℝ := fun y =>
-      (∑ x, A (x,y) * (U A B x)^2) / stoch_to_det.mY A y
-    let C (A B : Law X Y) : X × Y → ℝ := fun z =>
-      ((DX A B z.1 + DY A B z.2) / s A B - 1) +
-      (((∑ y, A (z.1,y) * DY A B y) / stoch_to_det.mX A z.1 +
-        (∑ x, A (x,z.2) * DX A B x) / stoch_to_det.mY A z.2) / s A B - 1)
-    let L (A B : Law X Y) : X × Y → ℝ := fun z => U A B z.1 + V A B z.2 + s A B
+    let DX := pairCharge_rawDX (X := X) (Y := Y)
+    let DY := pairCharge_rawDY (X := X) (Y := Y)
+    let C := pairCharge_rawC (X := X) (Y := Y)
+    let L := pairCharge_rawL (X := X) (Y := Y)
     let xP := (E P (fun z => (DX P R z.1 - (2 * B0 P R - A0 P R))^2) +
       E P (fun z => (DY P R z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2
     let xR := (E R (fun z => (DX R P z.1 - (2 * B0 R P - A0 R P))^2) +
@@ -362,15 +360,10 @@ lemma pairCharge_raw_LC_average_bound {S : Finset (X × Y)} {w P R : Law X Y}
       E R (fun z => L R P z * C R P z)) / 12
     0 < t0 ∧ 0 ≤ xavg ∧ xavg ≤ 2 * t0 ∧
       s P R / 48 * (15 * t0 - 8 * xavg + xavg^2 / t0) ≤ (NP + NR) / 2 := by
-  let DX (A B : Law X Y) : X → ℝ := fun x =>
-    (∑ y, A (x,y) * (V A B y)^2) / stoch_to_det.mX A x
-  let DY (A B : Law X Y) : Y → ℝ := fun y =>
-    (∑ x, A (x,y) * (U A B x)^2) / stoch_to_det.mY A y
-  let C (A B : Law X Y) : X × Y → ℝ := fun z =>
-    ((DX A B z.1 + DY A B z.2) / s A B - 1) +
-    (((∑ y, A (z.1,y) * DY A B y) / stoch_to_det.mX A z.1 +
-      (∑ x, A (x,z.2) * DX A B x) / stoch_to_det.mY A z.2) / s A B - 1)
-  let L (A B : Law X Y) : X × Y → ℝ := fun z => U A B z.1 + V A B z.2 + s A B
+  let DX := pairCharge_rawDX (X := X) (Y := Y)
+  let DY := pairCharge_rawDY (X := X) (Y := Y)
+  let C := pairCharge_rawC (X := X) (Y := Y)
+  let L := pairCharge_rawL (X := X) (Y := Y)
   let xP := (E P (fun z => (DX P R z.1 - (2 * B0 P R - A0 P R))^2) +
     E P (fun z => (DY P R z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2
   let xR := (E R (fun z => (DX R P z.1 - (2 * B0 R P - A0 R P))^2) +
@@ -420,14 +413,9 @@ lemma pairCharge_raw_LC_average_bound {S : Finset (X × Y)} {w P R : Law X Y}
 
 lemma pairCharge_raw_additive_variance_average_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
-    let DX (A B : Law X Y) : X → ℝ := fun x =>
-      (∑ y, A (x,y) * (V A B y)^2) / stoch_to_det.mX A x
-    let DY (A B : Law X Y) : Y → ℝ := fun y =>
-      (∑ x, A (x,y) * (U A B x)^2) / stoch_to_det.mY A y
-    let C (A B : Law X Y) : X × Y → ℝ := fun z =>
-      ((DX A B z.1 + DY A B z.2) / s A B - 1) +
-      (((∑ y, A (z.1,y) * DY A B y) / stoch_to_det.mX A z.1 +
-        (∑ x, A (x,z.2) * DX A B x) / stoch_to_det.mY A z.2) / s A B - 1)
+    let DX := pairCharge_rawDX (X := X) (Y := Y)
+    let DY := pairCharge_rawDY (X := X) (Y := Y)
+    let C := pairCharge_rawC (X := X) (Y := Y)
     let xP := (E P (fun z => (DX P R z.1 - (2 * B0 P R - A0 P R))^2) +
       E P (fun z => (DY P R z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2
     let xR := (E R (fun z => (DX R P z.1 - (2 * B0 R P - A0 R P))^2) +
@@ -439,14 +427,9 @@ lemma pairCharge_raw_additive_variance_average_bound {S : Finset (X × Y)} {w P 
     let WR := E (productLaw R) (fun z => (C R P z)^2) / 30 +
       E R (fun z => (C R P z)^2) / 20
     0 < t ∧ (WP + WR) / 2 ≤ ((17/10 : ℝ) * t + (23/4 : ℝ) * xavg) / 60 := by
-  let DX (A B : Law X Y) : X → ℝ := fun x =>
-    (∑ y, A (x,y) * (V A B y)^2) / stoch_to_det.mX A x
-  let DY (A B : Law X Y) : Y → ℝ := fun y =>
-    (∑ x, A (x,y) * (U A B x)^2) / stoch_to_det.mY A y
-  let C (A B : Law X Y) : X × Y → ℝ := fun z =>
-    ((DX A B z.1 + DY A B z.2) / s A B - 1) +
-    (((∑ y, A (z.1,y) * DY A B y) / stoch_to_det.mX A z.1 +
-      (∑ x, A (x,z.2) * DX A B x) / stoch_to_det.mY A z.2) / s A B - 1)
+  let DX := pairCharge_rawDX (X := X) (Y := Y)
+  let DY := pairCharge_rawDY (X := X) (Y := Y)
+  let C := pairCharge_rawC (X := X) (Y := Y)
   let xP := (E P (fun z => (DX P R z.1 - (2 * B0 P R - A0 P R))^2) +
     E P (fun z => (DY P R z.2 - (2 * A0 P R - B0 P R))^2)) / (s P R)^2
   let xR := (E R (fun z => (DX R P z.1 - (2 * B0 R P - A0 R P))^2) +
@@ -476,15 +459,10 @@ lemma pairCharge_raw_additive_variance_average_bound {S : Finset (X × Y)} {w P 
 
 lemma pairCharge_raw_C_means {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
-    let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-    let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
-    let C : X × Y → ℝ := fun z =>
-      ((DX z.1 + DY z.2) / s P R - 1) +
-      (((∑ y, P (z.1,y) * DY y) / stoch_to_det.mX P z.1 +
-        (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) / s P R - 1)
+    let C := pairCharge_rawC P R
     E P C = 0 ∧ E (productLaw P) C = 0 := by
-  let DX : X → ℝ := fun x => (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x
-  let DY : Y → ℝ := fun y => (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y
+  let DX := pairCharge_rawDX P R
+  let DY := pairCharge_rawDY P R
   let PX : X → ℝ := fun x => (∑ y, P (x,y) * DY y) / stoch_to_det.mX P x
   let PY : Y → ℝ := fun y => (∑ x, P (x,y) * DX x) / stoch_to_det.mY P y
   let C : X × Y → ℝ := fun z =>
@@ -587,16 +565,11 @@ lemma pairCharge_cond_defect_X_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     f P R x * ((∑ y, R (x,y) * (V R P y)^2) / stoch_to_det.mX R x) =
       (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x := by
   rw [pairCharge_cond_X_reverse_weight hpair (fun y => (V R P y)^2) hx]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro y _
-  by_cases hz : (x,y) ∈ S
-  · have hg := pairCharge_V_reverse_scaled hpair (Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩)
-    calc
-      P (x,y) * ((g P R y)^2 * (V R P y)^2) =
-        P (x,y) * (g P R y * V R P y)^2 := by ring
-      _ = P (x,y) * (V P R y)^2 := by rw [hg]; ring
-  · simp [hpair.2.1.2.1 (x,y) hz]
+  apply pairCharge_cond_X_congr_support hpair.2.1
+  intro y hy
+  rw [show (g P R y)^2 * (V R P y)^2 = (g P R y * V R P y)^2 by ring,
+    pairCharge_V_reverse_scaled hpair hy]
+  ring
 
 lemma pairCharge_cond_defect_Y_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R)
@@ -604,16 +577,11 @@ lemma pairCharge_cond_defect_Y_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     g P R y * ((∑ x, R (x,y) * (U R P x)^2) / stoch_to_det.mY R y) =
       (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y := by
   rw [pairCharge_cond_Y_reverse_weight hpair (fun x => (U R P x)^2) hy]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro x _
-  by_cases hz : (x,y) ∈ S
-  · have hf := pairCharge_U_reverse_scaled hpair (Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩)
-    calc
-      P (x,y) * ((f P R x)^2 * (U R P x)^2) =
-        P (x,y) * (f P R x * U R P x)^2 := by ring
-      _ = P (x,y) * (U P R x)^2 := by rw [hf]; ring
-  · simp [hpair.2.1.2.1 (x,y) hz]
+  apply pairCharge_cond_Y_congr_support hpair.2.1
+  intro x hx
+  rw [show (f P R x)^2 * (U R P x)^2 = (f P R x * U R P x)^2 by ring,
+    pairCharge_U_reverse_scaled hpair hx]
+  ring
 
 lemma pairCharge_lambda_X_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DX DXp : X → ℝ)
@@ -658,16 +626,10 @@ lemma pairCharge_cond_X_defect_field_reverse {S : Finset (X × Y)} {w P R : Law 
     f P R x * ((∑ y, R (x,y) * DYp y) / stoch_to_det.mX R x) =
       (∑ y, P (x,y) * (g P R y * DY y)) / stoch_to_det.mX P x := by
   rw [pairCharge_cond_X_reverse_weight hpair DYp hx]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro y _
-  by_cases hz : (x,y) ∈ S
-  · have hy : y ∈ YSupport S := Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩
-    calc
-      P (x,y) * ((g P R y)^2 * DYp y) =
-          P (x,y) * (g P R y * (g P R y * DYp y)) := by ring
-      _ = _ := by rw [hDY _ hy]
-  · simp [hpair.2.1.2.1 (x,y) hz]
+  apply pairCharge_cond_X_congr_support hpair.2.1
+  intro y hy
+  rw [show (g P R y)^2 * DYp y = g P R y * (g P R y * DYp y) by ring,
+    hDY y hy]
 
 lemma pairCharge_cond_Y_defect_field_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DX DXp : X → ℝ)
@@ -676,16 +638,10 @@ lemma pairCharge_cond_Y_defect_field_reverse {S : Finset (X × Y)} {w P R : Law 
     g P R y * ((∑ x, R (x,y) * DXp x) / stoch_to_det.mY R y) =
       (∑ x, P (x,y) * (f P R x * DX x)) / stoch_to_det.mY P y := by
   rw [pairCharge_cond_Y_reverse_weight hpair DXp hy]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro x _
-  by_cases hz : (x,y) ∈ S
-  · have hx : x ∈ XSupport S := Finset.mem_image.mpr ⟨(x,y), hz, rfl⟩
-    calc
-      P (x,y) * ((f P R x)^2 * DXp x) =
-          P (x,y) * (f P R x * (f P R x * DXp x)) := by ring
-      _ = _ := by rw [hDX _ hx]
-  · simp [hpair.2.1.2.1 (x,y) hz]
+  apply pairCharge_cond_Y_congr_support hpair.2.1
+  intro x hx
+  rw [show (f P R x)^2 * DXp x = f P R x * (f P R x * DXp x) by ring,
+    hDX x hx]
 
 lemma pairCharge_omega_X_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DX DXp : X → ℝ) (DY DYp : Y → ℝ)
@@ -809,63 +765,81 @@ lemma pairCharge_V_conditional_identity {S : Finset (X × Y)} {w P R : Law X Y}
   rw [hs] at hc
   linarith
 
-/-- Conditioning UV against an arbitrary row field. -/
-lemma pairCharge_UV_row_field {S : Finset (X × Y)} {w P R : Law X Y}
+/-- A row-field conditioning identity, shared by the raw UV and defect specializations. -/
+lemma pairCharge_row_field {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DX F : X → ℝ)
-    (hDX : ∀ x, DX x = (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x) :
-    E P (fun z => U P R z.1 * V P R z.2 * F z.1) =
-      (E P (fun z => (U P R z.1)^2 * F z.1) -
-        E P (fun z => U P R z.1 * DX z.1 * F z.1)) / 2 := by
-  have htower := pairCharge_cond_X_inner hpair.2.1.1 (fun x => U P R x * F x) (V P R)
-  have hpoint : E P (fun z => (U P R z.1 * F z.1) *
-      ((∑ y, P (z.1,y) * V P R y) / stoch_to_det.mX P z.1)) =
-      E P (fun z => ((U P R z.1)^2 * F z.1 - U P R z.1 * DX z.1 * F z.1) / 2) := by
-    apply pairCharge_E_congr_positive hpair.2.1.1
+    (hDX : ∀ x, DX x = pairCharge_rawDX P R x) :
+    E P (fun z => F z.1 * V P R z.2) =
+      (E P (fun z => F z.1 * U P R z.1) - E P (fun z => F z.1 * DX z.1)) / 2 := by
+  have htower := pairCharge_cond_X_inner hpair.2.1.1 F (V P R)
+  have hpoint : ∀ z, 0 < P z →
+      (∑ y, P (z.1,y) * V P R y) / stoch_to_det.mX P z.1 =
+        (U P R z.1 - DX z.1) / 2 := by
     intro z hz
     have hx : z.1 ∈ XSupport S :=
       Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
     have hu := pairCharge_U_conditional_identity hpair hx
-    rw [← hDX] at hu
-    have hce : (∑ y, P (z.1,y) * V P R y) / stoch_to_det.mX P z.1 =
-        (U P R z.1 - DX z.1) / 2 := by linarith only [hu]
-    rw [hce]
+    have hd := hDX z.1
+    dsimp [pairCharge_rawDX] at hd
+    rw [← hd] at hu
+    linarith only [hu]
+  have hcongr : E P (fun z => F z.1 *
+      ((∑ y, P (z.1,y) * V P R y) / stoch_to_det.mX P z.1)) =
+      E P (fun z => (F z.1 * U P R z.1 - F z.1 * DX z.1) / 2) := by
+    apply pairCharge_E_congr_positive hpair.2.1.1
+    intro z hz
+    rw [hpoint z hz]
     ring
-  have hproduct : E P (fun z => (U P R z.1 * F z.1) * V P R z.2) =
-      E P (fun z => U P R z.1 * V P R z.2 * F z.1) := by
-    congr 1
-    funext z
-    ring
-  rw [hproduct, hpoint, pairCharge_E_div, contact_q_E_sub] at htower
+  rw [hcongr, pairCharge_E_div, contact_q_E_sub] at htower
   exact htower.symm
 
-/-- Conditioning UV against an arbitrary column field. -/
-lemma pairCharge_UV_column_field {S : Finset (X × Y)} {w P R : Law X Y}
+/-- A column-field conditioning identity, shared by the raw UV and defect specializations. -/
+lemma pairCharge_column_field {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DY G : Y → ℝ)
-    (hDY : ∀ y, DY y = (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y) :
-    E P (fun z => U P R z.1 * V P R z.2 * G z.2) =
-      (E P (fun z => (V P R z.2)^2 * G z.2) -
-        E P (fun z => V P R z.2 * DY z.2 * G z.2)) / 2 := by
-  have htower := pairCharge_cond_Y_inner hpair.2.1.1 (U P R) (fun y => V P R y * G y)
-  have hpoint : E P (fun z =>
-      ((∑ x, P (x,z.2) * U P R x) / stoch_to_det.mY P z.2) * (V P R z.2 * G z.2)) =
-      E P (fun z => ((V P R z.2)^2 * G z.2 - V P R z.2 * DY z.2 * G z.2) / 2) := by
-    apply pairCharge_E_congr_positive hpair.2.1.1
+    (hDY : ∀ y, DY y = pairCharge_rawDY P R y) :
+    E P (fun z => U P R z.1 * G z.2) =
+      (E P (fun z => V P R z.2 * G z.2) - E P (fun z => DY z.2 * G z.2)) / 2 := by
+  have htower := pairCharge_cond_Y_inner hpair.2.1.1 (U P R) G
+  have hpoint : ∀ z, 0 < P z →
+      (∑ x, P (x,z.2) * U P R x) / stoch_to_det.mY P z.2 =
+        (V P R z.2 - DY z.2) / 2 := by
     intro z hz
     have hy : z.2 ∈ YSupport S :=
       Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
     have hv := pairCharge_V_conditional_identity hpair hy
-    rw [← hDY] at hv
-    have hce : (∑ x, P (x,z.2) * U P R x) / stoch_to_det.mY P z.2 =
-        (V P R z.2 - DY z.2) / 2 := by linarith only [hv]
-    rw [hce]
+    have hd := hDY z.2
+    dsimp [pairCharge_rawDY] at hd
+    rw [← hd] at hv
+    linarith only [hv]
+  have hcongr : E P (fun z =>
+      ((∑ x, P (x,z.2) * U P R x) / stoch_to_det.mY P z.2) * G z.2) =
+      E P (fun z => (V P R z.2 * G z.2 - DY z.2 * G z.2) / 2) := by
+    apply pairCharge_E_congr_positive hpair.2.1.1
+    intro z hz
+    rw [hpoint z hz]
     ring
-  have hproduct : E P (fun z => U P R z.1 * (V P R z.2 * G z.2)) =
-      E P (fun z => U P R z.1 * V P R z.2 * G z.2) := by
-    congr 1
-    funext z
-    ring
-  rw [hproduct, hpoint, pairCharge_E_div, contact_q_E_sub] at htower
+  rw [hcongr, pairCharge_E_div, contact_q_E_sub] at htower
   exact htower.symm
+
+/-- Conditioning UV against an arbitrary row field. -/
+lemma pairCharge_UV_row_field {S : Finset (X × Y)} {w P R : Law X Y}
+    (hpair : CommonSupportPairs S w P R) (DX F : X → ℝ)
+    (hDX : ∀ x, DX x = pairCharge_rawDX P R x) :
+    E P (fun z => U P R z.1 * V P R z.2 * F z.1) =
+      (E P (fun z => (U P R z.1)^2 * F z.1) -
+        E P (fun z => U P R z.1 * DX z.1 * F z.1)) / 2 := by
+  simpa only [mul_assoc, mul_left_comm, mul_comm, pow_two] using
+    pairCharge_row_field hpair DX (fun x => U P R x * F x) hDX
+
+/-- Conditioning UV against an arbitrary column field. -/
+lemma pairCharge_UV_column_field {S : Finset (X × Y)} {w P R : Law X Y}
+    (hpair : CommonSupportPairs S w P R) (DY G : Y → ℝ)
+    (hDY : ∀ y, DY y = pairCharge_rawDY P R y) :
+    E P (fun z => U P R z.1 * V P R z.2 * G z.2) =
+      (E P (fun z => (V P R z.2)^2 * G z.2) -
+        E P (fun z => V P R z.2 * DY z.2 * G z.2)) / 2 := by
+  simpa only [mul_assoc, mul_left_comm, mul_comm, pow_two] using
+    pairCharge_column_field hpair DY (fun y => V P R y * G y) hDY
 
 lemma pairCharge_defect_X_moments {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DX : X → ℝ)
@@ -998,47 +972,17 @@ lemma pairCharge_HB0_product {S : Finset (X × Y)} {w P R : Law X Y}
 
 lemma pairCharge_U_column_defect {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DY : Y → ℝ)
-    (hDY : ∀ y, DY y = (∑ x, P (x,y) * (U P R x)^2) / stoch_to_det.mY P y) :
+    (hDY : ∀ y, DY y = pairCharge_rawDY P R y) :
     E P (fun z => U P R z.1 * DY z.2) =
       (E P (fun z => V P R z.2 * DY z.2) - E P (fun z => (DY z.2)^2)) / 2 := by
-  have htower := pairCharge_cond_Y_inner hpair.2.1.1 (U P R) DY
-  have hpoint : E P (fun z =>
-      ((∑ x, P (x,z.2) * U P R x) / stoch_to_det.mY P z.2) * DY z.2) =
-      E P (fun z => (V P R z.2 * DY z.2 - (DY z.2)^2) / 2) := by
-    apply pairCharge_E_congr_positive hpair.2.1.1
-    intro z hz
-    have hy : z.2 ∈ YSupport S :=
-      Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
-    have hv := pairCharge_V_conditional_identity hpair hy
-    rw [← hDY] at hv
-    have hce : (∑ x, P (x,z.2) * U P R x) / stoch_to_det.mY P z.2 =
-        (V P R z.2 - DY z.2) / 2 := by linarith only [hv]
-    rw [hce]
-    ring
-  rw [hpoint, pairCharge_E_div, contact_q_E_sub] at htower
-  exact htower.symm
+  simpa only [pow_two] using pairCharge_column_field hpair DY DY hDY
 
 lemma pairCharge_V_row_defect {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (DX : X → ℝ)
-    (hDX : ∀ x, DX x = (∑ y, P (x,y) * (V P R y)^2) / stoch_to_det.mX P x) :
+    (hDX : ∀ x, DX x = pairCharge_rawDX P R x) :
     E P (fun z => DX z.1 * V P R z.2) =
       (E P (fun z => U P R z.1 * DX z.1) - E P (fun z => (DX z.1)^2)) / 2 := by
-  have htower := pairCharge_cond_X_inner hpair.2.1.1 DX (V P R)
-  have hpoint : E P (fun z => DX z.1 *
-      ((∑ y, P (z.1,y) * V P R y) / stoch_to_det.mX P z.1)) =
-      E P (fun z => (U P R z.1 * DX z.1 - (DX z.1)^2) / 2) := by
-    apply pairCharge_E_congr_positive hpair.2.1.1
-    intro z hz
-    have hx : z.1 ∈ XSupport S :=
-      Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
-    have hu := pairCharge_U_conditional_identity hpair hx
-    rw [← hDX] at hu
-    have hce : (∑ y, P (z.1,y) * V P R y) / stoch_to_det.mX P z.1 =
-        (U P R z.1 - DX z.1) / 2 := by linarith only [hu]
-    rw [hce]
-    ring
-  rw [hpoint, pairCharge_E_div, contact_q_E_sub] at htower
-  exact htower.symm
+  simpa only [mul_comm, pow_two] using pairCharge_row_field hpair DX DX hDX
 
 /-- The unaveraged contact endpoint for `H` and `B1`. -/
 lemma pairCharge_HB1_joint {S : Finset (X × Y)} {w P R : Law X Y}
