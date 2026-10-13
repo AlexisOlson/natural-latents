@@ -47,32 +47,40 @@ proofs:
 
 ## The idea of the proof
 
-Work in nats, and fix a finite stochastic latent $`L`$ that attains $`\tau(p)`$. Split its error into the two budgets
-$`M = I(X;Y \mid L)`$ and $`B = I(L;X \mid Y) + I(L;Y \mid X)`$, so that $`M + B = \tau(p)`$. The proof chains four
-inequalities, each a theorem in `NaturalLatents/General/`.
+Work in nats, and first suppose that the support of $`p`$ is connected, as a bipartite graph between the values of
+$`X`$ and the values of $`Y`$. Then `exists_setup_of_connected` constructs a finite stochastic latent $`L`$ that
+attains $`\tau(p)`$ and has two further properties: its components are distinct contacts of one feasible kernel (a
+dual object from the optimality conditions), and every posterior probability $`\Pr[L = i \mid (X,Y) = z]`$ is
+positive for $`z`$ in the support. Split the error of $`L`$ into the two budgets $`M = I(X;Y \mid L)`$ and
+$`B = I(L;X \mid Y) + I(L;Y \mid X)`$, so that $`M + B = \tau(p)`$. The proof chains four inequalities, each a theorem
+in `NaturalLatents/General/`.
 
-1. **Ledger** (`T_le_ledger`). Let $`g`$ be a random code whose label at each cell $`z`$ is distributed as the
-   posterior of $`L`$ given $`(X,Y) = z`$, and let $`h`$ be the average over the randomness of
-   $`H(g \mid X) + H(g \mid Y)`$. Then $`T(p) \le M - B/2 + 3h/2`$.
-2. **Race** (`exists_race`). For every $`a > 1`$, an exponential race among the labels of $`L`$ gives such a code
-   with $`h \le aB + 2\,j(a)\,d`$. Here $`d`$ is the probability that two independent draws from the posterior at
-   the same cell disagree, and $`j(a)`$ is an explicit price of the race.
-3. **Cap** (`racePrice_lt_capC3a`). $`j(a)`$ is below an explicit three-term bound; at $`a = 93/20`$ this gives
-   $`j(a) < u = 199/1000`$.
-4. **Payment** (`mismatch_payment`). $`\gamma\,d \le (1+2\beta)M + \beta B`$ with $`(\beta, \gamma) = (1/10, 3/25)`$,
-   from a charge on pairs of components of $`L`$. These components are contacts of one feasible kernel, a dual
-   object supplied by the optimality conditions for $`L`$.
+1. **Ledger** (`T_le_ledger`). Let $`F`$ be a probability law on maps $`g`$ from $`X \times Y`$ to the labels of
+   $`L`$ such that, at each cell $`z`$ of the support, $`g(z)`$ is distributed as the posterior of $`L`$ at $`z`$.
+   Let $`h`$ be the $`F`$-average, over the maps $`g`$, of $`H(g \mid X) + H(g \mid Y)`$ computed for each fixed
+   $`g`$. Then $`T(p) \le M - B/2 + 3h/2`$.
+2. **Race** (`exists_race`). Since the posteriors are positive, for every $`a > 1`$ an exponential race among the
+   labels gives such an $`F`$ with $`h \le aB + 2\,j(a)\,d`$. Here
+   $`d = \sum_z p(z)\bigl(1 - \sum_i \Pr[L = i \mid (X,Y) = z]^2\bigr)`$ is the probability that two labels drawn
+   independently from the posterior at a cell $`z \sim p`$ disagree, and
+   $`j(a) = a \log \Gamma(1 - 1/a) - \gamma_{\mathrm{E}}`$, with $`\gamma_{\mathrm{E}}`$ Euler's constant.
+3. **Cap** (`racePrice_lt_capC3a`). For $`a > 1`$,
+   $`j(a) < \frac{79}{96a} + \frac{241}{600a^2} + \frac{6503}{24000a^2(a-1)}`$; at $`a = 93/20`$ the right side is
+   below $`u = 199/1000`$.
+4. **Payment** (`mismatch_payment`). For this latent, $`\gamma\,d \le (1+2\beta)M + \beta B`$ at
+   $`(\beta, \gamma) = (1/10, 3/25)`$. The proof combines three separately proved bounds: an affinity bound for each
+   pair of components, a budget for two independent posterior replicas, and a charge on pairs of contacts of one
+   feasible kernel.
 
-Combining the four,
+Since $`d \ge 0`$ and $`\gamma > 0`$, the four combine into
 
 ```math
 T(p) \le \left(1 + \frac{3u(1+2\beta)}{\gamma}\right) M + \left(\frac{3a-1}{2} + \frac{3u\beta}{\gamma}\right) B
-= \frac{697}{100}\,M + \frac{2789}{400}\,B \le \frac{2789}{400}\,\tau(p).
+= \frac{697}{100}\,M + \frac{2789}{400}\,B \le \frac{2789}{400}\,\tau(p),
 ```
 
-The race and the payment need every component of $`L`$ to be positive on the support of $`p`$. This holds when the
-support is connected, as a bipartite graph between the values of $`X`$ and the values of $`Y`$. The bound then
-extends to every finite law, because $`T`$ and $`\tau`$ both split over the connected components of the support.
+where the last step uses $`M \ge 0`$ and $`M + B = \tau(p)`$. Finally, $`T`$ and $`\tau`$ both split over the connected
+components of the support, so the bound extends to every finite law (`extension_of_connected`).
 
 ## Verify
 
@@ -85,7 +93,7 @@ lake env lean -DrelaxedAutoImplicit=false Verify.lean
 python3 scripts/check_statement.py
 ```
 
-The audit passes when the last two commands exit with code 0 and print nothing. [Verify.lean](Verify.lean) pins the
+Verification passes when all four commands exit with code 0; on success the last two print nothing. [Verify.lean](Verify.lean) pins the
 type of each headline theorem and pins its axioms to exactly `[propext, Classical.choice, Quot.sound]`;
 `scripts/check_statement.py` checks the SHA-256 of `Statement.lean`. Continuous integration checks the statement
 hash, scans the Lean files of the proof (`NaturalLatents/`, `NaturalLatents.lean` and `Verify.lean`) for `sorry`,
