@@ -53,37 +53,57 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
+private lemma race_expMeasure_one_integrable_iff {g : ℝ → ℝ} :
+    Integrable g (expMeasure 1) ↔
+      Integrable (fun t => Real.exp (-t) * g t) (volume.restrict (Set.Ioi 0)) := by
+  let ν : Measure ℝ := volume.restrict (Set.Ioi (0 : ℝ))
+  let f : ℝ → ENNReal := stoch_to_det.SharedRace.unitExpDensity
+  have hf : Measurable f := by
+    change Measurable (fun t : ℝ => ENNReal.ofReal (Real.exp (-t)))
+    fun_prop
+  have hflt : ∀ᵐ t ∂ν, f t < ⊤ := by
+    filter_upwards [] with t
+    exact ENNReal.ofReal_lt_top
+  have hmeasure : expMeasure 1 = ν.withDensity f :=
+    stoch_to_det.SharedRace.expMeasure_one_eq_restrict_withDensity
+  rw [hmeasure, integrable_withDensity_iff_integrable_smul' hf hflt]
+  apply integrable_congr
+  filter_upwards [] with t
+  simp [f, stoch_to_det.SharedRace.unitExpDensity,
+    ENNReal.toReal_ofReal, Real.exp_nonneg]
+
+private lemma race_integral_expMeasure_one (g : ℝ → ℝ) :
+    (∫ t, g t ∂expMeasure 1) =
+      ∫ t in Set.Ioi (0 : ℝ), Real.exp (-t) * g t := by
+  let ν : Measure ℝ := volume.restrict (Set.Ioi (0 : ℝ))
+  let f : ℝ → ENNReal := stoch_to_det.SharedRace.unitExpDensity
+  have hf : Measurable f := by
+    change Measurable (fun t : ℝ => ENNReal.ofReal (Real.exp (-t)))
+    fun_prop
+  have hflt : ∀ᵐ t ∂ν, f t < ⊤ := by
+    filter_upwards [] with t
+    exact ENNReal.ofReal_lt_top
+  rw [stoch_to_det.SharedRace.expMeasure_one_eq_restrict_withDensity,
+    integral_withDensity_eq_integral_toReal_smul hf hflt]
+  apply integral_congr_ae
+  filter_upwards [] with t
+  simp [f, stoch_to_det.SharedRace.unitExpDensity,
+    ENNReal.toReal_ofReal, Real.exp_nonneg]
+
 lemma race_scalar_exp_log_integrable_mean :
     MeasureTheory.Integrable Real.log (ProbabilityTheory.expMeasure 1) ∧
       (∫ t, Real.log t ∂ProbabilityTheory.expMeasure 1) =
         -Real.eulerMascheroniConstant := by
   let ν : Measure ℝ := volume.restrict (Set.Ioi (0 : ℝ))
-  let f : ℝ → ENNReal := stoch_to_det.SharedRace.unitExpDensity
-  have hf : Measurable f := by
-    change Measurable (fun x : ℝ => ENNReal.ofReal (Real.exp (-x)))
-    fun_prop
-  have hflt : ∀ᵐ t ∂ν, f t < ⊤ := by
-    filter_upwards [] with t
-    exact ENNReal.ofReal_lt_top
   have hweight : Integrable (fun t : ℝ => Real.exp (-t) * Real.log t) ν := by
     have h := stoch_to_det.integrableOn_abs_log_mul_exp_neg_Ioi_1771
     apply h.mono' (by fun_prop : Measurable
       (fun t : ℝ => Real.exp (-t) * Real.log t)).aestronglyMeasurable
     filter_upwards [] with t
     simp [Real.norm_eq_abs, mul_comm]
-  have hconv : (fun t : ℝ => (f t).toReal • Real.log t) =
-      (fun t : ℝ => Real.exp (-t) * Real.log t) := by
-    funext t
-    simp [f, stoch_to_det.SharedRace.unitExpDensity,
-      ENNReal.toReal_ofReal, Real.exp_nonneg]
-  have hmeasure : ProbabilityTheory.expMeasure 1 = ν.withDensity f := by
-    exact stoch_to_det.SharedRace.expMeasure_one_eq_restrict_withDensity
   constructor
-  · rw [hmeasure]
-    apply (integrable_withDensity_iff_integrable_smul' hf hflt).2
-    rwa [hconv]
-  · rw [hmeasure, integral_withDensity_eq_integral_toReal_smul hf hflt,
-      hconv]
+  · exact race_expMeasure_one_integrable_iff.2 hweight
+  · rw [race_integral_expMeasure_one]
     simpa [ν, mul_comm] using stoch_to_det.integral_log_mul_exp_neg_Ioi
 
 lemma race_scalar_exp_ae_pos :
@@ -435,28 +455,12 @@ lemma race_exp_rpow_moment (p : ℝ) (hp : -1 < p) :
     Integrable (fun y : ℝ => y ^ p) (expMeasure 1) ∧
       (∫ y : ℝ, y ^ p ∂expMeasure 1) = Real.Gamma (1 + p) := by
   let ν : Measure ℝ := volume.restrict (Set.Ioi (0 : ℝ))
-  let f : ℝ → ENNReal := stoch_to_det.SharedRace.unitExpDensity
-  have hf : Measurable f := by
-    change Measurable (fun y : ℝ => ENNReal.ofReal (Real.exp (-y)))
-    fun_prop
-  have hflt : ∀ᵐ y ∂ν, f y < ⊤ := by
-    filter_upwards [] with y
-    exact ENNReal.ofReal_lt_top
   have hs : 0 < 1 + p := by linarith
   have hweight : Integrable (fun y : ℝ => Real.exp (-y) * y ^ p) ν := by
     simpa [ν, IntegrableOn] using (Real.GammaIntegral_convergent hs)
-  have hconv : (fun y : ℝ => (f y).toReal • y ^ p) =
-      (fun y : ℝ => Real.exp (-y) * y ^ p) := by
-    funext y
-    simp [f, stoch_to_det.SharedRace.unitExpDensity,
-      ENNReal.toReal_ofReal, Real.exp_nonneg]
-  have hmeasure : expMeasure 1 = ν.withDensity f := by
-    exact stoch_to_det.SharedRace.expMeasure_one_eq_restrict_withDensity
   constructor
-  · rw [hmeasure]
-    apply (integrable_withDensity_iff_integrable_smul' hf hflt).2
-    rwa [hconv]
-  · rw [hmeasure, integral_withDensity_eq_integral_toReal_smul hf hflt, hconv]
+  · exact race_expMeasure_one_integrable_iff.2 hweight
+  · rw [race_integral_expMeasure_one]
     simpa [ν] using (Real.Gamma_eq_integral hs).symm
 
 lemma race_rpow_tail_iff {a v t y : ℝ}
@@ -770,21 +774,12 @@ lemma race_arrival_laplace_renewal (a v : ℝ) (ha : 1 < a) (hv : 0 < v) :
     exact race_product_laplace_factorization expOne arrivalLaw v
       (fun s => (t + s) ^ (-a)) (fun s ω => A (t + s) ω) hKi
   rw [hfactor]
-  let ν : Measure ℝ := volume.restrict (Set.Ioi (0 : ℝ))
-  let f : ℝ → ENNReal := stoch_to_det.SharedRace.unitExpDensity
-  have hf : Measurable f := by
-    change Measurable (fun s : ℝ => ENNReal.ofReal (Real.exp (-s)))
-    fun_prop
-  have hflt : ∀ᵐ s ∂ν, f s < ⊤ := by
-    filter_upwards [] with s
-    exact ENNReal.ofReal_lt_top
-  have hmeasure : expOne = ν.withDensity f := by
-    exact stoch_to_det.SharedRace.expMeasure_one_eq_restrict_withDensity
-  rw [hmeasure, integral_withDensity_eq_integral_toReal_smul hf hflt]
+  change (∫ s : ℝ, Real.exp (-(v * (t + s) ^ (-a))) * F (t + s)
+      ∂expMeasure 1) = _
+  rw [race_integral_expMeasure_one]
   apply integral_congr_ae
   filter_upwards [] with s
-  simp [f, stoch_to_det.SharedRace.unitExpDensity,
-    ENNReal.toReal_ofReal, Real.exp_nonneg, mul_assoc, F, A]
+  simp [mul_assoc, F, A]
 
 lemma race_shifted_mass_tendsto_zero
     (a : ℝ) (ha : 0 < a) (u : ℕ → ℝ) (hu : ∀ n, 0 ≤ u n)
