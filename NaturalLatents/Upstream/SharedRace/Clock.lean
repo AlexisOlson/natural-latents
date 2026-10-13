@@ -1,7 +1,9 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/SharedRace/Clock.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.SharedRace.Definitions
-import NaturalLatents.Upstream.SharedRace.Scalar
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.MeanInequalities
+import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 /-!
 # Normalized exponential-clock quantities

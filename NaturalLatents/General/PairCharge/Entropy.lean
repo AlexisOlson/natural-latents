@@ -5,10 +5,10 @@ import NaturalLatents.General.PairCharge.Scalar
 /-!
 # Pair charge: entropy payments
 
-Second part of the pair charge. A variance primitive gives an entropy payment by second
-derivatives and without integrals; the module states it for a fixed statistic, for an affine
-field of constant gap, and for the fixed one-quarter correction, and proves the one-quarter
-information floor on all common supports (`pairCharge_quarter_floor`).
+A variance primitive gives an entropy payment by second derivatives. This module
+proves the payment for an affine field with constant gap, with covariance and variance
+identities and the resulting positive-residual bound. The support hypothesis permits
+cells with zero joint mass and positive product mass.
 
 ## Attribution
 
@@ -379,95 +379,6 @@ lemma pairCharge_entropy_linear_field_affine {Ω : Type*} [Fintype Ω]
     ring
   rw [he] at hp
   exact hp
-
-/-- The entropy payment for a fixed statistic, obtained by specializing the affine-field
-payment to the zero linear term. -/
-lemma pairCharge_entropy_variance_affine {Ω : Type*} [Fintype Ω]
-    (P Q F : Ω → ℝ) (hP : ∀ i, 0 ≤ P i) (hQ : ∀ i, 0 ≤ Q i)
-    (hzero : ∀ i, Q i = 0 → P i = 0)
-    (hPt : ∑ i, P i = 1) (hQt : ∑ i, Q i = 1) (τ : ℝ) :
-    τ * (∑ i, (P i - Q i) * F i) ≤
-      (∑ i, Q i * stoch_to_det.phi (P i / Q i)) +
-      τ^2 * ((∑ i, Q i * (F i - ∑ j, Q j * F j)^2) / 3 +
-        (∑ i, P i * (F i - ∑ j, P j * F j)^2) / 6 +
-          (∑ i, (P i - Q i) * F i)^2 / 12) := by
-  simpa using pairCharge_entropy_linear_field_affine P Q F (fun _ => 0)
-    hP hQ hzero hPt hQt (by simp) τ
-
-lemma pairCharge_entropy_variance_bound {Ω : Type*} [Fintype Ω]
-    (P Q F : Ω → ℝ) (hP : ∀ i, 0 ≤ P i) (hQ : ∀ i, 0 ≤ Q i)
-    (hzero : ∀ i, Q i = 0 → P i = 0)
-    (hPt : ∑ i, P i = 1) (hQt : ∑ i, Q i = 1) :
-    (∑ i, (P i - Q i) * F i)^2 ≤
-      4 * (∑ i, Q i * stoch_to_det.phi (P i / Q i)) *
-        ((∑ i, Q i * (F i - ∑ j, Q j * F j)^2) / 3 +
-          (∑ i, P i * (F i - ∑ j, P j * F j)^2) / 6 +
-            (∑ i, (P i - Q i) * F i)^2 / 12) := by
-  let Δ := ∑ i, (P i - Q i) * F i
-  let K := ∑ i, Q i * stoch_to_det.phi (P i / Q i)
-  let D := (∑ i, Q i * (F i - ∑ j, Q j * F j)^2) / 3 +
-    (∑ i, P i * (F i - ∑ j, P j * F j)^2) / 6 + Δ^2 / 12
-  apply pairCharge_payment_bound K Δ D
-  intro τ
-  exact pairCharge_entropy_variance_affine P Q F hP hQ hzero hPt hQt τ
-
-
-/-- The fixed one-quarter information floor, on all common supports. -/
-lemma pairCharge_quarter_floor {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) (hs1 : s P R ≤ 1) :
-    let t := s P R
-    let jj := contactj P R
-    let den := 15-7*t+t^2+(32-18*t+3*t^2)*jj-t^2*jj^2
-    0 < den ∧ 3*(1-t+t*jj)^2/den ≤ I P := by
-  let t := s P R
-  let jj := contactj P R
-  let vv := A0 P R*B0 P R/t^2
-  let hh := (1+t*jj)/4
-  let F : X × Y → ℝ := fun z =>
-    U P R z.1*V P R z.2/t+(U P R z.1+V P R z.2+t)/4
-  let gap := E P F-E (productLaw P) F
-  let D := E (productLaw P) (fun z => (F z-E (productLaw P) F)^2)/3 +
-    E P (fun z => (F z-E P F)^2)/6+gap^2/12
-  let rawD := (9*vv-2)/3+jj/6-t^2*vv^2/4-t*vv*hh/6-hh^2/12
-  let CL := t*((3/8:ℝ)-2*vv-jj/6+t*(vv/3+jj/24))
-  let EL := t*((7/12:ℝ)-t/2+2*t*vv/3+t*jj/12)
-  let den := 15-7*t+t^2+(32-18*t+3*t^2)*jj-t^2*jj^2
-  have hm := contact_moments hpair
-  have hs0 : 0 < t := hm.s_pos
-  have hjs := pairCharge_contactj_bounds hpair
-  have hvs := pairCharge_v_bounds hpair
-  have hden : 0 < den := by
-    have hb := pairCharge_fixed_floor_denominator t jj hs0.le hs1 (le_trans (by norm_num) hjs.1) hjs.2
-    change (31/4:ℝ) ≤ den at hb
-    linarith
-  have hy : 0 < 1-t+t*jj := pairCharge_fixed_floor_y_pos t jj hs0.le hs1 (lt_of_lt_of_le (by norm_num) hjs.1)
-  have hstats := pairCharge_fixed_statistic_data hpair
-  change gap = hh-t*vv ∧ D = rawD+CL/2+EL/16 at hstats
-  have hgap : (1-t+t*jj)/4 ≤ gap := by
-    rw [hstats.1]
-    exact pairCharge_fixed_floor_gap t jj vv hh hs0.le hvs.2 rfl
-  have hD : 192*D ≤ den := by
-    rw [hstats.2]
-    exact pairCharge_fixed_floor_variance t jj vv hh rawD CL EL hs1 hjs.2 hvs.2 rfl rfl rfl rfl
-  have hP := hpair.2.1.1
-  have hQ := pairCharge_product_isPMF hP
-  have he : (∑ z, (P z-productLaw P z)*F z) = gap := by
-    dsimp [gap,E]
-    simp only [sub_mul,Finset.sum_sub_distrib]
-  have hi := pairCharge_entropy_variance_bound P (productLaw P) F hP.nonneg hQ.nonneg
-    (stoch_to_det.joint_absCont_product hP) hP.total hQ.total
-  rw [he] at hi
-  change gap^2 ≤ 4*I P*D at hi
-  have hinfo : 0 ≤ I P := stoch_to_det.Knat_nonneg hP
-  have hupper := mul_le_mul_of_nonneg_left hD (show 0 ≤ I P by exact hinfo)
-  have hgap0 : 0 ≤ gap := by linarith
-  have hsq : (1-t+t*jj)^2 ≤ 16*gap^2 := by
-    have hmul := mul_nonneg (show 0 ≤ gap-(1-t+t*jj)/4 by linarith)
-      (show 0 ≤ gap+(1-t+t*jj)/4 by linarith)
-    nlinarith only [hmul]
-  refine ⟨hden,?_⟩
-  apply (div_le_iff₀ hden).2
-  nlinarith only [hsq,hi,hupper]
 
 end
 

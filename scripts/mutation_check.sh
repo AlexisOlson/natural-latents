@@ -20,9 +20,10 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# Copy tracked working files, including any unstaged changes being checked.
+# Copy surviving tracked working files, including any unstaged changes being checked.
 git -C "$repo" ls-files -z > "$tmp/tracked-files"
 while IFS= read -r -d '' file; do
+  [[ -f "$repo/$file" ]] || continue
   mkdir -p -- "$tmp/$(dirname -- "$file")"
   cp -- "$repo/$file" "$tmp/$file"
 done < "$tmp/tracked-files"

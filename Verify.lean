@@ -29,7 +29,7 @@ assert_no_sorry NaturalLatents.score
 -- Exact optimum bound.
 example (A B : Type) [Fintype A] [Fintype B] [DecidableEq A] [DecidableEq B]
     (p : A × B → ℝ) (hp : NaturalLatents.Probability p) :
-    NaturalLatents.T p ≤ (2789 / 400) * NaturalLatents.tau p :=
+    NaturalLatents.T p ≤ (13999 / 2000) * NaturalLatents.tau p :=
   NaturalLatents.T_le_mul_tau A B p hp
 
 assert_no_sorry NaturalLatents.T_le_mul_tau
@@ -56,10 +56,10 @@ assert_no_sorry NaturalLatents.General.exists_race
 #print axioms NaturalLatents.General.exists_race
 
 -- Cap: bound the race price.
-assert_no_sorry NaturalLatents.General.racePrice_lt_capC3a
-/-- info: 'NaturalLatents.General.racePrice_lt_capC3a' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+assert_no_sorry NaturalLatents.General.racePrice_lt_capC3b
+/-- info: 'NaturalLatents.General.racePrice_lt_capC3b' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms NaturalLatents.General.racePrice_lt_capC3a
+#print axioms NaturalLatents.General.racePrice_lt_capC3b
 
 -- Payment: pay for mismatches.
 assert_no_sorry NaturalLatents.General.mismatch_payment

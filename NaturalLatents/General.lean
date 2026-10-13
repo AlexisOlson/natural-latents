@@ -15,11 +15,11 @@ import NaturalLatents.General.Extension
 This module gathers the development under `NaturalLatents/General/`. For every finite law `p`
 on `X × Y` it provides, in nats,
 
-    T p ≤ (2789/400) * tau p,
+    T p ≤ (13999/2000) * tau p,
 
 as `General.T_le_of_connected` on connected supports together with
 `General.extension_of_connected`; `NaturalLatents.Main` converts the bound to bits.
-The constant `2789/400 = 6.9725` is below seven and is not claimed to be least.
+The constant `13999/2000 = 6.9995` is below seven and is not claimed to be least.
 
 ## Attribution
 

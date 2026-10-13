@@ -9,7 +9,9 @@ import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
 import Mathlib.Probability.Distributions.Beta
-import NaturalLatents.Upstream.SharedRace.Scalar
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.MeanInequalities
+import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import NaturalLatents.Upstream.SharedRace.Clock
 import NaturalLatents.Upstream.SharedRace.Information

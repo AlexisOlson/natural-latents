@@ -483,14 +483,6 @@ theorem Latent.ofFunction_joint_eq_push
     _ = ∑ x, if (f x, x) = (c, z) then p x else 0 := hsum.symm
     _ = ∑ a, if (fun z => (f z, z)) a = (c, z) then p a else 0 := by rfl
 
-private lemma Hvar_push_source
-    {Ω Ω' κ : Type*} [Fintype Ω] [Fintype Ω'] [DecidableEq Ω']
-    [Fintype κ] [DecidableEq κ]
-    (e : Ω → Ω') (a : Ω' → κ) (m : Ω → ℝ) :
-    Hvar a (push e m) = Hvar (a ∘ e) m := by
-  unfold Hvar
-  rw [push_push]
-
 /-- The score of a function-induced latent is exactly the deterministic
 LessWrong expression computed under `p`. -/
 theorem Latent.ofFunction_score_eq_detScore

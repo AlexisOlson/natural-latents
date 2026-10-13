@@ -5,14 +5,17 @@ import Mathlib.NumberTheory.Harmonic.EulerMascheroni
 import Mathlib.Probability.Independence.InfinitePi
 import NaturalLatents.Upstream.Connected
 import NaturalLatents.Upstream.ContactInformation
-import NaturalLatents.Upstream.ContinuousMismatch
+import NaturalLatents.Upstream.Floor
+import NaturalLatents.Upstream.Quotient
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import NaturalLatents.Upstream.CoordinateRace
 import NaturalLatents.Upstream.TableBoundProof
 
 /-!
 # Laws, budgets, contact data and race prices in nats
 
-This module fixes the vocabulary of the bound `T p ≤ (2789/400) tau p` for an arbitrary finite
+This module fixes the vocabulary of the bound `T p ≤ (13999/2000) tau p` for an arbitrary finite
 law `p` on `X × Y`. Everything inside the `General` tree is measured in nats: `T` and `tau` are the
 corresponding bit-valued `stoch_to_det` functionals multiplied by `Real.log 2`, and the factor
 cancels in `NaturalLatents.Main`.
@@ -120,9 +123,6 @@ def PositiveOn (S : Finset (X × Y)) (q : Law X Y) : Prop := ∀ z ∈ S, 0 < q 
 
 def XSupport (S : Finset (X × Y)) : Finset X := S.image Prod.fst
 def YSupport (S : Finset (X × Y)) : Finset Y := S.image Prod.snd
-/-- Q and mixture/chi-square sums use this rectangle, including its holes. -/
-def MarginalRectangle (S : Finset (X × Y)) : Finset (X × Y) := XSupport S ×ˢ YSupport S
-
 def productLaw (P : Law X Y) (z : X × Y) : ℝ := stoch_to_det.mX P z.1 * stoch_to_det.mY P z.2
 
 abbrev PairDomain := Finset (X × Y) → Law X Y → Law X Y → Law X Y → Prop

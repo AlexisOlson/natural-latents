@@ -15,7 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-KEEP_ALWAYS = {"NaturalLatents.Statement", "NaturalLatents.Main"}
+KEEP_ALWAYS = {"NaturalLatents.Statement", "NaturalLatents.Main", "NaturalLatents.General"}
 DECL_KW = {"theorem", "lemma", "def", "abbrev", "instance", "structure", "class", "inductive", "opaque",
            "example", "irreducible_def", "noncomputable def", "alias"}
 MODIFIERS = {"private", "protected", "noncomputable", "partial", "nonrec", "scoped", "local"}

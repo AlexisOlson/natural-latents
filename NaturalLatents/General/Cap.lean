@@ -326,10 +326,6 @@ theorem racePrice_lt_capC3b (a : ℝ) (ha : 1 < a) : j a < C3b a := by
     (gamma_hasSum_product_remainder hy1)
   simpa only [j, C3b] using c3b_reciprocal_conversion a ha h
 
-/-- Compatibility name retained for the unchanged kernel audit in `Verify.lean`. -/
-theorem racePrice_lt_capC3a (a : ℝ) (ha : 1 < a) : j a < C3b a :=
-  racePrice_lt_capC3b a ha
-
 end
 
 end NaturalLatents.General

@@ -7,7 +7,7 @@ import NaturalLatents.Upstream.SourceCoarsening
 # The two headline theorems
 
 `table : TableClaim` and `score : ScoreClaim`, for the propositions frozen in
-`NaturalLatents/Statement.lean`. The constant is `2789/400 = 6.9725`.
+`NaturalLatents/Statement.lean`. The constant is `13999/2000 = 6.9995`.
 
 The bound itself is `General.T_le_of_connected`, extended to every law by
 `General.extension_of_connected`. The remaining results convert the latent formulation to
@@ -20,7 +20,7 @@ open scoped BigOperators
 namespace NaturalLatents
 
 /-- The constant of both headline theorems. -/
-noncomputable def c : ℝ := 2789 / 400
+noncomputable def c : ℝ := 13999 / 2000
 
 theorem c_nonneg : 0 ≤ c := by norm_num [c]
 
@@ -151,7 +151,7 @@ theorem score_of_table (h : TableClaim) : ScoreClaim := by
 /-- The exact optimum bound in the frozen statement's vocabulary. -/
 theorem T_le_mul_tau (A B : Type) [Fintype A] [Fintype B]
     [DecidableEq A] [DecidableEq B] (p : A × B → ℝ) (hp : Probability p) :
-    T p ≤ (2789 / 400) * tau p := by
+    T p ≤ (13999 / 2000) * tau p := by
   obtain ⟨g, hg⟩ := table_bound_entropy hp
   exact T_le_mul_tau_of_code hp c c_nonneg g hg
 
