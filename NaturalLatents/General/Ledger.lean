@@ -34,21 +34,6 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
-lemma ledger_product_isPMF {S Z : Type*} [Fintype S] [Fintype Z]
-    {r : S → ℝ} {p : Z → ℝ}
-    (hr : stoch_to_det.IsPMF r) (hp : stoch_to_det.IsPMF p) :
-    stoch_to_det.IsPMF (fun w : S × Z => r w.1 * p w.2) := by
-  classical
-  constructor
-  · intro w
-    exact mul_nonneg (hr.nonneg w.1) (hp.nonneg w.2)
-  · change (∑ w : S × Z, r w.1 * p w.2) = 1
-    rw [Fintype.sum_prod_type]
-    simp_rw [← Finset.mul_sum]
-    rw [← Finset.sum_mul]
-    change stoch_to_det.mass r * stoch_to_det.mass p = 1
-    rw [hr.total, hp.total, mul_one]
-
 lemma ledger_push_source {S Z G : Type*}
     [Fintype S] [Fintype Z] [DecidableEq G]
     {r : S → ℝ} {p : Z → ℝ} (hr : ∑ s, r s = 1) (f : Z → G) :
@@ -106,7 +91,7 @@ lemma ledger_condH_seed {S Z G : Type*}
     stoch_to_det.condH q Prod.fst (fun w : S × Z => r w.1 * p w.2) =
       ∑ s, r s * stoch_to_det.Hvar (fun z => q (s, z)) p := by
   classical
-  rw [stoch_to_det.condH_eq_sum_H_fibers (ledger_product_isPMF hr hp)]
+  rw [stoch_to_det.condH_eq_sum_H_fibers (stoch_to_det.product_isPMF_dom hr hp)]
   apply Finset.sum_congr rfl
   intro s _
   rw [ledger_push_seed_slice r p q s]
@@ -125,7 +110,7 @@ lemma ledger_condMI_seed {S Z G K : Type*}
         (fun w : S × Z => r w.1 * p w.2) =
       stoch_to_det.Hvar (fun w : S × Z => ((q w, g w), w.1))
         (fun w : S × Z => r w.1 * p w.2) := by
-    simpa using stoch_to_det.Hvar_equiv (ledger_product_isPMF hr hp)
+    simpa using stoch_to_det.Hvar_equiv (stoch_to_det.product_isPMF_dom hr hp)
       (fun w : S × Z => ((q w, g w), w.1)) (Equiv.prodAssoc G K S)
   have hForm : stoch_to_det.condMI q g Prod.fst
         (fun w : S × Z => r w.1 * p w.2) =
@@ -156,30 +141,13 @@ lemma ledger_MI_seed_source_zero {S Z K : Type*}
     rw [← Finset.sum_mul]
     change stoch_to_det.mass r * stoch_to_det.Hvar g p = stoch_to_det.Hvar g p
     rw [hr.total, one_mul]
-  rw [stoch_to_det.MI_comm (ledger_product_isPMF hr hp) Prod.fst (fun w => g w.2)]
+  rw [stoch_to_det.MI_comm (stoch_to_det.product_isPMF_dom hr hp) Prod.fst (fun w => g w.2)]
   unfold stoch_to_det.MI
   rw [ledger_Hvar_source hr g]
   unfold stoch_to_det.condH at hcond
   linarith
 
-omit [DecidableEq X] [DecidableEq Y] in
-lemma ledger_p_mul_post {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) (i : L.ι) (z : X × Y) :
-    p z * post L i z = L.joint (i,z) := by
-  unfold post stoch_to_det.Latent.joint
-  by_cases hz : p z = 0
-  · have hle : L.prior i * L.comp i z ≤ ∑ v, L.prior v * L.comp v z :=
-      Finset.single_le_sum
-        (fun v _ => mul_nonneg (L.prior_isPMF.nonneg v) ((L.comp_isPMF v).nonneg z))
-        (Finset.mem_univ i)
-    rw [L.mixture z, hz] at hle
-    have hzero : L.prior i * L.comp i z = 0 :=
-      le_antisymm hle
-        (mul_nonneg (L.prior_isPMF.nonneg i) ((L.comp_isPMF i).nonneg z))
-    simp [hz, hzero]
-  · field_simp
-
-lemma ledger_calibrated_graph {p : Law X Y} (hp : stoch_to_det.IsPMF p)
+lemma ledger_calibrated_graph {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
     (L : FiniteLatent p) (F : CalibratedSeededFamily L) :
     stoch_to_det.push (fun w : (X × Y → L.ι) × (X × Y) => (w.1 w.2,w.2))
       (seedSourceJoint F) = L.joint := by
@@ -208,9 +176,9 @@ lemma ledger_calibrated_graph {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   rw [hfactor]
   by_cases hz : p z = 0
   · rw [hz, zero_mul]
-    simpa [hz] using ledger_p_mul_post hp L i z
+    simpa [hz] using p_mul_post L i z
   · rw [F.calibrated z (by simpa [stoch_to_det.support] using hz) i]
-    exact ledger_p_mul_post hp L i z
+    exact p_mul_post L i z
 
 lemma ledger_MI_push {Ω Ω' Γ Δ : Type} [Fintype Ω] [Fintype Ω']
     [DecidableEq Ω'] [Fintype Γ] [Fintype Δ] [DecidableEq Γ] [DecidableEq Δ]
@@ -315,7 +283,7 @@ lemma ledger_average_MI_lower {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   let J := seedSourceJoint F
   let Q : (X × Y → L.ι) × (X × Y) → L.ι := fun w => w.1 w.2
   let G : (X × Y → L.ι) × (X × Y) → Γ := fun w => g w.2
-  have hJ : stoch_to_det.IsPMF J := ledger_product_isPMF F.seed_isPMF hp
+  have hJ : stoch_to_det.IsPMF J := stoch_to_det.product_isPMF_dom F.seed_isPMF hp
   have hcal : stoch_to_det.MI Prod.fst (fun w : L.ι × (X × Y) => g w.2) L.joint =
       stoch_to_det.MI Q G J := by
     rw [← ledger_calibrated_graph hp L F, ledger_MI_push]

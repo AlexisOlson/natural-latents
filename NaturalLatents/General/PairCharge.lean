@@ -643,7 +643,7 @@ lemma pairCharge_HC_average_identity {S : Finset (X × Y)} {w P R : Law X Y}
   have hscalar := pairCharge_HC_endpoint_sum (s P R) (A0 P R) (B0 P R) (J P R)
     ((s P R + J P R) / 4) HX HY HXp HYp lam om lamp omp Z
     (contactj P R) (A0 P R * B0 P R / (s P R)^2) x M
-    (contact_moments hpair).s_pos.ne' (pairCharge_s_eq_A0_add_B0 P R) rfl rfl rfl hlam hom hH rfl
+    (contact_moments hpair).s_pos.ne' rfl rfl rfl rfl hlam hom hH rfl
   calc
     12 * NH =
         ((E (productLaw P) (fun z => U P R z.1 * V P R z.2 / s P R *
@@ -743,7 +743,7 @@ lemma pairCharge_actual_covariance_payment {S : Finset (X × Y)} {w P R : Law X 
     s P R * ((1/4 : ℝ) - 171 * contactj P R / 100) - (s P R)^2 / 160) +
     ((1/2 : ℝ) - 5 * s P R / 12) * x) / 12 ≤ N
   have hs := (contact_moments hpair).s_pos
-  have hsum := pairCharge_s_eq_A0_add_B0 P R
+  have hsum : s P R = A0 P R + B0 P R := rfl
   have hv : v = (1 - z^2) / 4 := by
     dsimp [v, z]
     field_simp [hs.ne']

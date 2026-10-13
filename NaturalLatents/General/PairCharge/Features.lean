@@ -105,7 +105,7 @@ lemma pairCharge_raw_feature_operator_bridge {S : Finset (X × Y)} {w P R : Law 
     rw [hdX x hx, hKX]
     dsimp only
     rw [hc, ha]
-    have hs := pairCharge_s_eq_A0_add_B0 P R
+    have hs : s P R = A0 P R + B0 P R := rfl
     dsimp [mX, mY]
     linarith
   have hpY : ∀ y ∈ YSupport S, p.2 y =
@@ -120,7 +120,7 @@ lemma pairCharge_raw_feature_operator_bridge {S : Finset (X × Y)} {w P R : Law 
     rw [hdY y hy, hKY]
     dsimp only
     rw [hc, ha]
-    have hs := pairCharge_s_eq_A0_add_B0 P R
+    have hs : s P R = A0 P R + B0 P R := rfl
     dsimp [mX, mY]
     linarith
   refine ⟨hdX, hdY, ?_, ?_⟩
@@ -260,7 +260,7 @@ lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
     ring
   have hL (z : X × Y) : L z = u.1 z.1 + u.2 z.2 := by
     dsimp [L, u, pairCharge_rawL]
-    rw [pairCharge_s_eq_A0_add_B0]
+    rw [s]
     ring
   have he := pairCharge_E_congr_rectangle hpair.2.1
     (fun z => (u.1 z.1 + u.2 z.2) * Cop z) (fun z => L z * C z)
@@ -480,7 +480,7 @@ lemma pairCharge_raw_C_means {S : Finset (X × Y)} {w P R : Law X Y}
   have hPY : E P (fun z => PY z.2) = 2 * B0 P R - A0 P R := by
     change E P (fun z => (∑ x, P (x,z.2) * DX x) / stoch_to_det.mY P z.2) = _
     rw [pairCharge_cond_Y_mean hpair.2.1.1, hDX]
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   constructor
   · simp only [C, contact_q_E_add, contact_q_E_sub, pairCharge_E_div, contact_q_E_const hpair.2.1.1,
       hDX, hDY, hPX, hPY]
@@ -965,7 +965,7 @@ lemma pairCharge_HB0_product {S : Finset (X × Y)} {w P R : Law X Y}
     (pairCharge_defect_X_moments hpair DX hDX).2.1,
     (pairCharge_defect_Y_moments hpair DY hDY).2.1,
     (pairCharge_mean_UV hpair).1, (pairCharge_mean_UV hpair).2]
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   field_simp [hsne]
   rw [hs]
   ring
@@ -1064,7 +1064,7 @@ lemma pairCharge_HB1_product {S : Finset (X × Y)} {w P R : Law X Y}
         (pairCharge_defect_X_moments hpair DX hDX).2.1]
   rw [pairCharge_H_additive_product _ _ _ _ _ _ hsne, hUPX, hVPY,
     (pairCharge_mean_UV hpair).1, (pairCharge_mean_UV hpair).2]
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   field_simp [hsne]
   rw [hs]
   ring
@@ -1084,7 +1084,7 @@ lemma pairCharge_defects_second_moment_identity {S : Finset (X × Y)} {w P R : L
   rw [(pairCharge_defect_Y_moments hpair DY hDY).1] at hY
   rw [hX, hY]
   have hsne := (contact_moments hpair).s_pos.ne'
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   field_simp [hsne]
   rw [hs]
   ring

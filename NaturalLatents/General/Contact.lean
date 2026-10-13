@@ -109,12 +109,6 @@ lemma contact_ratio_mul {S : Finset (X × Y)} {w P R : Law X Y}
     (contact_support_eq hpair.2.2.1 hpair.2.2.2.2.1) z
 
 
-lemma contact_ratio {S : Finset (X × Y)} {w P R : Law X Y}
-    (hpair : CommonSupportPairs S w P R) {z : X × Y} (hz : z ∈ S) :
-    R z / P z = (f P R z.1)^2 * (g P R z.2)^2 := by
-  rw [contact_ratio_mul hpair z]
-  field_simp [(hpair.2.2.2.1 z hz).ne']
-
 lemma contact_cond_g2_mul {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (x : X) :
     (∑ y, P (x,y) * (g P R y)^2) = stoch_to_det.mX P x * f P R x := by
@@ -304,7 +298,7 @@ lemma contact_upper_separation {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
     · intro z _
       exact mul_nonneg (hP.nonneg z) (hg z.2)
     · exact ⟨z, Finset.mem_univ z, mul_pos hz (hgp z hz)⟩
-  dsimp [s]
+  dsimp [s, A0, B0]
   linarith
 
 /- Finite expectation algebra used only by the contact quartic. -/
@@ -446,7 +440,7 @@ lemma contact_quartic {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
       _ = _ := by rw [contact_q_E_add, contact_q_E_sub, contact_q_E_sub, contact_q_E_const hP]
   rw [hm.1, hm.2, h22, hf2, hg2] at hj
   rw [hj, huv]
-  unfold s
+  unfold s A0 B0
   ring
 
 lemma contact_J_bound {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
@@ -656,7 +650,7 @@ theorem contact_moments {S : Finset (X × Y)} {w P R : Law X Y}
     by_contra hn
     have hp := hP.2.1 z hn
     linarith
-  refine ⟨(fun z hz => contact_ratio hpair hz), (fun x hx => contact_cond_g2 hpair hx),
+  refine ⟨(fun x hx => contact_cond_g2 hpair hx),
     (fun y hy => contact_cond_f2 hpair hy),
     contact_f3 hpair, contact_g3 hpair, hf2, hg2, contact_separation hpair hr he.2.2,
     ?_, he.1, he.2.1, hq, hh, contact_J_bound hP.1 he.1 he.2.1 hq hh,

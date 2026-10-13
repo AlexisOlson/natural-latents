@@ -63,30 +63,13 @@ lemma race_post_isPMF {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   · unfold stoch_to_det.mass post
     rw [← Finset.sum_div, L.mixture z, div_self hz]
 
-omit [DecidableEq X] [DecidableEq Y] in
-lemma race_p_mul_post {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) (i : L.ι) (z : X × Y) :
-    p z * post L i z = L.joint (i,z) := by
-  unfold post stoch_to_det.Latent.joint
-  by_cases hz : p z = 0
-  · have hle : L.prior i * L.comp i z ≤ ∑ v, L.prior v * L.comp v z :=
-      Finset.single_le_sum
-        (fun v _ => mul_nonneg (L.prior_isPMF.nonneg v) ((L.comp_isPMF v).nonneg z))
-        (Finset.mem_univ i)
-    rw [L.mixture z, hz] at hle
-    have hzero : L.prior i * L.comp i z = 0 :=
-      le_antisymm hle
-        (mul_nonneg (L.prior_isPMF.nonneg i) ((L.comp_isPMF i).nonneg z))
-    simp [hz, hzero]
-  · field_simp
-
-lemma race_posteriorJoint {p : Law X Y} (hp : stoch_to_det.IsPMF p)
+lemma race_posteriorJoint {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
     (L : FiniteLatent p) :
     stoch_to_det.SharedRace.posteriorJoint p (fun z i => post L i z) =
       stoch_to_det.push Prod.swap L.joint := by
   funext zi
   rcases zi with ⟨⟨x,y⟩,i⟩
-  rw [stoch_to_det.SharedRace.posteriorJoint, race_p_mul_post hp]
+  rw [stoch_to_det.SharedRace.posteriorJoint, p_mul_post L i (x,y)]
   unfold stoch_to_det.push
   symm
   apply Finset.sum_eq_single (i,(x,y))

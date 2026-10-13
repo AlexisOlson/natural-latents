@@ -196,7 +196,7 @@ lemma affinity_BC_X_le {S : Finset (X × Y)} {w P R : Law X Y}
     (fun x => ∑ y, P (x,y) * (g P R y - 1)^2) (s P R) hpX (contact_f_nonneg hpair)
     (contact_f_cube hpair) hthird
   · rw [affinity_cubic_moment _ _ hpX hthird, ← contact_E_fst, ← contact_E_fst, hmoments.f2]
-    unfold s
+    unfold s A0 B0
     ring
   · exact affinity_row_X hpair hmoments
   · have htower : (∑ x, (f P R x - 1)^2 * (∑ y, P (x,y) * (g P R y - 1)^2)) =
@@ -224,7 +224,7 @@ lemma affinity_BC_Y_le {S : Finset (X × Y)} {w P R : Law X Y}
     (fun y => ∑ x, P (x,y) * (f P R x - 1)^2) (s P R) hpY (contact_g_nonneg hpair)
     (contact_g_cube hpair) hthird
   · rw [affinity_cubic_moment _ _ hpY hthird, ← contact_E_snd, ← contact_E_snd, hmoments.g2]
-    unfold s
+    unfold s A0 B0
     ring
   · exact affinity_row_Y hpair hmoments
   · have htower : (∑ y, (g P R y - 1)^2 * (∑ x, P (x,y) * (f P R x - 1)^2)) =
@@ -268,19 +268,11 @@ lemma affinity_affinities_pos {S : Finset (X × Y)} {w P R : Law X Y}
     exact ht.trans_le (Finset.single_le_sum (fun y _ => Real.sqrt_nonneg
       (stoch_to_det.mY P y * stoch_to_det.mY R y)) (Finset.mem_univ z.2))
 
-lemma affinity_b_pos (t : ℝ) (ht : t < 2) : 0 < b t := by
-  have hproduct : 0 < (2 - t) * (10 - t) :=
-    mul_pos (sub_pos.mpr ht) (by linarith only [ht])
-  have hrem : b t - (1 / 16 : ℝ) = 3 * ((2 - t) * (10 - t)) / 64 := by
-    unfold b
-    ring
-  linarith only [hproduct, hrem]
-
 /-- The separation price is paid by the marginal Bhattacharyya affinities of two contacts. -/
 theorem affinity_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (hmoments : ContactMoments S P R) : AffinityBound P R := by
   obtain ⟨hX, hY⟩ := affinity_affinities_pos hpair
-  have hb := affinity_b_pos (s P R) hmoments.s_lt_two
+  have hb := b_pos (s P R) hmoments.s_lt_two.le
   have hlogX := (Real.log_le_log_iff hX hb).mpr (affinity_BC_X_le hpair hmoments)
   have hlogY := (Real.log_le_log_iff hY hb).mpr (affinity_BC_Y_le hpair hmoments)
   unfold AffinityBound Psi

@@ -20,7 +20,7 @@ cancels at the endpoint in `General.lean`.
 * **Budgets of a latent `L`.** `M L = I(X;Y | Λ)` and `B L = I(Λ;X | Y) + I(Λ;Y | X)`, so that
   `M L + B L` is the stochastic score in nats (`budgets_eq_score`). `post L i z` is the
   posterior of component `i` at the cell `z`, `d L` is its categorical mismatch, and `K L`
-  is the replica budget of two posterior draws. `CostIdentity` states the score identity
+  is the replica budget of two posterior draws. `cost_identity` proves the score identity
   `M L + B L = c p + ∑ prior i * phi (comp i)`, with `phi` minus upstream's `Φ` and `c`
   upstream's `Ψ`, both in nats.
 * **Contact data.** For two contacts `P`, `R` of a common feasible kernel, `f` and `g` are the
@@ -81,6 +81,22 @@ def B {p : Law X Y} (L : FiniteLatent p) : ℝ :=
 def post {p : Law X Y} (L : FiniteLatent p) (i : L.ι) (z : X × Y) : ℝ :=
   L.prior i * L.comp i z / p z
 
+omit [DecidableEq X] [DecidableEq Y] in
+lemma p_mul_post {p : Law X Y} (L : FiniteLatent p) (i : L.ι) (z : X × Y) :
+    p z * post L i z = L.joint (i, z) := by
+  unfold post stoch_to_det.Latent.joint
+  by_cases hz : p z = 0
+  · have hle : L.prior i * L.comp i z ≤ ∑ v, L.prior v * L.comp v z :=
+      Finset.single_le_sum
+        (fun v _ => mul_nonneg (L.prior_isPMF.nonneg v) ((L.comp_isPMF v).nonneg z))
+        (Finset.mem_univ i)
+    rw [L.mixture z, hz] at hle
+    have hzero : L.prior i * L.comp i z = 0 :=
+      le_antisymm hle
+        (mul_nonneg (L.prior_isPMF.nonneg i) ((L.comp_isPMF i).nonneg z))
+    simp [hz, hzero]
+  · field_simp
+
 lemma budgets_eq_score {p : Law X Y} (L : FiniteLatent p) :
     M L + B L = Real.log 2 * L.score := by
   unfold M B stoch_to_det.Latent.score
@@ -91,11 +107,8 @@ def phi (q : Law X Y) : ℝ := -(Real.log 2 * stoch_to_det.Phi q)
 def c (p : Law X Y) : ℝ := Real.log 2 * stoch_to_det.Psi p
 /-- The score identity in nats: `M L + B L = c p + ∑ i, prior i * phi (comp i)` for every latent `L` of a
 probability law `p`; the upstream identity multiplied by `Real.log 2`. -/
-def CostIdentity : Prop := ∀ (p : Law X Y), stoch_to_det.IsPMF p →
-  ∀ L : FiniteLatent p, M L + B L = c p + ∑ i, L.prior i * phi (L.comp i)
-
-lemma cost_identity : CostIdentity (X := X) (Y := Y) := by
-  intro p hp L
+lemma cost_identity (p : Law X Y) (hp : stoch_to_det.IsPMF p) (L : FiniteLatent p) :
+    M L + B L = c p + ∑ i, L.prior i * phi (L.comp i) := by
   rw [budgets_eq_score, L.score_eq hp]
   simp only [c, phi, mul_sub, Finset.mul_sum, mul_neg, Finset.sum_neg_distrib]
   rw [sub_eq_add_neg]
@@ -139,11 +152,16 @@ def E (P : Law X Y) (F : X × Y → ℝ) : ℝ := ∑ z, P z * F z
 
 def A0 (P R : Law X Y) : ℝ := 1 - E P (fun z => f P R z.1)
 def B0 (P R : Law X Y) : ℝ := 1 - E P (fun z => g P R z.2)
-def s (P R : Law X Y) : ℝ := 2 - E P (fun z => f P R z.1) - E P (fun z => g P R z.2)
+def s (P R : Law X Y) : ℝ := A0 P R + B0 P R
 def J (P R : Law X Y) : ℝ := E P (fun z => (U P R z.1)^2 * (V P R z.2)^2)
 def contactj (P R : Law X Y) : ℝ := J P R / (s P R)^2
 
 def b (t : ℝ) : ℝ := 1 - 9 * t / 16 + 3 * t^2 / 64
+lemma b_pos (t : ℝ) (ht : t ≤ 2) : 0 < b t := by
+  have hp : 0 ≤ (2 - t) * (10 - t) :=
+    mul_nonneg (by linarith) (by linarith)
+  unfold b
+  nlinarith
 /-- Contact separation price, distinct from upstream's law-only Psi. -/
 def Psi (t : ℝ) : ℝ := -2 * Real.log (b t)
 abbrev BC_X (P R : Law X Y) := stoch_to_det.BC (stoch_to_det.mX P) (stoch_to_det.mX R)
@@ -154,7 +172,6 @@ def PC (domain : PairDomain (X := X) (Y := Y)) (beta gamma : ℝ) : Prop :=
 
 /-- The moment relations of two contacts, with conditional equalities only on used marginal symbols. -/
 structure ContactMoments (S : Finset (X × Y)) (P R : Law X Y) : Prop where
-  ratio : ∀ z ∈ S, R z / P z = (f P R z.1)^2 * (g P R z.2)^2
   cond_g2 : ∀ x ∈ XSupport S,
     (∑ y, P (x,y) * (g P R y)^2) / stoch_to_det.mX P x = f P R x
   cond_f2 : ∀ y ∈ YSupport S,
@@ -178,7 +195,6 @@ structure CommonSetup (p : Law X Y) where
   L : FiniteLatent p
   w : Law X Y
   feasible : FeasibleKernel (stoch_to_det.support p) w
-  kernel_zero : stoch_to_det.Supported (stoch_to_det.support p) w
   attained : M L + B L = tau p
   prior_pos : ∀ i, 0 < L.prior i
   distinct : Function.Injective L.comp

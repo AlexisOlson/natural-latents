@@ -10,7 +10,7 @@ every probability law `p`.
 
 * `extension_of_pos` mixes `p` with the uniform law, applies the hypothesis to the mixtures,
   and passes to the limit using the continuity of the entropies, of `c`, and of `T`, with the
-  score identity `CostIdentity` supplying the cost of the mixed latent.
+  score identity `cost_identity` supplying the cost of the mixed latent.
 * `extension_of_connected` is the corresponding reduction through upstream's
   `reduce_to_connected`.
 

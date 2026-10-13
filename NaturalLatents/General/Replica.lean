@@ -46,24 +46,6 @@ lemma replica_sum_post {p : Law X Y} (L : FiniteLatent p)
   unfold post
   rw [← Finset.sum_div, L.mixture z, div_self hz]
 
-open stoch_to_det in
-omit [DecidableEq X] [DecidableEq Y] in
-lemma replica_p_mul_post {p : Law X Y} (L : FiniteLatent p)
-    (i : L.ι) (z : X × Y) : p z * post L i z = L.joint (i, z) := by
-  unfold post Latent.joint
-  by_cases hpz : p z = 0
-  · have hle : L.prior i * L.comp i z ≤ ∑ v, L.prior v * L.comp v z := by
-      simpa using (Finset.single_le_sum
-        (s := (Finset.univ : Finset L.ι))
-        (fun v _ => mul_nonneg (L.prior_isPMF.nonneg v) ((L.comp_isPMF v).nonneg z))
-        (Finset.mem_univ i))
-    rw [L.mixture z, hpz] at hle
-    have hzero : L.prior i * L.comp i z = 0 :=
-      le_antisymm hle
-        (mul_nonneg (L.prior_isPMF.nonneg i) ((L.comp_isPMF i).nonneg z))
-    simp [hpz, hzero]
-  · field_simp
-
 omit [DecidableEq X] [DecidableEq Y] in
 lemma replica_sum_domain {p : Law X Y} (L : FiniteLatent p)
     (F : L.ι × L.ι × (X × Y) → ℝ) :
@@ -82,10 +64,10 @@ lemma replica_sum_replica_second {p : Law X Y} (L : FiniteLatent p)
     (∑ j, replicaJoint L (i, j, z)) = L.joint (i, z) := by
   by_cases hpz : p z = 0
   · have hzero : L.joint (i, z) = 0 := by
-      rw [← replica_p_mul_post L i z, hpz, zero_mul]
+      rw [← p_mul_post L i z, hpz, zero_mul]
     simp [replicaJoint, hpz, hzero]
   · change (∑ j, (p z * post L i z) * post L j z) = L.joint (i, z)
-    rw [← Finset.mul_sum, replica_sum_post L z hpz, mul_one, replica_p_mul_post]
+    rw [← Finset.mul_sum, replica_sum_post L z hpz, mul_one, p_mul_post]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma replica_sum_replica_first {p : Law X Y} (L : FiniteLatent p)
@@ -224,15 +206,7 @@ lemma replica_iidProduct_MI_zero
     MI Prod.fst Prod.snd (fun u : A × A => t u.1 * t u.2) = 0 := by
   let q : A × A → ℝ := fun u => t u.1 * t u.2
   have ht_sum : ∑ a, t a = 1 := by simpa [mass] using ht.total
-  have hq : IsPMF q := by
-    constructor
-    · intro u
-      exact mul_nonneg (ht.nonneg u.1) (ht.nonneg u.2)
-    · unfold mass q
-      rw [Fintype.sum_prod_type]
-      simp_rw [← Finset.mul_sum]
-      rw [ht_sum]
-      simp [ht_sum]
+  have hq : IsPMF q := product_isPMF_dom ht ht
   have hfst : push Prod.fst q = t := by
     funext a
     unfold push
@@ -306,16 +280,7 @@ lemma replica_MI_Zfiber_zero {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p)
         exact replica_post_nonneg hp L i z
       · simpa [mass, t] using replica_sum_post L z hpz
     let q : L.ι × L.ι → ℝ := fun v => t v.1 * t v.2
-    have hq : IsPMF q := by
-      constructor
-      · intro v
-        exact mul_nonneg (ht.nonneg v.1) (ht.nonneg v.2)
-      · unfold mass q
-        rw [Fintype.sum_prod_type]
-        simp_rw [← Finset.mul_sum]
-        have ht_sum : ∑ i, t i = 1 := by simpa [mass] using ht.total
-        rw [ht_sum]
-        simp [ht_sum]
+    have hq : IsPMF q := product_isPMF_dom ht ht
     have hzero : MI Prod.fst Prod.snd q = 0 := replica_iidProduct_MI_zero ht
     have hscale := MI_smul hq.nonneg Prod.fst Prod.snd (hp.nonneg z)
     have hn : n = fun v : L.ι × L.ι => p z * q v := by

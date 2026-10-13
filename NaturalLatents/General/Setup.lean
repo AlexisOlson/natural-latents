@@ -124,7 +124,6 @@ theorem exists_setup_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     L := L
     w := w
     feasible := hw
-    kernel_zero := ?_
     attained := ?_
     prior_pos := setupConn_prior_pos K
     distinct := K.Q_injective
@@ -132,8 +131,6 @@ theorem exists_setup_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     positive := hpositive
     rows_pos := ?_
   }⟩
-  · intro z hz
-    exact if_neg hz
   · calc
       M L + B L = c p + ∑ i, L.prior i * phi (L.comp i) := cost_identity p hp L
       _ = c p + ∑ i, D.L.prior i * phi (D.L.comp i) := by

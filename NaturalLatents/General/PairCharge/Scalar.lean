@@ -31,18 +31,13 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
-lemma pairCharge_cost_b_pos {t : ℝ} (_ht : 0 ≤ t) (ht2 : t ≤ 2) : 0 < b t := by
-  have hfac : 0 ≤ (2-t)*(30-3*t) := mul_nonneg (by linarith) (by linarith)
-  unfold b
-  nlinarith
-
 /-- The cubic logarithmic price. -/
 lemma pairCharge_cubic_price {t : ℝ} (ht : 0 ≤ t) (ht1 : t ≤ 1) :
     9*t/8 + 57*t^2/256 + t^3/16 ≤ Psi t := by
   let F : ℝ → ℝ := fun x => -2 * Real.log (b x) - (9*x/8 + 57*x^2/256 + x^3/16)
   have hd (x : ℝ) (hx : x ∈ Set.Icc (0 : ℝ) 1) :
       HasDerivAt F (x^2*(84+693*x-72*x^2)/(8192*b x)) x := by
-    have hb : b x ≠ 0 := (pairCharge_cost_b_pos hx.1 (by linarith [hx.2])).ne'
+    have hb : b x ≠ 0 := (b_pos x (by linarith [hx.2])).ne'
     have hbd : HasDerivAt b (-9/16 + 3*x/32) x := by
       have hid : b = (fun y : ℝ => 1 - (9/16)*y + (3/64)*y^2) := by
         funext y
@@ -80,23 +75,17 @@ lemma pairCharge_cubic_price {t : ℝ} (ht : 0 ≤ t) (ht1 : t ≤ 1) :
       rw [(hd x hx').deriv]
       have hsq : x^2 ≤ 1 := by nlinarith [hx'.1, hx'.2]
       have hp : 0 ≤ 84+693*x-72*x^2 := by nlinarith [hx'.1]
-      exact div_nonneg (mul_nonneg (sq_nonneg x) hp) (mul_nonneg (by norm_num) (pairCharge_cost_b_pos hx'.1 (by linarith [hx'.2])).le)
+      exact div_nonneg (mul_nonneg (sq_nonneg x) hp) (mul_nonneg (by norm_num) (b_pos x (by linarith [hx'.2])).le)
   have h := hm (by simp) ⟨ht,ht1⟩ ht
   have hzero : F 0 = 0 := by simp [F,b]
   rw [hzero] at h
   dsimp [F,Psi] at h ⊢
   linarith
 
-lemma pairCharge_b_pos {t : ℝ} (_ht0 : 0 ≤ t) (ht2 : t ≤ 2) : 0 < b t := by
-  have hp : 0 ≤ (2 - t) * (10 - t) :=
-    mul_nonneg (by linarith) (by linarith)
-  unfold b
-  nlinarith
-
 lemma pairCharge_tail_Psi {t : ℝ} (ht1 : 1 ≤ t) (ht2 : t ≤ 2) :
     (6 : ℝ) / 5 ≤ Psi t := by
   have ht0 : 0 ≤ t := by linarith
-  have hb0 : 0 < b t := pairCharge_b_pos ht0 ht2
+  have hb0 : 0 < b t := b_pos t ht2
   have hprod : 0 ≤ (t - 1) * (11 - t) :=
     mul_nonneg (by linarith) (by linarith)
   have hbhalf : b t ≤ (1 : ℝ) / 2 := by
@@ -842,10 +831,6 @@ lemma pairCharge_pair_reverse {S : Finset (X × Y)} {w P R : Law X Y}
   exact ⟨hpair.1, hpair.2.2.1, hpair.2.1, hpair.2.2.2.2.1,
     hpair.2.2.2.1, Ne.symm hpair.2.2.2.2.2⟩
 
-lemma pairCharge_s_eq_A0_add_B0 (P R : Law X Y) : s P R = A0 P R + B0 P R := by
-  unfold s A0 B0
-  ring
-
 lemma pairCharge_v_bounds {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
     (2 : ℝ) / 9 ≤ A0 P R * B0 P R / (s P R)^2 ∧
@@ -858,7 +843,7 @@ lemma pairCharge_v_bounds {S : Finset (X × Y)} {w P R : Law X Y}
   rw [hm.U2] at hU
   rw [hm.V2] at hV
   have hs : 0 < (s P R)^2 := sq_pos_of_pos hm.s_pos
-  have hsum := pairCharge_s_eq_A0_add_B0 P R
+  have hsum : s P R = A0 P R + B0 P R := rfl
   constructor
   · apply (le_div_iff₀ hs).2
     nlinarith [mul_nonneg hU hV]
@@ -1098,7 +1083,7 @@ lemma pairCharge_mixed_UV {S : Finset (X × Y)} {w P R : Law X Y}
   have hEg : E P (fun z => g P R z.2) = 1 - B0 P R := by unfold B0; ring
   rw [hEg] at hU
   rw [hEf] at hV
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   have hq := hm.quartic
   constructor <;> linarith
 
@@ -1112,7 +1097,7 @@ lemma pairCharge_UV_weighted_energy {S : Finset (X × Y)} {w P R : Law X Y}
   have hV := pairCharge_E_weighted_cube P (fun z => V P R z.2)
   rw [hm.U2, hc.1] at hU
   rw [hm.V2, hc.2] at hV
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   constructor <;> linarith
 
 lemma pairCharge_reciprocal_roots {a b : ℝ} (ha : 0 < a) (hb : 0 < b) :
@@ -1175,7 +1160,7 @@ lemma pairCharge_mean_losses_reverse {S : Finset (X × Y)} {w P R : Law X Y}
 
 lemma pairCharge_s_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) : s R P = s P R := by
-  rw [pairCharge_s_eq_A0_add_B0, pairCharge_s_eq_A0_add_B0,
+  rw [s, s,
     (pairCharge_mean_losses_reverse hpair).1, (pairCharge_mean_losses_reverse hpair).2]
   ring
 
@@ -1319,7 +1304,7 @@ lemma pairCharge_fixed_endpoint_table {S : Finset (X × Y)} {w P R : Law X Y}
   have hm := contact_moments hpair
   have hu := (pairCharge_mean_UV hpair).1
   have hv := (pairCharge_mean_UV hpair).2
-  have hsum := pairCharge_s_eq_A0_add_B0 P R
+  have hsum : s P R = A0 P R + B0 P R := rfl
   have hH : E P H = (s P R+J P R)/4 := by
     dsimp [H]
     linarith [hm.quartic]

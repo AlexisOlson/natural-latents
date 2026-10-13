@@ -302,7 +302,7 @@ lemma pairCharge_contact_gram_energy {S : Finset (X × Y)} {w P R : Law X Y}
   rw [hm.V2, (pairCharge_mean_UV hpair).2] at hv
   rw [(pairCharge_mean_UV hpair).1, (pairCharge_mean_UV hpair).2] at huv
   have hq := hm.quartic
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   rw [hu, hv, huv, hq, hs]
   ring
 
@@ -412,7 +412,7 @@ lemma pairCharge_J_bound_strict {S : Finset (X × Y)} {w P R : Law X Y}
         ring
       _ = _ := by rw [contact_q_E_sub, contact_q_E_scale, hinner]
   rw [hprod, hm.U2] at hzero
-  have hs := pairCharge_s_eq_A0_add_B0 P R
+  have hs : s P R = A0 P R + B0 P R := rfl
   dsimp [mX] at hzero
   have hspos : 0 < (s P R)^2 := sq_pos_of_pos hm.s_pos
   have hb := hm.scalar_bound
