@@ -1,40 +1,16 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Duality.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed.
-import Mathlib.Analysis.Convex.StdSimplex
-import Mathlib.Analysis.Convex.Caratheodory
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.LocallyConvex.Separation
 import Mathlib.Data.Fintype.EquivFin
-import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 import NaturalLatents.Upstream.Envelope
 
 /-!
-# §2. Kernel duality, contacts, and the defect functional
+# Common feasible kernels and their contacts
 
-
-The defect `G_w` and the notion of a **contact** are used in every later
-section. Everything here is finite-dimensional real analysis — no probability
-space, no measure theory.
-
-## Contents
-
-| Lean name | Label | Note |
-|---|---|---|
-| `Lambda`, `Feasible`, `Gdef`, `IsContact` | Def 2.1 | definitions |
-| `Gdef_eq_certificate_gap` | Lemma 2.2 | pure algebra |
-| `valid_iff_feasible`, `Gdef_nonneg` | Thm 2.3 | Gibbs + a Lagrange/perturbation argument |
-| `exists_tau_optimal_kernel` | Cor 2.4 | compactness; attainment |
-| `exists_common_contact_pair` | Thm 2.5 *contact-opt* | **the pair `(L,w)` fixed for §§4-12** |
-| `contact_support_eq` | Lemma 2.6 | contacts have full support on connected `𝒮` |
-| `contact_hypercontractive` | Lemma 2.7 | `E_q[f(X)g(Y)] ≤ ‖f‖_{3/2} ‖g‖_{3/2}` |
-| `Gdef_fusion` | Lemma 2.8(a) | fusion identity |
-
-## Mathlib background
-
-§5.2, §6.1 and §6.2 all reduce to Lemma 2.7, derived from `Feasible` by Hölder.
-The `(⇒)` direction of Theorem 2.3 and Corollary 2.4 both
-use a first-order (one-sided `ε^{2/3}` perturbation) argument at a maximizer of
-`Λ_w` on a simplex, for which Mathlib has no packaged KKT statement.
+The proof follows the three-step duality argument: attain an affine minorant,
+normalize it to a feasible kernel whose optimal components are contacts, and
+use connectedness to show that every contact has full support.
 -/
 
 namespace stoch_to_det
@@ -43,7 +19,7 @@ open Finset
 
 variable {α β : Type*} [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β]
 
-/-! ### Definition 2.1 -/
+/-! ## Definitions -/
 
 /-- `Λ_w(u,v) := ∑_{(x,y) ∈ 𝒮} w(x,y) u(x)^{2/3} v(y)^{2/3}`. -/
 noncomputable def Lambda (S : Finset (α × β)) (w : α × β → ℝ) (u : α → ℝ) (v : β → ℝ) : ℝ :=
@@ -56,18 +32,18 @@ def Feasible (S : Finset (α × β)) (w : α × β → ℝ) : Prop :=
 
 /-- A certificate `c : 𝒮 → ℝ` is **valid** when `⟨c,q⟩ ≥ Φ(q)` for every law `q`
 on `𝒮`. -/
-def Valid (S : Finset (α × β)) (c : α × β → ℝ) : Prop :=
+private def Valid (S : Finset (α × β)) (c : α × β → ℝ) : Prop :=
   ∀ q : α × β → ℝ, IsPMF q → Supported S q → Phi q ≤ ∑ z ∈ S, c z * q z
 
 /-- The reference measure `m_q := w · q_X^{2/3} ⊗ q_Y^{2/3}` restricted to `𝒮`
 . -/
-noncomputable def refMeas (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → ℝ) :
+private noncomputable def refMeas (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → ℝ) :
     α × β → ℝ :=
   fun z => if z ∈ S then w z * mX q z.1 ^ ((2 : ℝ) / 3) * mY q z.2 ^ ((2 : ℝ) / 3) else 0
 
 /-- The **defect** `G_w(q) := 3 ∑ q · lg (q / (w q_X^{2/3} q_Y^{2/3})) = 3 D(q ‖ m_q)`
 , in bits, with `D` taken against an *unnormalized* reference. -/
-noncomputable def Gdef (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → ℝ) : ℝ :=
+private noncomputable def Gdef (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → ℝ) : ℝ :=
   3 * ∑ z ∈ S, q z * lg (q z / refMeas S w q z)
 
 /-- `q` is a **contact** of `w`: `G_w(q) = 0`, equivalently `q = w q_X^{2/3} q_Y^{2/3}`
@@ -77,7 +53,7 @@ equations); the equivalence with `G_w(q) = 0` is `Gdef_eq_zero_iff`. -/
 def IsContact (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → ℝ) : Prop :=
   IsPMF q ∧ Supported S q ∧ ∀ z ∈ S, q z = w z * mX q z.1 ^ ((2 : ℝ) / 3) * mY q z.2 ^ ((2 : ℝ) / 3)
 
-/-! ### Lemma 2.2 -/
+/-! ## Analytic tools -/
 
 private lemma sum_mul_lg_self_eq_neg_H {γ : Type*} [Fintype γ]
     {m : γ → ℝ} (hm : IsPMF m) :
@@ -222,7 +198,7 @@ private lemma mass_refMeas_eq_Lambda (S : Finset (α × β)) (w : α × β → �
 
 /-- **Lemma 2.2** (defect = certificate gap).
 With `c = −3 lg w`: `G_w(q) = ⟨c,q⟩ − Φ(q)`. -/
-theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β → ℝ}
+private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β → ℝ}
     (hw : ∀ z ∈ S, 0 < w z) {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
     Gdef S w q = (∑ z ∈ S, (-3 * lg (w z)) * q z) - Phi q := by
   have hqX : IsPMF (mX q) := isPMF_push hq
@@ -524,7 +500,7 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
       simp [hDpos.ne']
 
 /-- **Theorem 2.3** (validity ⟺ feasibility). -/
-theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ} (hw : ∀ z ∈ S, 0 < w z) :
+private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ} (hw : ∀ z ∈ S, 0 < w z) :
     Valid S (fun z => -3 * lg (w z)) ↔ Feasible S w := by
   constructor
   · intro hvalid
@@ -814,15 +790,8 @@ theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
     have hnonneg := Gdef_nonneg_aux hfeas hq hqS
     linarith
 
-/-- **Theorem 2.3**, consequence: the defect of a feasible kernel is nonnegative
-on *every* law. -/
-theorem Gdef_nonneg {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
-    {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
-    0 ≤ Gdef S w q := by
-  exact Gdef_nonneg_aux hw hq hqS
-
 /-- **Theorem 2.3**, equality case: `G_w(q) = 0` exactly at contacts. -/
-theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
+private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
     {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
     Gdef S w q = 0 ↔ IsContact S w q := by
   have hqX : IsPMF (mX q) := isPMF_push hq
@@ -896,7 +865,7 @@ theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} (hw : Fe
       · rw [div_self hz, lg_one, mul_zero]
     rw [Gdef, hsumZero, mul_zero]
 
-/-! ### Corollary 2.4 and Theorem 2.5 -/
+/-! ## Lemma 1 (attainment and affine minorant) -/
 
 private noncomputable def dualContinuousEntropy {γ : Type*} [Fintype γ]
     (m : γ → ℝ) : ℝ :=
@@ -1666,6 +1635,8 @@ private lemma exists_optimal_valid_certificate
   change obj c = concaveEnvelopePhi p
   exact le_antisymm hupper hlower
 
+/-! ## Lemma 2 (normalization gives feasibility and contacts) -/
+
 private lemma neg_three_lg_two_rpow (r : ℝ) :
     -3 * lg ((2 : ℝ) ^ (-r / 3)) = r := by
   rw [lg_eq_log_div, Real.log_rpow (by norm_num : (0 : ℝ) < 2)]
@@ -1674,7 +1645,7 @@ private lemma neg_three_lg_two_rpow (r : ℝ) :
 
 /-- **Corollary 2.4**: `τ` as an attained convex program over
 feasible kernels. -/
-theorem exists_tau_optimal_kernel {p : α × β → ℝ} (hp : IsPMF p) :
+private theorem exists_tau_optimal_kernel {p : α × β → ℝ} (hp : IsPMF p) :
     ∃ w : α × β → ℝ, Feasible (support p) w ∧
       tau p = Psi p + 3 * ∑ z ∈ support p, p z * lg (w z) := by
   obtain ⟨c, hcValid, hcObj⟩ := exists_optimal_valid_certificate hp
@@ -1777,7 +1748,7 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
     by_cases hv : L.prior v = 0
     · simp [hv]
     · exact mul_nonneg (L.prior_isPMF.nonneg v)
-        (Gdef_nonneg hw (L.comp_isPMF v) (hcompS v hv))
+        (Gdef_nonneg_aux hw (L.comp_isPMF v) (hcompS v hv))
   refine ⟨L, w, hw, hLopt, ?_⟩
   intro v hv
   have htermZero :
@@ -1788,7 +1759,7 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
     (mul_eq_zero.mp htermZero).resolve_left hv
   exact (Gdef_eq_zero_iff hw (L.comp_isPMF v) (hcompS v hv)).mp hGzero
 
-/-! ### Lemmas 2.6-2.8 -/
+/-! ## Lemma 3 (connected support gives positive contacts) -/
 
 /-- **Lemma 2.6**: on a connected support every contact has
 full support. Used from §3 on; it is what makes the near/far dichotomy of
