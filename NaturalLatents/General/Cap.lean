@@ -349,32 +349,18 @@ lemma c3a_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
   rw [hgeom_eq] at hle
   linarith
 
-/-- A common denominator for all logarithm remainders with argument at most `y`. -/
-lemma c3a_log_remainder_le_of_le {x y : ℝ}
-    (hx0 : 0 ≤ x) (hxy : x ≤ y) (hy1 : y < 1) :
-    -Real.log (1 - x) - x ≤ x ^ 2 / 2 + x ^ 3 / 3 + x ^ 4 / (4 * (1 - y)) := by
-  have hx1 : x < 1 := hxy.trans_lt hy1
-  refine (c3a_log_remainder_le hx0 hx1).trans ?_
-  exact add_le_add le_rfl
-    (div_le_div_of_nonneg_left (by positivity) (by linarith) (by linarith))
-
 lemma c3a_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     (hs : HasSum (fun n : ℕ => -Real.log (1 - y / (n + 1)) - y / (n + 1))
-      (Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y))
-    (hlog : ∀ x : ℝ, 0 ≤ x → x ≤ y →
-      -Real.log (1 - x) - x ≤ x ^ 2 / 2 + x ^ 3 / 3 + x ^ 4 / (4 * (1 - y)))
-    (h2s : Summable (fun n : ℕ => 1 / (n + 1 : ℝ) ^ 2))
-    (h3s : Summable (fun n : ℕ => 1 / (n + 1 : ℝ) ^ 3))
-    (h4s : Summable (fun n : ℕ => 1 / (n + 1 : ℝ) ^ 4))
-    (h2 : (∑' n : ℕ, 1 / (n + 1 : ℝ) ^ 2) < 79 / 48)
-    (h3 : (∑' n : ℕ, 1 / (n + 1 : ℝ) ^ 3) ≤ 241 / 200)
-    (h4 : (∑' n : ℕ, 1 / (n + 1 : ℝ) ^ 4) ≤ 6503 / 6000) :
+      (Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y)) :
     Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y <
       79 / 96 * y ^ 2 + 241 / 600 * y ^ 3 + 6503 / 24000 * y ^ 4 / (1 - y) := by
   let f : ℕ → ℝ := fun n =>
     (y ^ 2 / 2) * (1 / (n + 1 : ℝ) ^ 2) +
     (y ^ 3 / 3) * (1 / (n + 1 : ℝ) ^ 3) +
     (y ^ 4 / (4 * (1 - y))) * (1 / (n + 1 : ℝ) ^ 4)
+  have h2s := cap_zeta_two.1
+  have h3s := cap_zeta_three.1
+  have h4s := cap_zeta_four.1
   have hfs : Summable f := ((h2s.mul_left _).add (h3s.mul_left _)).add (h4s.mul_left _)
   have hterm : ∀ n : ℕ,
       -Real.log (1 - y / (n + 1)) - y / (n + 1) ≤ f n := by
@@ -382,10 +368,16 @@ lemma c3a_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     have hd : 0 < (n + 1 : ℝ) := by positivity
     have hd1 : 1 ≤ (n + 1 : ℝ) := by linarith [show (0 : ℝ) ≤ n from Nat.cast_nonneg n]
     have hxy : y / (n + 1 : ℝ) ≤ y := div_le_self hy0.le hd1
-    have h := hlog (y / (n + 1)) (by positivity) hxy
-    convert h using 1
+    have h := c3a_log_remainder_le (x := y / (n + 1)) (by positivity)
+      (hxy.trans_lt hy1)
+    have hdenom :
+        (y / (n + 1 : ℝ)) ^ 4 / (4 * (1 - y / (n + 1))) ≤
+          (y / (n + 1 : ℝ)) ^ 4 / (4 * (1 - y)) :=
+      div_le_div_of_nonneg_left (by positivity) (by positivity) (by linarith)
+    have h := h.trans (add_le_add le_rfl hdenom)
+    refine h.trans_eq ?_
     dsimp [f]
-    field_simp [hd.ne', (sub_pos.mpr hy1).ne']
+    field_simp [hd.ne']
   have hbound := hs.summable.tsum_le_tsum hterm hfs
   rw [hs.tsum_eq] at hbound
   have hsum : (∑' n : ℕ, f n) =
@@ -397,9 +389,10 @@ lemma c3a_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
       ((h2s.mul_left _).tsum_add (h3s.mul_left _)), tsum_mul_left, tsum_mul_left,
       tsum_mul_left]
   rw [hsum] at hbound
-  have h2' := mul_lt_mul_of_pos_left h2 (show 0 < y ^ 2 / 2 by positivity)
-  have h3' := mul_le_mul_of_nonneg_left h3 (show 0 ≤ y ^ 3 / 3 by positivity)
-  have h4' := mul_le_mul_of_nonneg_left h4
+  have h2' := mul_lt_mul_of_pos_left cap_zeta_two.2 (show 0 < y ^ 2 / 2 by positivity)
+  have h3' := mul_le_mul_of_nonneg_left cap_zeta_three.2.le
+    (show 0 ≤ y ^ 3 / 3 by positivity)
+  have h4' := mul_le_mul_of_nonneg_left cap_zeta_four.2.le
     (show 0 ≤ y ^ 4 / (4 * (1 - y)) by positivity)
   calc
     _ ≤ _ := hbound
@@ -440,9 +433,6 @@ theorem racePrice_lt_capC3a (a : ℝ) (ha : 1 < a) : j a < C3a a := by
   have hy1 : 1 / a < 1 := (div_lt_one ha0).mpr ha
   have h := c3a_assemble_remainders hy0 hy1
     (gamma_hasSum_product_remainder hy1)
-    (fun x hx0 hxy => c3a_log_remainder_le_of_le hx0 hxy hy1)
-    cap_zeta_two.1 cap_zeta_three.1 cap_zeta_four.1
-    cap_zeta_two.2 cap_zeta_three.2.le cap_zeta_four.2.le
   simpa only [j, C3a] using c3a_reciprocal_conversion a ha h
 
 end

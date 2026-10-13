@@ -234,37 +234,36 @@ lemma race_condMI_transport {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     simp only [stoch_to_det.push_push, Function.comp_def, Prod.swap]
   rw [hswap, stoch_to_det.condMI_comm_local L.joint_isPMF Prod.snd Prod.fst]
 
+private lemma condMI_pair_coordinate
+    {A B C D E : Type} [Fintype A] [Fintype B] [Fintype C] [Fintype D] [Fintype E]
+    [DecidableEq B] [DecidableEq C] [DecidableEq D] [DecidableEq E]
+    {m : A → ℝ} (hm : stoch_to_det.IsPMF m) (k : A → D) (f : A → B) (g : A → C)
+    (pair : B → C → E) (getG : E → C) (hpair : ∀ b c, getG (pair b c) = c) :
+    stoch_to_det.condMI k (fun a => pair (f a) (g a)) f m =
+      stoch_to_det.condMI k g f m := by
+  have hpairH := stoch_to_det.Hvar_eq_of_leftInverse hm (fun a => (g a, f a))
+    (fun gf => (pair gf.2 gf.1, gf.2)) (fun ef => (getG ef.1, ef.2))
+    (fun gf => by simp [hpair])
+  have hprefixedH := stoch_to_det.Hvar_eq_of_leftInverse hm (fun a => (k a, g a, f a))
+    (fun kgf => (kgf.1, pair kgf.2.2 kgf.2.1, kgf.2.2))
+    (fun kef => (kef.1, getG kef.2.1, kef.2.2)) (fun kgf => by simp [hpair])
+  have hpairH' : stoch_to_det.Hvar (fun a => (pair (f a) (g a), f a)) m =
+      stoch_to_det.Hvar (fun a => (g a, f a)) m := by
+    simpa only [Function.comp_def] using hpairH
+  have hprefixedH' : stoch_to_det.Hvar (fun a => (k a, pair (f a) (g a), f a)) m =
+      stoch_to_det.Hvar (fun a => (k a, g a, f a)) m := by
+    simpa only [Function.comp_def] using hprefixedH
+  unfold stoch_to_det.condMI
+  rw [hpairH', hprefixedH']
+
 lemma race_condMI_coordinate_sum {p : Law X Y} (L : FiniteLatent p) :
     Real.log 2 *
       (stoch_to_det.condMI Prod.fst Prod.snd (fun lz : L.ι × (X × Y) => lz.2.1) L.joint +
        stoch_to_det.condMI Prod.fst Prod.snd (fun lz : L.ι × (X × Y) => lz.2.2) L.joint) = B L := by
-  have hZX : stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.2, lz.2.1)) L.joint =
-      stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.2.2, lz.2.1)) L.joint :=
-    stoch_to_det.Hvar_eq_of_leftInverse L.joint_isPMF (fun lz => (lz.2.2,lz.2.1))
-      (fun yx => ((yx.2,yx.1),yx.2)) (fun zx => (zx.1.2,zx.2)) (fun _ => rfl)
-  have hLZX : stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.1, lz.2, lz.2.1)) L.joint =
-      stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.1, lz.2.2, lz.2.1)) L.joint :=
-    stoch_to_det.Hvar_eq_of_leftInverse L.joint_isPMF (fun lz => (lz.1,lz.2.2,lz.2.1))
-      (fun lyx => (lyx.1,(lyx.2.2,lyx.2.1),lyx.2.2))
-      (fun lzx => (lzx.1,lzx.2.1.2,lzx.2.2)) (fun _ => rfl)
-  have hZY : stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.2, lz.2.2)) L.joint =
-      stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.2.1, lz.2.2)) L.joint :=
-    stoch_to_det.Hvar_eq_of_leftInverse L.joint_isPMF (fun lz => (lz.2.1,lz.2.2))
-      (fun xy => ((xy.1,xy.2),xy.2)) (fun zy => (zy.1.1,zy.2)) (fun _ => rfl)
-  have hLZY : stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.1, lz.2, lz.2.2)) L.joint =
-      stoch_to_det.Hvar (fun lz : L.ι × (X × Y) => (lz.1, lz.2.1, lz.2.2)) L.joint :=
-    stoch_to_det.Hvar_eq_of_leftInverse L.joint_isPMF (fun lz => (lz.1,lz.2.1,lz.2.2))
-      (fun lxy => (lxy.1,(lxy.2.1,lxy.2.2),lxy.2.2))
-      (fun lzy => (lzy.1,lzy.2.1.1,lzy.2.2)) (fun _ => rfl)
-  have hIX : stoch_to_det.condMI Prod.fst Prod.snd (fun lz : L.ι × (X × Y) => lz.2.1)
-      L.joint = stoch_to_det.condMI Prod.fst (fun lz => lz.2.2) (fun lz => lz.2.1) L.joint := by
-    unfold stoch_to_det.condMI
-    rw [hZX, hLZX]
-  have hIY : stoch_to_det.condMI Prod.fst Prod.snd (fun lz : L.ι × (X × Y) => lz.2.2)
-      L.joint = stoch_to_det.condMI Prod.fst (fun lz => lz.2.1) (fun lz => lz.2.2) L.joint := by
-    unfold stoch_to_det.condMI
-    rw [hZY, hLZY]
-  rw [hIX, hIY]
+  rw [condMI_pair_coordinate L.joint_isPMF Prod.fst (fun lz => lz.2.1)
+      (fun lz => lz.2.2) (fun x y => (x, y)) Prod.snd (fun _ _ => rfl),
+    condMI_pair_coordinate L.joint_isPMF Prod.fst (fun lz => lz.2.2)
+      (fun lz => lz.2.1) (fun y x => (x, y)) Prod.fst (fun _ _ => rfl)]
   unfold B
   ring
 

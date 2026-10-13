@@ -18,6 +18,34 @@ open Finset
 
 universe u v w
 
+private lemma push_apply_ne_zero
+    {A : Type u} {B : Type v} [Fintype A] [Fintype B] [DecidableEq B]
+    {m : A → ℝ} (hm : IsPMF m) (f : A → B) {a : A} (ha : m a ≠ 0) :
+    push f m (f a) ≠ 0 := by
+  apply (lt_of_lt_of_le (lt_of_le_of_ne (hm.nonneg a) (Ne.symm ha)) ?_).ne'
+  unfold push
+  exact Finset.single_le_sum (fun x _ => hm.nonneg x) (by simp)
+
+private lemma sum_negMulLog_push
+    {A : Type u} {B : Type v} [Fintype A] [Fintype B] [DecidableEq B]
+    (m : A → ℝ) (f : A → B) :
+    ∑ b, Real.negMulLog (push f m b) =
+      ∑ a, m a * (-Real.log (push f m (f a))) := by
+  calc
+    _ = ∑ b, push f m b * (-Real.log (push f m b)) := by
+      apply Finset.sum_congr rfl
+      intro b _
+      rw [Real.negMulLog]
+      ring
+    _ = _ := sum_push_mul f m _
+
+private lemma logTwo_mul_H_eq_sum_negMulLog
+    {A : Type u} [Fintype A] {m : A → ℝ} (hm : IsPMF m) :
+    SharedRace.logTwo * H m = ∑ a, Real.negMulLog (m a) := by
+  have h := H_eq_negMulLog hm.isFinMeas
+  rw [hm.total, Real.log_one, mul_zero, zero_add] at h
+  exact h
+
 /-- Mutual information in bits, multiplied by `log 2`, is the KL divergence
 of the joint law from the product of its marginals. -/
 lemma logTwo_mul_MI_eq_kl
@@ -40,19 +68,9 @@ lemma logTwo_mul_MI_eq_kl
   have hsnd : IsPMF sndMarginal := isPMF_push hjoint
   have hsupp : ∀ z, joint z ≠ 0 → productMarginal z ≠ 0 := by
     intro z hz
-    have hjpos : 0 < joint z :=
-      lt_of_le_of_ne (hjoint.nonneg z) (Ne.symm hz)
-    have hfst_le : joint z ≤ fstMarginal z.1 := by
-      dsimp [fstMarginal]
-      unfold push
-      exact Finset.single_le_sum (fun w _ => hjoint.nonneg w) (by simp)
-    have hsnd_le : joint z ≤ sndMarginal z.2 := by
-      dsimp [sndMarginal]
-      unfold push
-      exact Finset.single_le_sum (fun w _ => hjoint.nonneg w) (by simp)
     dsimp [productMarginal]
-    exact mul_ne_zero (lt_of_lt_of_le hjpos hfst_le).ne'
-      (lt_of_lt_of_le hjpos hsnd_le).ne'
+    exact mul_ne_zero (push_apply_ne_zero hjoint Prod.fst hz)
+      (push_apply_ne_zero hjoint Prod.snd hz)
   have hfst_eq : fstMarginal = push f m := by
     dsimp [fstMarginal, joint]
     simpa [Function.comp_def] using
@@ -66,26 +84,10 @@ lemma logTwo_mul_MI_eq_kl
     rw [hfst_eq, hsnd_eq]
   have hlift_fst : ∑ x, Real.negMulLog (fstMarginal x) =
       ∑ z, joint z * (-Real.log (fstMarginal z.1)) := by
-    calc
-      (∑ x, Real.negMulLog (fstMarginal x)) =
-          ∑ x, fstMarginal x * (-Real.log (fstMarginal x)) := by
-        apply Finset.sum_congr rfl
-        intro x _
-        rw [Real.negMulLog]
-        ring
-      _ = ∑ z, joint z * (-Real.log (fstMarginal z.1)) :=
-        sum_push_mul Prod.fst joint _
+    exact sum_negMulLog_push joint Prod.fst
   have hlift_snd : ∑ y, Real.negMulLog (sndMarginal y) =
       ∑ z, joint z * (-Real.log (sndMarginal z.2)) := by
-    calc
-      (∑ y, Real.negMulLog (sndMarginal y)) =
-          ∑ y, sndMarginal y * (-Real.log (sndMarginal y)) := by
-        apply Finset.sum_congr rfl
-        intro y _
-        rw [Real.negMulLog]
-        ring
-      _ = ∑ z, joint z * (-Real.log (sndMarginal z.2)) :=
-        sum_push_mul Prod.snd joint _
+    exact sum_negMulLog_push joint Prod.snd
   have hlift_joint : ∑ z, Real.negMulLog (joint z) =
       ∑ z, joint z * (-Real.log (joint z)) := by
     apply Finset.sum_congr rfl
@@ -109,13 +111,10 @@ lemma logTwo_mul_MI_eq_kl
       have hsnd0 : sndMarginal z.2 ≠ 0 := (mul_ne_zero_iff.mp hprod).2
       rw [Real.log_div hz hprod, Real.log_mul hfst0 hsnd0]
       ring
-  have hHjoint := H_eq_negMulLog hjoint.isFinMeas
-  have hHfst := H_eq_negMulLog hfst.isFinMeas
-  have hHsnd := H_eq_negMulLog hsnd.isFinMeas
-  rw [hjoint.total, Real.log_one, mul_zero, zero_add] at hHjoint
-  rw [hfst.total, Real.log_one, mul_zero, zero_add] at hHfst
-  rw [hsnd.total, Real.log_one, mul_zero, zero_add] at hHsnd
-  unfold SharedRace.logTwo
+  have hHjoint := logTwo_mul_H_eq_sum_negMulLog hjoint
+  have hHfst := logTwo_mul_H_eq_sum_negMulLog hfst
+  have hHsnd := logTwo_mul_H_eq_sum_negMulLog hsnd
+  unfold SharedRace.logTwo at hHjoint hHfst hHsnd ⊢
   calc
     Real.log 2 * MI f g m =
         Real.log 2 * (H fstMarginal + H sndMarginal - H joint) := by
