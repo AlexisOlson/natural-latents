@@ -9,10 +9,10 @@ import NaturalLatents.Upstream.SourceCoarsening
 `table : TableClaim` and `score : ScoreClaim`, for the propositions frozen in
 `NaturalLatents/Statement.lean`. The constant is `2789/400 = 6.9725`.
 
-The bound itself is `General.T_le_of_connected` extended to every law by
-`General.extension_of_connected`. The passage from latents to probability
-tables follows the bridge shape of `TableBoundProof` in DLorell/stoch_to_det
-pull request #6 (Jeremy Gillen), with this repository's constant.
+The bound itself is `General.T_le_of_connected`, extended to every law by
+`General.extension_of_connected`. The remaining results convert the latent formulation to
+probability tables and derive `score` from `table`; that conversion follows the bridge in
+`TableBoundProof`, from Jeremy Gillen's pull request #6 to DLorell/stoch_to_det.
 -/
 
 open scoped BigOperators

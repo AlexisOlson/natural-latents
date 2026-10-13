@@ -1,29 +1,21 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.General.Definitions
 
 /-!
-# Attaining latents with contact components
+# Attaining latents for connected laws
 
-Three constructions of the data `T p ≤ (2789/400) tau p` is proved from, one per class of law.
-
-* `exists_setup_of_pos`: for a positive law, an attaining latent whose components are distinct
-  positive contacts of one feasible kernel (`CommonSetup`).
-* `exists_setup_of_connected`: the same for a law with connected support, by clustering the
-  components of upstream's seed setup.
-* `exists_setup`: for every probability law, an attaining latent with distinct contact
-  components localized on graph components of the support (`GeneralSetup`).
-
-Nothing here is quantitative; the module fixes which structure the later estimates may use.
+For a law with connected support, `exists_setup_of_connected` constructs a `CommonSetup`:
+an attaining latent whose components are distinct positive contacts of one feasible kernel.
+The construction clusters the components of a `stoch_to_det.SeedSetup`; later estimates use
+the resulting positive priors, common support, and posterior rows.
 
 ## Attribution
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/
 
 namespace StochasticToDeterministicLatents.General

@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.General.Setup
 import NaturalLatents.General.Ledger
 import NaturalLatents.General.Race
@@ -9,21 +9,15 @@ import NaturalLatents.General.Payment
 import NaturalLatents.General.PairCharge
 
 /-!
-# The bound for positive, connected and general laws
+# The bound for connected laws
 
 Assembling the results of the earlier modules at the exponent `a = 93/20`, with
 `beta = 1/10` and `gamma = 3/25`, gives in nats
 
     T p ≤ (2789/400) * tau p.
 
-Three routes:
-
-* `T_le_of_pos` for a positive law, through `exists_setup_of_pos`, the race with the Gamma-form
-  price and the three-term cap;
-* `T_le_of_connected` for a law with connected support, through `exists_setup_of_connected`;
-* `T_le` for every probability law, through `exists_setup`, the zero-rate race
-  with the exponential-time price and the four-term cap; this route does not use
-  `racePriceE_eq`.
+The theorem `T_le_of_connected` combines `exists_setup_of_connected`, the exponential race,
+the cap on its Gamma-form price, the pair charge, the mismatch payment, and the ledger inequality.
 
 The cap at `93/20` lies below `199/1000`, the coefficient of `M` is `697/100`, and the coefficient of `B` is
 `(3 * (93/20) - 1) / 2 + 3 * (199/1000) * (1/10) / (3/25) = 2789/400`.
@@ -32,10 +26,8 @@ The cap at `93/20` lies below `199/1000`, the coefficient of `M` is `697/100`, a
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/
 
 namespace StochasticToDeterministicLatents.General

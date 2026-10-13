@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.Entropy
 import NaturalLatents.Upstream.Functionals
 import NaturalLatents.Upstream.Envelope
@@ -10,28 +10,21 @@ import NaturalLatents.General.Pricing
 import NaturalLatents.General.Extension
 
 /-!
-# Factor 2789/400 for every finite law
+# The bound in nats
 
-For every finite law `p` on `X × Y`, with `X` and `Y` finite types in `Type`,
+This module gathers the development under `NaturalLatents/General/`. For every finite law `p`
+on `X × Y` it provides, in nats,
 
     T p ≤ (2789/400) * tau p,
 
-in bits (`General.T_le_mul_tau`); the constant `2789/400 = 6.9725` is below seven. The internal development
-in `General/` works in nats; the factor `Real.log 2` cancels in the bridge proof.
-The same bound for every law is also derived through the positive-law route
-(`General.T_le_mul_tau_via_pos`) and through the connected-support route
-(`General.T_le_mul_tau_via_connected`), which avoid the zero-rate race.
-
-The proof depends on the shared-race, coordinate-race, floor and scalar modules of upstream's open
-pull request #6; the result is `kernel-verified` here only relative to that revision, and the
-statement does not claim that the constant is least.
+as `General.T_le_of_connected` on connected supports together with
+`General.extension_of_connected`; `NaturalLatents.Main` converts the bound to bits.
+The constant `2789/400 = 6.9725` is below seven and is not claimed to be least.
 
 ## Attribution
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/

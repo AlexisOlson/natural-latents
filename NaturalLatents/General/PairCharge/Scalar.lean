@@ -1,12 +1,12 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.General.Contact
 
 /-!
 # Pair charge: scalar payments and symmetries
 
-First part of the pair charge, the statement `PC (1/10) (3/25)` on pairs of contacts. This
-module collects the scalar inequalities: the cubic logarithmic price, the exact rational
+This module supplies scalar inequalities used to prove the pair-charge statement. It includes
+the cubic logarithmic price, the exact rational
 polynomial certificates on the regions of the `(s, j)` rectangle, the payments that follow from
 a fixed common coefficient, the spectral-gap identity and the cubic-error payment, then the
 bounds on the contact moment `contactj` and the exchange of the two contacts, with the fixed
@@ -16,10 +16,8 @@ endpoint tables used later.
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/
 
 namespace StochasticToDeterministicLatents.General
@@ -1261,7 +1259,7 @@ lemma pairCharge_E_affine_square (P : Law X Y) (F G : X × Y → ℝ) (c : ℝ) 
   simp only [hid, contact_E_add, pairCharge_E_div]
 
 
-/-- The exact endpoint table (5.5) for the fixed quarter correction. -/
+/-- The exact endpoint table for the fixed quarter correction. -/
 lemma pairCharge_fixed_endpoint_table {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
     let H : X × Y → ℝ := fun z => U P R z.1 * V P R z.2

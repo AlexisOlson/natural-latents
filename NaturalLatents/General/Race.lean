@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.Normed.Group.InfiniteSum
@@ -31,19 +31,16 @@ gives a calibrated seeded family `F` with
     h F ≤ a * B L + 2 * j a * d L
 
 (`exists_race`), the entropy of the winner paid by the arrival-sum price `j a` times the
-categorical mismatch. This module assembles the gain and scaling lemmas for the appended
-clock sequence behind it, then removes the positivity of the posterior rows by a limit of
-positive rows, obtaining `exists_race_of_zero_rates` with the exponential-time price `jET a`.
-Finally `racePriceE_eq` identifies `jET a` with `j a`.
+categorical mismatch. This module assembles the gain, scaling, superposition, and transport
+lemmas for the appended clock sequence and proves `exists_race`. The analytic inputs about
+arrival sums and their Gamma-form price come from `NaturalLatents.General.RaceLaplace`.
 
 ## Attribution
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/
 
 namespace StochasticToDeterministicLatents.General

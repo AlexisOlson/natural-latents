@@ -1,27 +1,20 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.General.Definitions
 
 /-!
-# From positive and connected laws to all laws
+# From connected laws to all laws
 
-If `T q ≤ C * tau q` holds for all positive laws `q` (resp. all laws with connected support), it holds for
-every probability law `p`.
-
-* `extension_of_pos` mixes `p` with the uniform law, applies the hypothesis to the mixtures,
-  and passes to the limit using the continuity of the entropies, of `c`, and of `T`, with the
-  score identity `cost_identity` supplying the cost of the mixed latent.
-* `extension_of_connected` is the corresponding reduction through upstream's
-  `reduce_to_connected`.
+If `T q ≤ C * tau q` holds for every law `q` with connected support, then
+`extension_of_connected` gives the same bound for every probability law. It applies
+`stoch_to_det.reduce_to_connected` and converts between the bit- and nat-valued functionals.
 
 ## Attribution
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/
 
 namespace StochasticToDeterministicLatents.General

@@ -1,5 +1,5 @@
 -- Adapted from the author's earlier repository (StochasticToDeterministicLatents);
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 import Mathlib.NumberTheory.Harmonic.EulerMascheroni
 import Mathlib.Probability.Independence.InfinitePi
@@ -13,39 +13,36 @@ import NaturalLatents.Upstream.TableBoundProof
 # Laws, budgets, contact data and race prices in nats
 
 This module fixes the vocabulary of the bound `T p ≤ (2789/400) tau p` for an arbitrary finite
-law `p` on `X × Y`. Everything inside the `General` tree is measured in nats: `T`, `tau` and
-`Hnat` are the upstream bit-valued functionals multiplied by `Real.log 2`, and the factor
-cancels at the endpoint in `General.lean`.
+law `p` on `X × Y`. Everything inside the `General` tree is measured in nats: `T` and `tau` are the
+corresponding bit-valued `stoch_to_det` functionals multiplied by `Real.log 2`, and the factor
+cancels in `NaturalLatents.Main`.
 
 * **Budgets of a latent `L`.** `M L = I(X;Y | Λ)` and `B L = I(Λ;X | Y) + I(Λ;Y | X)`, so that
   `M L + B L` is the stochastic score in nats (`budgets_eq_score`). `post L i z` is the
   posterior of component `i` at the cell `z`, `d L` is its categorical mismatch, and `K L`
   is the replica budget of two posterior draws. `cost_identity` proves the score identity
-  `M L + B L = c p + ∑ prior i * phi (comp i)`, with `phi` minus upstream's `Φ` and `c`
-  upstream's `Ψ`, both in nats.
+  `M L + B L = c p + ∑ prior i * phi (comp i)`. Here `phi` is the negation of
+  `stoch_to_det.Phi`, while `c` is `stoch_to_det.Psi`, both converted to nats.
 * **Contact data.** For two contacts `P`, `R` of a common feasible kernel, `f` and `g` are the
   cube-root secants shifted by one, `E` is the expectation under `P`, and `A0`, `B0`, `s`, `J`
   and `contactj` are the moments that the contact relations constrain. `Psi t = -2 log (b t)` is
   the separation price, `AffinityBound` compares it with the marginal Bhattacharyya
   affinities, and `PC` is the pair-charge statement on a domain of pairs.
 * **Setups.** `CommonSetup` is an attaining latent with a feasible kernel, distinct positive
-  contacts of full common support and positive posterior rows; `GeneralSetup` replaces the
-  common support by localization on graph components of the support.
+  contacts of full common support, and positive posterior rows.
 * **Seeded families.** `CalibratedSeededFamily` is a law on complete maps `X × Y → ι` whose
   one-cell marginals are the posteriors, and `h` is the seed-averaged conditional entropy of
   the fixed maps.
 * **Race prices.** `j a` is the Gamma form of the exponential-race price, `jET a` its
   exponential-time form `∫ m a t dt` with `m a t = E log (1 + Vtail a t)`, and `C3a` is
-  the three-term and four-term caps on them.
+  the explicit three-term cap on `j a`.
 
 ## Attribution
 
 The upstream ancestor is
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
-The upstream definitions and lemmas used here come from that project, including
-its open pull request #6 (`jezgillen`, head `7b41957d`) at the pinned revision.
-The rest is adapted from unpublished working material with public names and
-module boundaries; that material supplies attribution only, not verification evidence.
+This file retains that source's definitions and lemmas where cited, together with
+material adapted from the author's earlier repository.
 -/
 
 namespace StochasticToDeterministicLatents.General
@@ -68,7 +65,7 @@ def T (p : Law X Y) : ℝ := Real.log 2 * stoch_to_det.T p
 lemma tau_eq_upstream (p : Law X Y) : tau p = Real.log 2 * stoch_to_det.tau p := rfl
 lemma T_eq_upstream (p : Law X Y) : T p = Real.log 2 * stoch_to_det.T p := rfl
 
-/-- The two CMI budgets for an arbitrary upstream latent. -/
+/-- The two conditional-mutual-information budgets for a finite latent. -/
 def M {p : Law X Y} (L : FiniteLatent p) : ℝ :=
   Real.log 2 * stoch_to_det.condMI (fun w => w.2.1) (fun w => w.2.2)
     (fun w => w.1) L.joint
@@ -102,11 +99,11 @@ lemma budgets_eq_score {p : Law X Y} (L : FiniteLatent p) :
   unfold M B stoch_to_det.Latent.score
   ring
 
-/-- phi is minus upstream Phi; c is upstream's law-only Psi. -/
+/-- `phi` negates `stoch_to_det.Phi`; `c` converts the law functional `stoch_to_det.Psi` to nats. -/
 def phi (q : Law X Y) : ℝ := -(Real.log 2 * stoch_to_det.Phi q)
 def c (p : Law X Y) : ℝ := Real.log 2 * stoch_to_det.Psi p
 /-- The score identity in nats: `M L + B L = c p + ∑ i, prior i * phi (comp i)` for every latent `L` of a
-probability law `p`; the upstream identity multiplied by `Real.log 2`. -/
+probability law `p`; this is the corresponding bit-valued identity multiplied by `Real.log 2`. -/
 lemma cost_identity (p : Law X Y) (hp : stoch_to_det.IsPMF p) (L : FiniteLatent p) :
     M L + B L = c p + ∑ i, L.prior i * phi (L.comp i) := by
   rw [budgets_eq_score, L.score_eq hp]
@@ -134,7 +131,7 @@ def CommonSupportPairs (S : Finset (X × Y)) (w P R : Law X Y) : Prop :=
   FeasibleKernel S w ∧ Contact S w P ∧ Contact S w R ∧
     PositiveOn S P ∧ PositiveOn S R ∧ P ≠ R
 
-/-- Reuse upstream cube-root secants, including its irrelevant null-marginal convention. -/
+/-- Cube-root secants, retaining the arbitrary convention at null marginals. -/
 abbrev U (P R : Law X Y) := stoch_to_det.contactSecantX P R
 abbrev V (P R : Law X Y) := stoch_to_det.contactSecantY P R
 def f (P R : Law X Y) (x : X) : ℝ := U P R x + 1
@@ -162,7 +159,7 @@ lemma b_pos (t : ℝ) (ht : t ≤ 2) : 0 < b t := by
     mul_nonneg (by linarith) (by linarith)
   unfold b
   nlinarith
-/-- Contact separation price, distinct from upstream's law-only Psi. -/
+/-- Contact separation price, distinct from the law functional `stoch_to_det.Psi`. -/
 def Psi (t : ℝ) : ℝ := -2 * Real.log (b t)
 abbrev BC_X (P R : Law X Y) := stoch_to_det.BC (stoch_to_det.mX P) (stoch_to_det.mX R)
 abbrev BC_Y (P R : Law X Y) := stoch_to_det.BC (stoch_to_det.mY P) (stoch_to_det.mY R)
