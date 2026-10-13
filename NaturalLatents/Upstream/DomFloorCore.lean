@@ -25,13 +25,6 @@ noncomputable def Knat (q : α × β → ℝ) : ℝ :=
       Real.log (q z / (mX q z.1 * mY q z.2)) -
       q z / (mX q z.1 * mY q z.2) + 1)
 
-private lemma sum_negMulLog {ι : Type*} [Fintype ι] (m : ι → ℝ) :
-    (∑ i, Real.negMulLog (m i)) = ∑ i, m i * (-Real.log (m i)) := by
-  apply Finset.sum_congr rfl
-  intro i _
-  simp only [Real.negMulLog]
-  ring
-
 /-- The scalar-integrand formula for mutual information, in natural-log units. -/
 theorem Knat_eq_log_two_mul_Ixy {q : α × β → ℝ} (hq : IsPMF q) :
     Knat q = Real.log 2 * Ixy q := by
@@ -48,13 +41,32 @@ theorem Knat_eq_log_two_mul_Ixy {q : α × β → ℝ} (hq : IsPMF q) :
     have hxpos : 0 < mX q z.1 := lt_of_lt_of_le hqpos hxle
     have hypos : 0 < mY q z.2 := lt_of_lt_of_le hqpos hyle
     exact (mul_ne_zero hxpos.ne' hypos.ne') hQz
-  have hliftX : (∑ x, Real.negMulLog (mX q x)) =
-      ∑ z, q z * (-Real.log (mX q z.1)) :=
-    (sum_negMulLog (mX q)).trans (sum_push_mul Prod.fst q _)
-  have hliftY : (∑ y, Real.negMulLog (mY q y)) =
-      ∑ z, q z * (-Real.log (mY q z.2)) :=
-    (sum_negMulLog (mY q)).trans (sum_push_mul Prod.snd q _)
-  have hliftq := sum_negMulLog q
+  have hliftX : ∑ x, Real.negMulLog (mX q x) =
+      ∑ z, q z * (-Real.log (mX q z.1)) := by
+    calc
+      ∑ x, Real.negMulLog (mX q x) =
+          ∑ x, mX q x * (-Real.log (mX q x)) := by
+            apply Finset.sum_congr rfl
+            intro x _
+            rw [Real.negMulLog]
+            ring
+      _ = ∑ z, q z * (-Real.log (mX q z.1)) := sum_push_mul Prod.fst q _
+  have hliftY : ∑ y, Real.negMulLog (mY q y) =
+      ∑ z, q z * (-Real.log (mY q z.2)) := by
+    calc
+      ∑ y, Real.negMulLog (mY q y) =
+          ∑ y, mY q y * (-Real.log (mY q y)) := by
+            apply Finset.sum_congr rfl
+            intro y _
+            rw [Real.negMulLog]
+            ring
+      _ = ∑ z, q z * (-Real.log (mY q z.2)) := sum_push_mul Prod.snd q _
+  have hliftq : ∑ z, Real.negMulLog (q z) =
+      ∑ z, q z * (-Real.log (q z)) := by
+    apply Finset.sum_congr rfl
+    intro z _
+    rw [Real.negMulLog]
+    ring
   have hEntropyKL :
       (∑ x, Real.negMulLog (mX q x)) + (∑ y, Real.negMulLog (mY q y)) -
           ∑ z, Real.negMulLog (q z) =
@@ -75,6 +87,9 @@ theorem Knat_eq_log_two_mul_Ixy {q : α × β → ℝ} (hq : IsPMF q) :
   have hEq_q := H_eq_negMulLog hq.nonneg
   have hEq_X := H_eq_negMulLog hqX.nonneg
   have hEq_Y := H_eq_negMulLog hqY.nonneg
+  rw [hq.total, Real.log_one, mul_zero, zero_add] at hEq_q
+  rw [hqX.total, Real.log_one, mul_zero, zero_add] at hEq_X
+  rw [hqY.total, Real.log_one, mul_zero, zero_add] at hEq_Y
   have hI_nats : Real.log 2 * Ixy q = ∑ z, q z * Real.log (q z / Q z) := by
     calc
       Real.log 2 * Ixy q =
