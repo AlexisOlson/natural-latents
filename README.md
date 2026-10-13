@@ -72,7 +72,7 @@ in `NaturalLatents/General/`.
    pair of components, a budget for two independent posterior replicas, and a charge on pairs of contacts of one
    feasible kernel.
 
-Since $`d \ge 0`$ and $`\gamma > 0`$, the four combine into
+Since $`d \ge 0`$, $`u \ge 0`$ and $`\gamma > 0`$, the four combine into
 
 ```math
 T(p) \le \left(1 + \frac{3u(1+2\beta)}{\gamma}\right) M + \left(\frac{3a-1}{2} + \frac{3u\beta}{\gamma}\right) B
