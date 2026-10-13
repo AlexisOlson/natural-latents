@@ -1,8 +1,8 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/TableBoundProof.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.TableInformationProof
 
-/-! The 9.4 bound for probability tables, with conditional entropies on the deterministic side. -/
+/-! The final bound for probability tables, with conditional entropies on the deterministic side. -/
 
 open scoped BigOperators
 open stoch_to_det

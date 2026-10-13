@@ -1,21 +1,14 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Connected.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.Duality
 
 /-!
-# §3. Reduction to connected supports
+# Reduction to connected supports
 
-
-Lemma 3.1 says `T` and `τ` are both additive over the connected components of
-the bipartite support graph, and concludes that it suffices to prove
-`T ≤ C τ` on connected supports.
-
-`stoch_to_det.Main` consumes §3 through the consequence, `reduce_to_connected`, rather
-than through the two additivity identities.
-
-The reduction quantifies over laws on the same `α × β` — a component is a law
-on the ambient product that vanishes off the component — so no alphabet
-transport arises. See the support-handling note in `stoch_to_det.Functionals`.
+This file constructs component decompositions of finite joint laws, proves that
+`tau` and `T` are additive over their connected components, and derives
+`reduce_to_connected`. `General.extension_of_connected` uses that reduction to pass from
+connected supports to arbitrary finite laws.
 -/
 
 namespace stoch_to_det
@@ -913,7 +906,7 @@ private lemma restrict_score_le {p : α × β → ℝ} (hp : IsPMF p)
       (H_nonneg_of_isPMF (fiberWeight_isPMF D V v))
   linarith
 
-/-- **Lemma 3.1**, `τ`-half: `τ(p) = ∑ᵢ αᵢ τ(p⁽ⁱ⁾)`. -/
+/-- Additivity of `tau`: `τ(p) = ∑ᵢ αᵢ τ(p⁽ⁱ⁾)`. -/
 theorem tau_eq_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
     tau p = ∑ i, D.wt i * tau (D.part i) := by
   classical
@@ -973,7 +966,7 @@ private lemma restrictLatent_isDet {p : α × β → ℝ}
   · simpa [restrictLatent, hwt] using Latent.const_isDet (D.part_isPMF i)
   · simpa [restrictLatent, hwt] using conditionalLatent_isDet D V hV i hwt
 
-/-- **Lemma 3.1**, `T`-half: `T(p) = ∑ᵢ αᵢ T(p⁽ⁱ⁾)`. -/
+/-- Additivity of `T`: `T(p) = ∑ᵢ αᵢ T(p⁽ⁱ⁾)`. -/
 theorem T_eq_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
     T p = ∑ i, D.wt i * T (D.part i) := by
   classical
@@ -1004,7 +997,7 @@ theorem T_eq_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : Component
       _ ≤ V.score := restrict_score_le hp D V
       _ = T p := hVscore
 
-/-- **Lemma 3.1**, consequence. This is the form §12 uses.
+/-- Reduction consequence used by the table bound.
 
 If `T ≤ C τ` holds for every finite law with connected support, it holds for
 every finite law. -/

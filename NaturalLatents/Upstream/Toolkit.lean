@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Toolkit.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Analysis.MeanInequalities
 import Mathlib.Analysis.Calculus.DerivativeTest
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
@@ -8,24 +8,11 @@ import Mathlib.Tactic.Linarith
 import NaturalLatents.Upstream.Entropy
 
 /-!
-# Lemma 0.1 — the classical toolkit
+# Information-theoretic and analytic toolkit
 
-
-Four standard facts, none of which is available in Mathlib in the form used
-here (Mathlib's `klDiv` is `ℝ≥0∞`-valued and in nats; there is no finite
-bits-valued KL, no Bhattacharyya coefficient, and no differential entropy).
-All four proofs are included below.
-
-| Lean name | Label | Used by |
-|---|---|---|
-| `variational_le` | (T1) | Lemma 5.2 |
-| `pinsker` | (T2) | Thm 6.1, Thm 9.1 |
-| `bhattacharyya` | (T3) | Thm 9.1 (far part) |
-| `diffEntropy_le_of_abs_le` | (T4) | Thm 8.1 (off-diagonal contexts) |
-
-(T4) is the only item here that leaves the finite world; it is stated for a
-real random variable given by a Lebesgue density, which is exactly how §8 uses
-it (`X + N` with `N = ln T`, `T ~ Exp(1)`).
+This file proves the finite variational, Pinsker, and Bhattacharyya inequalities
+used by the contact estimates. It also develops the differential-entropy bound
+needed for the scalar exponential channel.
 -/
 
 namespace stoch_to_det
@@ -65,8 +52,8 @@ private lemma KL_nonneg {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
   exact div_nonneg hnats (Real.log_pos (by norm_num : (1 : ℝ) < 2)).le
 
 omit [DecidableEq ω] in
-/-- **(T3)** Bhattacharyya, first half:
-`min_r [D(r‖P) + D(r‖Q)] = −2 lg BC(P,Q)`. Only `≥` is used (Thm 9.1). -/
+/-- Bhattacharyya inequality:
+`min_r [D(r‖P) + D(r‖Q)] = −2 lg BC(P,Q)`. Only the lower-bound direction is needed. -/
 theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
     {r : ω → ℝ} (hr : IsPMF r) (hacP : AbsCont r P) (hacQ : AbsCont r Q) :
     -2 * lg (BC P Q) ≤ KL r P + KL r Q := by
@@ -149,6 +136,6 @@ theorem bhattacharyya_le {P Q : ω → ℝ} (hP : IsPMF P) (hQ : IsPMF Q)
   change -2 * lg B ≤ KL r P + KL r Q
   linarith
 
-/-! ### Analytic preparation for (T4) -/
+/-! ### Analytic preparation for the differential-entropy bound -/
 
 end stoch_to_det

@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Functionals.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.Entropy
 
 /-!
@@ -15,8 +15,8 @@ support condition (`Supported`). A connected component is then a law on the
 same `α × β` that vanishes off the component, and `reduce_to_connected`
 quantifies over the same `α`, `β`.
 
-Statements consequently carry `Supported` / positivity hypotheses explicitly;
-see the junk-value note in `stoch_to_det.Prelude`.
+Statements consequently carry `Supported` / positivity hypotheses explicitly,
+since `Real.log 0 = 0` gives junk values off the support.
 -/
 
 namespace stoch_to_det
@@ -35,7 +35,7 @@ def Supported (S : Finset (α × β)) (m : α × β → ℝ) : Prop := ∀ z ∉
 
 /-- Two cells are adjacent when they share a row or a column. The connected
 components of this relation on `S` are exactly the connected components of the
-bipartite support graph of §3 (a component occupies a set of columns and a set
+bipartite support graph of the support decomposition (a component occupies a set of columns and a set
 of rows disjoint from every other component's). -/
 def Adj (z z' : α × β) : Prop := z.1 = z'.1 ∨ z.2 = z'.2
 
@@ -47,7 +47,7 @@ def IsConnected (S : Finset (α × β)) : Prop :=
 /-! ### Latents -/
 
 /-- A **latent** for `p`: a finite mixture representation `p = ∑ᵥ λᵥ qᵥ`
-(§0). The index type is bundled, so `Latent p` lives one universe up. -/
+The index type is bundled, so `Latent p` lives one universe up. -/
 structure Latent (p : α × β → ℝ) where
   /-- The (finite) alphabet of the latent variable `V`. -/
   ι : Type
@@ -97,7 +97,7 @@ lemma joint_isPMF (V : Latent p) : IsPMF V.joint := by
     simp_rw [hcomp, mul_one]
     simpa [mass] using V.prior_isPMF.total
 
-/-- The **score** `S_p(V) := I(X;Y ∣ V) + I(V;X ∣ Y) + I(V;Y ∣ X)` (§0). -/
+/-- The **score** `S_p(V) := I(X;Y ∣ V) + I(V;X ∣ Y) + I(V;Y ∣ X)` -/
 noncomputable def score (V : Latent p) : ℝ :=
   condMI (fun w => w.2.1) (fun w => w.2.2) (fun w => w.1) V.joint
     + condMI (fun w => w.1) (fun w => w.2.1) (fun w => w.2.2) V.joint
@@ -112,7 +112,7 @@ lemma score_nonneg (V : Latent p) : 0 ≤ V.score := by
     (condMI_nonneg V.joint_isPMF (fun w => w.1) (fun w => w.2.2) (fun w => w.2.1))
 
 /-- A latent is **deterministic** when its components have pairwise disjoint
-supports, i.e. `V = f(Z)` for a function `f` (§0). -/
+supports, i.e. `V = f(Z)` for a function `f`. -/
 def IsDet (V : Latent p) : Prop :=
   ∀ z, ∀ v v', V.prior v * V.comp v z ≠ 0 → V.prior v' * V.comp v' z ≠ 0 → v = v'
 
@@ -142,13 +142,13 @@ end Latent
 and the value is Lean's junk `sInf ∅ = 0`, so every substantive statement
 carries `IsPMF p`. -/
 
-/-- `τ(p) := inf over finite latents `V` of `S_p(V)` (Main Theorem). -/
+/-- `τ(p) := inf over finite latents `V` of `S_p(V)`. -/
 noncomputable def tau (p : α × β → ℝ) : ℝ := ⨅ V : Latent p, V.score
 
-/-- `T(p) := inf over deterministic `A = f(X,Y)` of `S_p(A)` (Main Theorem). -/
+/-- `T(p) := inf over deterministic `A = f(X,Y)` of `S_p(A)`. -/
 noncomputable def T (p : α × β → ℝ) : ℝ := ⨅ V : {V : Latent p // V.IsDet}, V.1.score
 
-/-- The deterministic LessWrong expression
+/-- The deterministic conditional-information expression
 `I(X;Y | Γ) + H(Γ | X) + H(Γ | Y)`. -/
 noncomputable def detScore {γ : Type*} [Fintype γ] [DecidableEq γ]
     (p : α × β → ℝ) (Γ : α × β → γ) : ℝ :=
@@ -247,7 +247,7 @@ lemma tau_le_score {p : α × β → ℝ} (V : Latent p) : tau p ≤ V.score := 
   exact ciInf_le hb V
 
 /-- The score of any single deterministic latent bounds `T` from above. This is
-how §12 uses `T`: Corollary 4.4 exhibits one good seed. -/
+the final bound uses `T`: `exists_good_seed` exhibits one suitable seed. -/
 lemma T_le_score {p : α × β → ℝ} (V : Latent p) (hV : V.IsDet) : T p ≤ V.score := by
   unfold T
   have hb : BddBelow (Set.range fun W : {W : Latent p // W.IsDet} => W.1.score) :=

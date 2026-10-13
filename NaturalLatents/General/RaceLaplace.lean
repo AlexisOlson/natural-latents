@@ -96,7 +96,7 @@ lemma race_scalar_exp_log_integrable_mean :
         -Real.eulerMascheroniConstant := by
   let ν : Measure ℝ := volume.restrict (Set.Ioi (0 : ℝ))
   have hweight : Integrable (fun t : ℝ => Real.exp (-t) * Real.log t) ν := by
-    have h := stoch_to_det.integrableOn_abs_log_mul_exp_neg_Ioi_1771
+    have h := stoch_to_det.integrableOn_abs_log_mul_exp_neg_Ioi
     apply h.mono' (by fun_prop : Measurable
       (fun t : ℝ => Real.exp (-t) * Real.log t)).aestronglyMeasurable
     filter_upwards [] with t

@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Seed.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Probability.Distributions.Exponential
 import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.InformationTheory.KullbackLeibler.Basic
@@ -7,47 +7,12 @@ import NaturalLatents.Upstream.Duality
 import NaturalLatents.Upstream.Toolkit
 
 /-!
-# §4-§5. The calibrated shared-Gumbel race, and posterior replicas
+# Seed setup, shared races, and posterior replicas
 
-
-## Where the finite part ends
-
-This is where the development leaves the finite world. For a *fixed* seed `ε`, the
-winner `A_ε` is a deterministic function of `z` and Lemma 4.3's first display
-
-  `∑ₐ μₐ^ε G_w(rₐ^ε) = S_p(A_ε) − τ(p)`
-
-is an identity between finite sums — `Gdef_fusion` applied to one mixture. No
-measure theory. The measure enters at exactly two points:
-
-1. `Dwdefect` — the average over `ε` — and Corollary 4.4, which only needs
-   *existence of one good seed* (`exists_good_seed` below);
-2. `§7`-`§11`, where `I(ε; Z ∣ A, L₀)` is genuinely an information quantity of
-   a continuous variable.
-
-Correspondingly, §5 is **entirely finite except Theorem 5.7**: `L₀, L₁, L₂` are
-finite-valued, so Lemmas 5.2, 5.3, 5.4 and 5.6 are finite statements about the
-replica coupling and are listed here with no measure-theoretic hypotheses.
-
-## Representation of the seed
-
-There are two equivalent pictures: iid standard
-Gumbel `ε`, or iid `Exp(1)` clocks `E_ℓ = e^{−ε_ℓ}` raced at rates `t_ℓ(z)`.
-Here the exponential picture is primitive (`clockLaw`), matching §7.4 and §10,
-which work in it throughout (memorylessness, shifted-exponential losing clocks),
-and matching Mathlib's `ProbabilityTheory.expMeasure`. The Gumbel form is the
-pushforward along the bijection `ε = −log E`.
-
-## Conditional mutual information against a continuous variable
-
-`I(ε; Z ∣ A, L₀)` pairs a continuous `ε` against a **finite** `Z`. For finite
-`Z` conditioned on finite variables,
-
-  `I(W ; Z ∣ C) = ∑_{z,c} P(z,c) · D( Law(W ∣ z,c) ‖ Law(W ∣ c) )`,
-
-a KL between measures on `ι → ℝ`, always well defined; `condMIcts` below takes
-this as its definition, over Mathlib's `InformationTheory.klDiv` (`ℝ≥0∞`, nats).
-No general theory of mutual information is involved.
+This file packages an attained optimal latent and feasible contact kernel in
+`SeedSetup`. It defines the exponential-clock and Gumbel seed laws, the
+fixed-seed winner, continuous-versus-finite conditional information, averaged
+defect, and the finite posterior-replica identities used by the race proof.
 -/
 
 namespace stoch_to_det
@@ -56,29 +21,28 @@ open Finset MeasureTheory ProbabilityTheory InformationTheory
 
 variable {α β : Type*} [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β]
 
-/-! ### The standing data of §§4-12 -/
+/-! ### Standing data for the race construction -/
 
-/-- The data fixed once and for all by Theorem 2.5 for the rest of the proof
+/-- The optimal latent and contact-kernel data used by the race construction
 : a law with connected support together with an attained
 `τ`-optimal common-contact pair `(L, w)`. -/
 structure SeedSetup (p : α × β → ℝ) where
   /-- `p` is a probability law. -/
   isPMF : IsPMF p
-  /-- Standing assumption of §§4-12. -/
+  /-- The joint law has connected support. -/
   conn : IsConnected (support p)
-  /-- The attaining latent of Corollary 1.3. -/
+  /-- A latent attaining `tau p`. -/
   L : Latent p
-  /-- The `τ`-optimal kernel of Corollary 2.4. -/
+  /-- A feasible kernel attaining the dual optimum. -/
   w : α × β → ℝ
   /-- `w` is feasible. -/
   feasible : Feasible (support p) w
   /-- `L` attains `τ`. -/
   optimal : L.score = tau p
-  /-- Every positive component of `L` is a contact of `w` (Theorem 2.5). -/
+  /-- Every component of positive prior mass is a contact of `w`. -/
   contact : ∀ v, L.prior v ≠ 0 → IsContact (support p) w (L.comp v)
   /-- All prior weights are strictly positive: zero-mass labels are pruned
-  when the setup is constructed (`exists_seedSetup`). §7's clustering
-  needs this. -/
+  when `exists_seedSetup` constructs the setup. Clustering uses this positivity. -/
   prior_pos : ∀ v, 0 < L.prior v
 
 namespace SeedSetup
@@ -101,7 +65,7 @@ private lemma sum_ne_zero_subtype_eq {κ : Type*} [Fintype κ]
   rw [← Finset.sum_subtype (Finset.univ.filter fun i => a i ≠ 0) (by simp) f]
   exact Finset.sum_filter_of_ne (fun i _ hi h => hi (hf i h))
 
-/-- Theorem 2.5 packaged as a `SeedSetup`: prune the zero-prior labels
+/-- Construction of a `SeedSetup`: prune the zero-prior labels
 of `exists_common_contact_pair`'s latent (pruning to the subtype
 `{v // L.prior v ≠ 0}` preserves the score and the mixture). -/
 theorem exists_seedSetup {p : α × β → ℝ} (hp : IsPMF p)
@@ -151,7 +115,7 @@ theorem exists_seedSetup {p : α × β → ℝ} (hp : IsPMF p)
     change 0 < L.prior v.1
     exact lt_of_le_of_ne (L.prior_isPMF.nonneg v.1) (Ne.symm v.2)
 
-/-! ### Definition 4.1 — the race at a fixed seed -/
+/-! ### The race at a fixed seed -/
 
 section FixedSeed
 
@@ -162,7 +126,7 @@ end FixedSeed
 /-! ### The seed law -/
 
 /-- The clock law: iid `Exp(1)` coordinates, `E_ℓ = e^{−ε_ℓ}`.
-Taken as primitive because §7.4 and §10 reason by memorylessness. -/
+Taken as primitive so the clock arguments can use exponential memorylessness. -/
 noncomputable def clockLaw (ι : Type) [Fintype ι] : Measure (ι → ℝ) :=
   Measure.pi fun _ : ι => expMeasure 1
 
@@ -472,7 +436,7 @@ When `Z` and the conditioning variable are finite and only the observed
 variable `W` is continuous, `I(W;Z ∣ C)` is a weighted sum of KL divergences
 between measures on the observation space. -/
 
-/-! ### The averaged defect, and the export to §12 -/
+/-! ### The averaged defect and a good fixed seed -/
 
 section Average
 
@@ -480,11 +444,11 @@ variable {p : α × β → ℝ} (D : SeedSetup p)
 
 end Average
 
-/-! ### §5. Posterior replicas — finite except Theorem 5.7
+/-! ### Posterior replicas
 
 `L₀, L₁, L₂` are conditionally iid finite draws from the posterior given `Z`
 , so the replica space is a finite product and Lemmas
-5.2-5.6 below are finite statements. Only Theorem 5.7 involves `ε`.
+The initial replica identities are finite; the final comparison also involves the seed.
 
 The replica joint law on `ι × ι × ι × (α × β)` is
 `P(ℓ₀,ℓ₁,ℓ₂,z) = p(z) t_{ℓ₀}(z) t_{ℓ₁}(z) t_{ℓ₂}(z)`; exchangeability of the
@@ -585,7 +549,7 @@ lemma condMI_equiv_left_local
 /- Any real-valued expression which depends on the seed only through the
 finite winner map is integrable.  We use the measurable lexicographic winner
 as an a.e. version of the arbitrary maximizer in `winner`. -/
-/-! #### The cellwise source latent used in Theorem 5.7 -/
+/-! #### The cellwise source latent -/
 
 /- The finite cross-entropy inequality used for conditional-entropy
 concavity.  It is just Gibbs' inequality, with all quantities in bits. -/

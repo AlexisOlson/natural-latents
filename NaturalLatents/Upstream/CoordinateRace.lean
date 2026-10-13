@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/CoordinateRace.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.PoweredRaceWinner
 
 /-! Conditioning the shared-race entropy bound on an observed coordinate. -/

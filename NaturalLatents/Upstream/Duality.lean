@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Duality.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.LocallyConvex.Separation
 import Mathlib.Data.Fintype.EquivFin
@@ -8,7 +8,7 @@ import NaturalLatents.Upstream.Envelope
 /-!
 # Common feasible kernels and their contacts
 
-The proof follows the three-step duality argument: attain an affine minorant,
+The argument has three steps: attain an affine minorant,
 normalize it to a feasible kernel whose optimal components are contacts, and
 use connectedness to show that every contact has full support.
 -/
@@ -48,8 +48,7 @@ private noncomputable def Gdef (S : Finset (α × β)) (w : α × β → ℝ) (q
 
 /-- `q` is a **contact** of `w`: `G_w(q) = 0`, equivalently `q = w q_X^{2/3} q_Y^{2/3}`
 pointwise. The pointwise form is taken as the definition,
-since that is the form later sections use (§5.2 and §6.2 divide two contact
-equations); the equivalence with `G_w(q) = 0` is `Gdef_eq_zero_iff`. -/
+since this form permits two contact equations to be divided; the equivalence with `G_w(q) = 0` is `Gdef_eq_zero_iff`. -/
 def IsContact (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → ℝ) : Prop :=
   IsPMF q ∧ Supported S q ∧ ∀ z ∈ S, q z = w z * mX q z.1 ^ ((2 : ℝ) / 3) * mY q z.2 ^ ((2 : ℝ) / 3)
 
@@ -196,7 +195,7 @@ private lemma mass_refMeas_eq_Lambda (S : Finset (α × β)) (w : α × β → �
     mass (refMeas S w q) = Lambda S w (mX q) (mY q) := by
   simp [mass, refMeas, Lambda]
 
-/-- **Lemma 2.2** (defect = certificate gap).
+/-- Defect equals certificate gap.
 With `c = −3 lg w`: `G_w(q) = ⟨c,q⟩ − Φ(q)`. -/
 private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β → ℝ}
     (hw : ∀ z ∈ S, 0 < w z) {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
@@ -284,7 +283,7 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
   unfold Phi
   ring
 
-/-! ### Theorem 2.3 -/
+/-! ### Validity and feasibility -/
 
 theorem Gdef_nonneg {S : Finset (α × β)} {w : α × β → ℝ}
     (hw : Feasible S w) {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
@@ -499,7 +498,7 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
       dsimp [a]
       simp [hDpos.ne']
 
-/-- **Theorem 2.3** (validity ⟺ feasibility). -/
+/-- Validity is equivalent to feasibility. -/
 private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ} (hw : ∀ z ∈ S, 0 < w z) :
     Valid S (fun z => -3 * lg (w z)) ↔ Feasible S w := by
   constructor
@@ -790,7 +789,7 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
     have hnonneg := Gdef_nonneg hfeas hq hqS
     linarith
 
-/-- **Theorem 2.3**, equality case: `G_w(q) = 0` exactly at contacts. -/
+/-- Equality case for validity and feasibility: `G_w(q) = 0` exactly at contacts. -/
 private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
     {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
     Gdef S w q = 0 ↔ IsContact S w q := by
@@ -865,7 +864,7 @@ private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} 
       · rw [div_self hz, lg_one, mul_zero]
     rw [Gdef, hsumZero, mul_zero]
 
-/-! ## Lemma 1 (attainment and affine minorant) -/
+/-! ## Attainment and an affine minorant -/
 
 private noncomputable def dualContinuousEntropy {γ : Type*} [Fintype γ]
     (m : γ → ℝ) : ℝ :=
@@ -1635,7 +1634,7 @@ private lemma exists_optimal_valid_certificate
   change obj c = concaveEnvelopePhi p
   exact le_antisymm hupper hlower
 
-/-! ## Lemma 2 (normalization gives feasibility and contacts) -/
+/-! ## Normalization gives feasibility and contacts -/
 
 private lemma neg_three_lg_two_rpow (r : ℝ) :
     -3 * lg ((2 : ℝ) ^ (-r / 3)) = r := by
@@ -1643,7 +1642,7 @@ private lemma neg_three_lg_two_rpow (r : ℝ) :
   field_simp [Real.log_ne_zero_of_pos_of_ne_one
     (by norm_num : (0 : ℝ) < 2) (by norm_num : (2 : ℝ) ≠ 1)]
 
-/-- **Corollary 2.4**: `τ` as an attained convex program over
+/-- Optimization identity: `τ` as an attained convex program over
 feasible kernels. -/
 private theorem exists_tau_optimal_kernel {p : α × β → ℝ} (hp : IsPMF p) :
     ∃ w : α × β → ℝ, Feasible (support p) w ∧
@@ -1672,11 +1671,11 @@ private theorem exists_tau_optimal_kernel {p : α × β → ℝ} (hp : IsPMF p) 
   rw [tau_eq_Psi_sub_envelope hp, ← hcObj, hsum]
   ring
 
-/-- **Theorem 2.5** (*contact-opt*). The existence of an
+/-- Contact optimality. The existence of an
 **attained τ(p)-optimal common-contact pair** `(L, w)`: a latent achieving `τ`
 all of whose components are contacts of one feasible kernel.
 
-This is the hypothesis §§4-12 run on; `SeedSetup` in `stoch_to_det.Seed` packages it. -/
+`SeedSetup` packages these data for the race construction. -/
 theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
     ∃ (L : Latent p) (w : α × β → ℝ),
       Feasible (support p) w ∧ L.score = tau p ∧
@@ -1759,11 +1758,10 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
     (mul_eq_zero.mp htermZero).resolve_left hv
   exact (Gdef_eq_zero_iff hw (L.comp_isPMF v) (hcompS v hv)).mp hGzero
 
-/-! ## Lemma 3 (connected support gives positive contacts) -/
+/-! ## Connected support gives positive contacts -/
 
-/-- **Lemma 2.6**: on a connected support every contact has
-full support. Used from §3 on; it is what makes the near/far dichotomy of
-Theorem 9.1 total. -/
+/-- Full support of contacts: on a connected support every contact has
+full support. It ensures that the later near/far contact dichotomy covers every cell. -/
 theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
     (hS : IsConnected S) {q : α × β → ℝ} (hq : IsContact S w q) :
     support q = S := by
@@ -1925,10 +1923,10 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
   · intro hzS
     exact (hall z hzS).ne'
 
-/-- **Lemma 2.7** (hypercontractivity of contacts):
+/-- Hypercontractivity of contacts:
 `E_q[f(X) g(Y)] ≤ ‖f‖_{L^{3/2}(q_X)} ‖g‖_{L^{3/2}(q_Y)}` for `f, g ≥ 0`.
 
-A frequently reused inequality (§5.2, §6.1, §6.2), proved by applying
+This inequality is proved by applying
 `Feasible` to the tilted marginals. -/
 theorem contact_hypercontractive {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
     {q : α × β → ℝ} (hq : IsContact S w q) {f : α → ℝ} {g : β → ℝ}

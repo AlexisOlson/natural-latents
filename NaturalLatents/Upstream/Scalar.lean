@@ -1,44 +1,15 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Scalar.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.Floor
 import NaturalLatents.Upstream.Quotient
 import Mathlib.NumberTheory.Harmonic.GammaDeriv
 
 /-!
-# §8. The scalar channel theorem
+# Analytic estimates for the scalar race channel
 
-
-`scalar = I(σ_B(Z) T ; Z ∣ B, C₀) ≤ S + κ d`, with `κ = (1 + ln 8 − γ)/ln 2`.
-
-The statement of Theorem 8.1 is the `RaceQuantities.scalar_le` obligation;
-this module keeps the scalar analytic ingredients and the `Ksc` assembly bound.
-
-## Proof structure
-
-The calculation is performed in nats and converted at the end; nats-valued statements
-here carry the `_nats` suffix. Fix a context `(g,b)` and write `R := p/σ_b(Z)` under the source
-posterior `ν`, `C := −E_ν ln R = D(ν ‖ q_g) ≥ 0`. Then:
-
-* **Off-diagonal `b ≠ g`.** The bijection
-  `W := ln(U/p) = X + N` with `X := −ln R` a function of `Z` and `N := ln T`
-  independent turns the problem into a scalar additive-noise channel:
-  `I(U;Z ∣ b,g) = h(X+N) − h(N)`. Then `h(N) = γ + 1` (an explicit integral),
-  `E|N| ≤ 1 + e⁻¹ ≤ 2`, `E|X| ≤ C + 2`, and the max-entropy bound (T4) gives
-  `≤ C + ln 8 − γ`. This is the only place `(T4)` — and hence differential
-  entropy — is used here.
-* **Diagonal `b = g`.** The golden formula against the
-  reference `Exp(mean p)`, using
-  `D(Exp(mean s) ‖ Exp(mean p)) = ln(p/s) + s/p − 1`. Gives `p·I ≤ 1 − p`.
-* **Assembly.** The mixture identity
-  `∑_b p_{gb} C_{gb} = I(B;Z ∣ C₀=g)` collapses the off-diagonal sum, and
-  cluster-level calibration gives `I(B;Z ∣ C₀) = S`, `P(B ≠ C₀) = d`.
-
-## Mathlib support
-
-`ProbabilityTheory.expMeasure` and `InformationTheory.klDiv` cover the diagonal
-case. The off-diagonal case additionally needs `h(N) = γ + 1` for `N = ln T`,
-`T ~ Exp(1)` — obtained from the derivative of the Gamma integral at one — and
-`stoch_to_det.Toolkit.diffEntropy_le_of_abs_le`.
+This file proves logarithmic integrability and exponential-density estimates
+used in the scalar-channel part of `exists_raceQuantities`. Its bounds combine
+with the finite clustering identities in `Race.lean`.
 -/
 
 namespace stoch_to_det
@@ -125,7 +96,7 @@ theorem integral_log_mul_exp_neg_Ioi :
       _ = J.re := by rfl
   exact hJreal.trans hJvalue
 
-theorem integrableOn_abs_log_mul_exp_neg_Ioi_1771 :
+theorem integrableOn_abs_log_mul_exp_neg_Ioi :
     IntegrableOn (fun t : ℝ => |Real.log t| * Real.exp (-t)) (Set.Ioi 0) := by
   have hnorm := integrableOn_log_mul_exp_neg_Ioi.norm
   refine hnorm.congr (ae_of_all _ fun t => ?_)

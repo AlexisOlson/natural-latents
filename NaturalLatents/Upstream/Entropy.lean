@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Entropy.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Algebra.Order.Chebyshev
 import Mathlib.Analysis.MeanInequalities
 import Mathlib.Data.Fintype.BigOperators
@@ -11,24 +11,10 @@ import NaturalLatents.Upstream.Prelude
 /-!
 # Finite entropy and mutual information
 
-
-Mathlib (v4.33.0-rc2) has **no Shannon entropy and no mutual information**; it has
-`Mathlib.InformationTheory.KullbackLeibler` (`klDiv`, `ℝ≥0∞`-valued, in nats)
-and `Mathlib.Analysis.SpecialFunctions.BinaryEntropy` only. So this layer is
-built from scratch.
-
-## The representation
-
-The finite-alphabet layer consists of finite sums over finite supports. We
-represent a *nonnegative finite measure* on a `Fintype α` as a bare
-function `m : α → ℝ` carrying a separate `IsFinMeas m` hypothesis, rather than
-as a bundled structure. Note that `𝖧` is 1-homogeneous and is applied to
-*unnormalized* measures throughout (§0, §2: `m_q := w · q_X^{2/3} ⊗ q_Y^{2/3}`
-has mass `Λ_w(q_X,q_Y) ≤ 1`), so a pmf-only type would not suffice.
-
-Random variables are plain functions `f : α → γ` out of the sample type, and
-every entropy is the entropy of a **pushforward** `push f m`. Marginals,
-cluster maps, winner cells, and component indices are all `push`.
+This file defines finite nonnegative measures, homogeneous entropy, deterministic
+pushforwards, conditional entropy, mutual information, and the product-law
+functionals `Psi`, `Phi`, and `Ixy`. These finite-sum definitions support the
+latent-variable functionals used throughout the repository.
 -/
 
 namespace stoch_to_det
@@ -57,10 +43,10 @@ structure IsPMF (m : α → ℝ) : Prop where
 lemma IsPMF.sum_eq_one {m : α → ℝ} (hm : IsPMF m) : ∑ a, m a = 1 := by
   simpa only [mass] using hm.total
 
-/-- `𝖧(m) := ∑ m · lg(|m|/m)`, the 1-homogeneous entropy of §0, in bits.
+/-- `𝖧(m) := ∑ m · lg(|m|/m)`, the 1-homogeneous entropy in bits.
 
 The convention `0 log 0 := 0` is automatic here: at `m a = 0` the
-summand is `0 * lg (mass m / 0) = 0 * lg 0 = 0`. See `stoch_to_det.Prelude`. -/
+summand is `0 * lg (mass m / 0) = 0 * lg 0 = 0`. -/
 noncomputable def H (m : α → ℝ) : ℝ := ∑ a, m a * lg (mass m / m a)
 
 lemma apply_le_mass {m : α → ℝ} (hm : IsFinMeas m) (a : α) : m a ≤ mass m :=
@@ -603,10 +589,10 @@ noncomputable abbrev mX (m : α × β → ℝ) : α → ℝ := push Prod.fst m
 /-- The `Y`-marginal `m_Y`. -/
 noncomputable abbrev mY (m : α × β → ℝ) : β → ℝ := push Prod.snd m
 
-/-- `Ψ(m) := 2𝖧(m) − 𝖧(m_X) − 𝖧(m_Y)` (§0). -/
+/-- `Ψ(m) := 2𝖧(m) − 𝖧(m_X) − 𝖧(m_Y)` -/
 noncomputable def Psi (m : α × β → ℝ) : ℝ := 2 * H m - H (mX m) - H (mY m)
 
-/-- `Φ(m) := 3𝖧(m) − 2𝖧(m_X) − 2𝖧(m_Y)` (§0). -/
+/-- `Φ(m) := 3𝖧(m) − 2𝖧(m_X) − 2𝖧(m_Y)` -/
 noncomputable def Phi (m : α × β → ℝ) : ℝ := 3 * H m - 2 * H (mX m) - 2 * H (mY m)
 
 /-- `I_q(X;Y)` for a law `q` on the product. -/

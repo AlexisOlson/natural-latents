@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Floor.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import Mathlib.Analysis.SpecialFunctions.Log.Base
 import Mathlib.NumberTheory.Harmonic.EulerMascheroni
 import Mathlib.Tactic.NormNum
@@ -9,29 +9,12 @@ import NaturalLatents.Upstream.Duality
 import NaturalLatents.Upstream.Toolkit
 
 /-!
-# §6. The near-collision information floor
+# The near-collision information floor
 
-
-Two theorems:
-
-* `Ixy_ge_hgr_floor` (Thm 6.1, *contact-hgr-information-floor-v2*) — a contact
-  with maximal correlation `ρ` has `I_q(X;Y) ≥ 8ρ¹⁰/(729(1+ρ)⁴ ln 2)` bits.
-* `nearcollision_floor` (Thm 6.2, *common-contact-explicit-nearcollision-floor*)
-  — two *distinct* contacts of one kernel that are within `δ_*` in total
-  variation both have `ρ ≥ 1/16`, hence `I ≥ c_*`.
-
-## Scope
-
-The section is entirely finite-dimensional — no probability space, no seed, no
-measure theory — and its only input from earlier sections is
-`stoch_to_det.Duality.contact_hypercontractive` (Lemma 2.7). It is where `c_*` and `δ_*`
-are created, the constants §9 and §10 then spend.
-
-The arguments use real analysis on finite alphabets: singular
-vectors of the conditional-expectation operator, interpolation between
-`L^{3/2}`, `L²`, `L^{9/4}`, `L³`, a clipping argument, and Pinsker (T2).
-Pinsker is `stoch_to_det.Toolkit.pinsker`; Mathlib has no finite bits-valued form of it
-(`klDiv` is `ℝ≥0∞`-valued in nats).
+This file proves `Ixy_ge_hgr_floor`, which bounds mutual information using
+maximal correlation, and `nearcollision_floor`, which gives a uniform floor for
+two distinct nearby contacts of one feasible kernel. These estimates supply
+the contact-separation bounds used by the race argument.
 -/
 
 namespace stoch_to_det

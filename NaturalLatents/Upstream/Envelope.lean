@@ -1,28 +1,16 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Envelope.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.Functionals
 import Mathlib.Analysis.Convex.Caratheodory
 import Mathlib.Analysis.Convex.StdSimplex
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 
 /-!
-# §1. The two functionals as envelopes
+# The two functionals as envelopes
 
-
-Three results, in dependency order:
-
-* `Latent.score_eq` (Lemma 1.1, decomposition identity) — `S_p(V) = Ψ(p) − ∑ λᵥ Φ(qᵥ)`.
-* `Latent.score_sub_Ixy` (Lemma 1.2, score identity) — the interaction-information form.
-  This is the workhorse: §2.8(c), §4.3 and §5.3 all invoke it.
-* `tau_eq_Psi_sub_envelope` (Corollary 1.3) — `τ = Ψ − Φ̂`, with the infimum **attained**.
-
-## Mathlib background
-
-Lemmas 1.1 and 1.2 are `Finset.sum` algebra over `stoch_to_det.Entropy`. The
-proof of Corollary 1.3 uses Carathéodory for the hypograph together with a
-compactness argument; the relevant Mathlib entries are `convexHull_eq_union`,
-`IsCompact.exists_isMaxOn`, and — for concavity of the entropy —
-`Real.strictConcaveOn_negMulLog` via `stoch_to_det.Entropy.H_eq_negMulLog`.
+This file proves `Latent.score_eq` and `Latent.score_sub_Ixy`, then identifies
+`tau` with the concave envelope of `Phi` and proves attainment. It also gives
+the corresponding finite-partition description used for deterministic latents.
 -/
 
 namespace stoch_to_det
@@ -160,7 +148,7 @@ private lemma Latent.sum_prior_mul_Phi (V : Latent p) :
       rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib]
       simp only [← Finset.mul_sum]
 
-/-- **Lemma 1.1** (decomposition identity).
+/-- Decomposition identity.
 `S_p(V) = Ψ(p) − ∑ᵥ λᵥ Φ(qᵥ)`. -/
 theorem Latent.score_eq (hp : IsPMF p) (V : Latent p) :
     V.score = Psi p - ∑ v, V.prior v * Phi (V.comp v) := by
@@ -272,7 +260,7 @@ theorem Latent.score_eq (hp : IsPMF p) (V : Latent p) :
   unfold Psi
   ring
 
-/-- **Lemma 1.2** (score identity).
+/-- Score identity.
 `S_p(V) − I(X;Y) = 3 I(V;Z) − 2 I(V;X) − 2 I(V;Y)`. -/
 theorem Latent.score_sub_Ixy (hp : IsPMF p) (V : Latent p) :
     V.score - Ixy p
@@ -306,12 +294,12 @@ theorem Latent.score_sub_Ixy (hp : IsPMF p) (V : Latent p) :
 
 /-- The upper concave envelope of `Φ` on the simplex `Δ(𝒮)`, evaluated at `p`:
 the supremum of `∑ᵥ λᵥ Φ(qᵥ)` over finite mixture representations of `p`
-supported in `𝒮`. Defined as an `⨆` over `Latent p` (Lemma 1.1 shows this is
+supported in `𝒮`. Defined as an `⨆` over `Latent p` (`Latent.score_eq` shows this is
 the same optimization as minimizing the score). -/
 noncomputable def concaveEnvelopePhi (p : α × β → ℝ) : ℝ :=
   ⨆ V : Latent p, ∑ v, V.prior v * Phi (V.comp v)
 
-/-- **Corollary 1.3**, first half: `τ(p) = Ψ(p) − Φ̂(p)`. -/
+/-- Envelope identity: `τ(p) = Ψ(p) − Φ̂(p)`. -/
 theorem tau_eq_Psi_sub_envelope (hp : IsPMF p) :
     tau p = Psi p - concaveEnvelopePhi p := by
   let payoff : Latent p → ℝ := fun V => ∑ v, V.prior v * Phi (V.comp v)
@@ -1055,7 +1043,7 @@ lemma exists_latent_of_mem_convexHull_phiGraph (_hp : IsPMF p) {r : ℝ}
   refine ⟨V, ?_⟩
   exact hpayoff
 
-/-- **Corollary 1.3**, attainment half: the infimum defining
+/-- Attainment: the infimum defining
 `τ` is attained by a finite latent. Only finiteness of the attaining latent is
 used downstream; a sharper `|𝒮| + 1` cardinality bound is not needed. -/
 theorem exists_tau_optimal_latent (hp : IsPMF p) :
@@ -1100,7 +1088,7 @@ theorem exists_tau_optimal_latent (hp : IsPMF p) :
   · unfold tau
     exact ciInf_le hscore_bdd V
 
-/-- **Corollary 1.3**, partition half: the same statement for `T` over
+/-- Deterministic partition form: the same statement for `T` over
 deterministic latents. -/
 theorem exists_T_optimal_latent (hp : IsPMF p) :
     ∃ V : Latent p, V.IsDet ∧ V.score = T p := by

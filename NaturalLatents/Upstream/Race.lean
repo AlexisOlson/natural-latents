@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Race.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 import NaturalLatents.Upstream.Scalar
 import NaturalLatents.Upstream.SharedRace.Definitions
 import NaturalLatents.Upstream.SharedRace.ClockLaw
@@ -20,25 +20,12 @@ import Mathlib.Probability.ProductMeasure
 import Mathlib.Probability.Kernel.CompProdEqIff
 
 /-!
-# §§7–10. The race construction
+# Construction of the race quantities
 
-The single obligation of the continuous tier: build the actual
-`RaceQuantities` for any `SeedSetup` and `Clustering` — i.e. define the
-four seed-level scalars and
-prove Lemmas 7.2–7.5 (grouping, winner-entropy identity, exact race law,
-chain split), Theorem 8.1 (`scalar ≤ S + κd`), Theorem 10.1
-(`cone · ln 2 ≤ d`), and the `I ≤ H` cell-residual link of Theorem 12.1.
-
-Intended concrete realizations:
-* `winnerEntropy := ∫ H(A_ε ∣ L₀) d(seedLaw)` — at fixed `ε` the winner
-  is a finite variable, so the integrand is a finite conditional entropy
-  of the joint `(winner ε ∘ ·, id)`-pushforward of `L.joint`;
-* `scalar` — contexts `(g, b)` are finite and `Law(U ∣ Z=z, B=b)` is the
-  explicit `clockLawGiven b z` (Lemma 7.4), so `scalar` is a finite sum
-  of `klDiv`s against the true conditional mixtures;
-* `seedLeak` — KLs of restricted-and-normalized seed laws;
-* `cone` — the context-integrated KL of the losing vector, or the
-  remainder `seedLeak − scalar` with Lemma 7.5 proved for it.
+This file constructs `RaceQuantities` from a `SeedSetup` and `Clustering`.
+It proves the exponential-clock conditioning and factorization identities,
+the scalar and losing-vector estimates, and the fixed-seed residual bound used
+by the final table inequality.
 -/
 
 namespace stoch_to_det
@@ -80,9 +67,9 @@ Only positive-mass summands need a finiteness assertion; all remaining
 summands have zero coefficient in `condMIcts`.
 -/
 
-/-! ### Lemma 7.4: exact race-law leaves -/
+/-! ### Exact race-law components -/
 
-/- The published `Seed` race calibration is phrased for a `SeedSetup`.  The
+/- The `Seed` race calibration is phrased for a `SeedSetup`.  The
 cluster race only needs its underlying finite positive-weight theorem, which
 we derive here from the same public exponential-clock API. -/
 
@@ -835,16 +822,16 @@ private theorem clock_min_excess_restrict_factorization
   rw [Measure.prod_prod, hqB]
   ac_rfl
 
-/- The one-block independence statement behind Lemma 7.2(a).  It is proved
+/- The one-block independence statement behind the one-block factorization.  It is proved
 by partitioning the exponential clocks according to their strict winner and
 then summing the fixed-cell factorization above. -/
 /-! ### Lemmas 7.2 and 7.3: grouping and winner entropy -/
 
 /- Reindex the iid label seeds by their cluster fibres.  This is the
-measure-theoretic independence input for both parts of Lemma 7.2(a). -/
-/-! ### Theorem 8.1: the scalar channel -/
+measure-theoretic independence input for the grouping identities. -/
+/-! ### The scalar channel -/
 
-/-! ### Lemma 7.5 and Theorem 10.1: the losing-vector cone -/
+/-! ### The losing-vector cone -/
 
 private lemma map_weightedLosingExcess_scale
     {κ : Type} [Fintype κ] [DecidableEq κ]
