@@ -87,7 +87,7 @@ error depends on the joint law only. No label is merged or removed.
 Lean: `stoch_to_det.SourceCoarsening.ofJoint`, `ofJoint_joint` and `ofJoint_score`
 (`NaturalLatents/Upstream/SourceCoarsening.lean`).
 
-**Lemma T6.4 (one code for every joint law).** For every finite law $`p`$, the code $`\Gamma`$ of Lemma T6.2 satisfies
+**Lemma T6.4 (one code for every joint law).** For every finite law $`p`$, there is a code $`\Gamma`$ such that
 $`D(\Gamma)\le c\,\mathrm{SE}(r)`$ for every finite $`K`$ and every law $`r`$ on $`K\times(A\times B)`$ with marginal $`p`$.
 
 *Description.* Let $`L_r`$ be the latent of Lemma T6.3, whose error is $`\mathrm{SE}(r)`$. With $`c\ge0`$,
@@ -99,7 +99,7 @@ Lean: `NaturalLatents.finite_bound` (`NaturalLatents/Main.lean`), which takes $`
 `stoch_to_det.tau_le_score` (`NaturalLatents/Upstream/Functionals.lean`), whose lower bound is
 `stoch_to_det.Latent.score_nonneg` (same file).
 
-**Lemma T6.5 (the table form).** For every finite law $`p`$, the code $`\Gamma`$ satisfies
+**Lemma T6.5 (the table form).** For every finite law $`p`$, there is a code $`\Gamma`$ such that
 $`\mathrm{DE}(t_{p,\Gamma})\le c\,\mathrm{SE}(q)`$ for every $`k`$ and every law $`q`$ on $`A\times B\times[k]`$ with
 marginal $`p`$; since $`0\le c<7`$, `TableClaim` holds with $`c`$.
 

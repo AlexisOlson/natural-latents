@@ -110,7 +110,7 @@ from latents of the parts, where $`H_p(K\mid L)=0`. Both are in bits and are pro
 parts (the private `Psi_eq_components` and `Phi_fiber_decomp`), not from the chain rule. On a part of weight zero the
 private `restrictLatent` uses the constant latent.
 
-:::theorem "E3.3" (parent := "extension") (lean := "stoch_to_det.sum_components_tau_le, stoch_to_det.T_le_sum_components, stoch_to_det.exists_tau_optimal_latent, stoch_to_det.exists_T_optimal_latent") (uses := "E3.1, E3.2") (tags := "kernel-verified")
+:::theorem "E3.3" (parent := "extension") (lean := "stoch_to_det.sum_components_tau_le, stoch_to_det.T_le_sum_components, stoch_to_det.exists_tau_optimal_latent, stoch_to_det.exists_T_optimal_latent") (uses := "E3.1, E3.2") (tags := "partly kernel-verified")
 *Lemma E3.3 (the two component inequalities).* For every finite law $`p` with component laws and weights as in
 Lemma E3.1,
 
@@ -122,6 +122,8 @@ T(p)\le\sum_k\rho_k T(\bar p_k).
 :::
 
 :::proof "E3.3"
+Lean proves: the same inequality in bits; it is invariant under the common factor $`\ln 2`.
+
 The page and the Lean prove the same two directions, and the extension uses only these.
 
 Restrict each stochastic latent to the components and glue minimizing deterministic codes with their component tags. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/extension.md#3-the-extension-by-component-split).
@@ -143,7 +145,7 @@ $`T` is an infimum over deterministic latents, and the second glues attaining de
 by `stoch_to_det.exists_T_optimal_latent`, with the private `glueLatent` and `glueLatent_isDet`; the glued labels are
 pairs of a part and a label of that part.
 
-:::theorem "E3.4" (parent := "extension") (lean := "NaturalLatents.General.extension_of_connected, stoch_to_det.reduce_to_connected") (uses := "E3.1, E3.3") (tags := "kernel-verified")
+:::theorem "E3.4" (parent := "extension") (lean := "NaturalLatents.General.extension_of_connected, stoch_to_det.reduce_to_connected") (uses := "E3.1, E3.3") (tags := "partly kernel-verified")
 *Lemma E3.4 (the extension by component split).* Fix finite nonempty alphabets $`\mathcal X,\mathcal Y` and a real
 number $`C\ge0`. Suppose $`T(q)\le C\tau(q)` for every probability law $`q` on these fixed alphabets whose support is
 connected. Then $`T(p)\le C\tau(p)` for every probability law $`p` on the same alphabets, including those with
@@ -151,6 +153,8 @@ $`\tau(p)=0`.
 :::
 
 :::proof "E3.4"
+Lean proves: the same inequality in bits; it is invariant under the common factor $`\ln 2`.
+
 Chain the two component inequalities with the connected-support bound and the nonnegativity of the constant. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/extension.md#3-the-extension-by-component-split).
 :::
 

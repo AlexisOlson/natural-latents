@@ -85,7 +85,7 @@ I(L_2;Y\mid L_1)
 :::
 
 :::proof "P5.1"
-Lean proves: symmetry, nonnegativity and row sums $`\sum_j\mu_{ij}=\pi_i` of the pair masses, the first relative-entropy expression of (P5.2) when every pair mass is positive, and the resulting midpoint-profile inequality under replica symmetry.
+Lean proves: symmetry, nonnegativity and row sums $`\sum_j\mu_{ij}=\pi_i` of the pair masses, strict positivity of every pair mass for a `CommonSetup` (`payment_pairMass_pos`), the first relative-entropy expression of (P5.2) when every pair mass is positive, and the resulting midpoint-profile inequality under replica symmetry.
 
 Expand the posterior pair masses and conditional relative entropies, then interchange the replica labels and average. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/payment.md#5-the-mismatch-payment).
 :::
@@ -205,7 +205,7 @@ total mass $`\sum_{i,j}\mu_{ij}=1` rather than expanding $`\left(\sum_ir_z(i)\ri
 $`M=\sum_i\pi_iI(q_i)`; and `payment_information_payment` states only the inequality of (P5.7), without the identity
 with $`M-\sum_i\mu_{ii}I(q_i)`.
 
-:::theorem "P5.5" (parent := "payment") (lean := "NaturalLatents.General.mismatch_payment") (uses := "P5.3, P5.4, Q3.1") (tags := "kernel-verified")
+:::theorem "P5.5" (parent := "payment") (lean := "NaturalLatents.General.mismatch_payment") (uses := "P5.3, P5.4, Q3.1") (tags := "partly kernel-verified")
 *Lemma P5.5 (the mismatch payment for every nonnegative charge coefficient).*
 For every $`\beta\ge0`, $`\gamma>0`, let $`p=\sum_i \pi_i q_i` be a latent of the
 setup of section 0 of the [contact page](https://github.com/AlexisOlson/natural-latents/blob/main/docs/contact.md), with positive priors and distinct components, satisfying
@@ -228,6 +228,8 @@ $$`
 :::
 
 :::proof "P5.5"
+Lean proves: the conclusion under $`PC(\beta,\gamma)` for all supports and all common feasible kernels (`HasPairCharge CommonSupportPair β γ`), the form that `pairCharge_C` supplies.
+
 Weight each off-diagonal pair charge by its replica mass and close with the profile payment, information payment, and replica budget. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/payment.md#5-the-mismatch-payment).
 :::
 

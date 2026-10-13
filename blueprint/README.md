@@ -22,5 +22,5 @@ it to Pages is a separate, manually dispatched workflow job.
 Node tags describe the scope of the cited declaration names:
 
 - `kernel-verified`: the cited Lean declarations together prove the whole statement.
-- `partly kernel-verified`: the cited Lean declarations prove only the scope named at the start of the proof.
+- `partly kernel-verified`: the cited Lean declarations prove only part of the statement; the proof block opens with "Lean proves: ..." and names that part.
 - `paper proof`: the node has no cited Lean declaration and relies on the paper proof.

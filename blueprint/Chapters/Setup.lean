@@ -201,7 +201,7 @@ $`q\in\Delta_S`, equality $`\phi(q)=\ell\cdot q` holds if and only if $`q` is a 
 :::
 
 :::proof "S1.3"
-Lean proves: an attaining latent has a common feasible kernel with contacts at positive-prior labels, connected support admits a positive-prior `SeedSetup`, and $`Gdef\ge0` for every supported probability law.
+Lean proves: there is an attaining latent with a common feasible kernel with contacts at positive-prior labels, connected support admits a positive-prior `SeedSetup`, and $`Gdef\ge0` for every supported probability law under the feasible-kernel hypothesis `Feasible S w`.
 
 Normalize the exponential kernel and use Gibbs inequality to prove feasibility and identify the zero-gap contacts. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/setup.md#1-the-setup-on-a-connected-support).
 :::
@@ -227,9 +227,9 @@ Lean differs from the page in three ways:
 :::theorem "S1.4" (parent := "setup") (lean := "stoch_to_det.contact_support_eq, NaturalLatents.General.exists_setup_of_connected") (uses := "S1.2, S1.3") (tags := "kernel-verified")
 *Lemma S1.4 (positivity propagation and the setup on a connected support).* For every finite nonempty $`X,Y`, every
 law $`p` with connected support $`S`, every feasible kernel $`w` positive on $`S` and zero off $`S`, and every
-contact probability law $`q` on $`S`, one has $`q(z)>0` for every $`z\in S`. In particular, the latent and kernel
-furnished by Lemmas S1.2 and S1.3 attain $`\tau(p)`, have positive priors and distinct components, and have positive
-posterior rows throughout $`S`.
+contact probability law $`q` on $`S`, one has $`q(z)>0` for every $`z\in S`. In particular, there is a latent and a kernel with
+the latent attaining $`\tau(p)` and having positive priors, distinct components, and positive posterior rows
+throughout $`S`.
 :::
 
 :::proof "S1.4"

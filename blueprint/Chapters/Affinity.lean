@@ -55,7 +55,7 @@ all `NaturalLatents.General.*`; $`BC_X` and $`BC_Y` are `stoch_to_det.BC` (`Natu
 applied to the $`X` and $`Y` marginals. `separationPrice` is defined for every real $`t` through Lean's totalized
 logarithm, and agrees with (A2.1) where $`b(t)>0`.
 
-:::theorem "A2.1" (parent := "affinity") (lean := "NaturalLatents.General.affinity_bhattacharyyaX_le, NaturalLatents.General.affinity_bhattacharyyaY_le, NaturalLatents.General.affinity_affinities_pos, NaturalLatents.General.affinity_conditional_square") (uses := "C1.1, C1.2, C1.5") (tags := "kernel-verified")
+:::theorem "A2.1" (parent := "affinity") (lean := "NaturalLatents.General.affinity_bhattacharyyaX_le, NaturalLatents.General.affinity_bhattacharyyaY_le, NaturalLatents.General.affinity_affinities_pos, NaturalLatents.General.affinity_conditional_square, NaturalLatents.General.contact_hessian") (uses := "C1.1, C1.2, C1.4, C1.5") (tags := "kernel-verified")
 *Lemma A2.1 (each marginal affinity is at most the quadratic $`b` at $`s`).* For every finite nonempty $`X,Y`, every nonempty
 common support $`S` with all rows and columns used, every feasible $`w>0` on $`S`, and every pair of distinct positive
 contacts $`P,R`, assume the conclusions (C1.4), (C1.9), $`0<s<2`, and (C1.23) of section 1. Then the affinities defined in
@@ -68,6 +68,9 @@ $$`
 :::
 
 :::proof "A2.1"
+The listed moment hypotheses supply every field of `ContactMoments` except `hessian`;
+`NaturalLatents.General.contact_hessian` (C1.4) supplies that field from the assumed feasible kernel and contact.
+
 Factor the pointwise Hellinger deficit, use conditional Cauchy-Schwarz and the quartic bound, and expand the marginal Hellinger sums. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/affinity.md#2-the-affinity-bound).
 :::
 

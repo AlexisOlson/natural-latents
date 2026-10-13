@@ -300,7 +300,7 @@ a contact, without positivity on $`S`. Its proof uses `contact_hessian_cube_test
 $`1+tF` and $`1+tG`, and extracts the coefficient of $`t^2` by a one-sided limit (`contact_hessian_coefficient`)
 instead of Taylor's formula for $`z^{2/3}`.
 
-:::theorem "C1.5" (parent := "contact") (lean := "NaturalLatents.General.contact_quarticMoment_bound, NaturalLatents.General.contact_scalar_bound, NaturalLatents.General.contact_moments") (uses := "C1.1, C1.2, C1.4") (tags := "kernel-verified")
+:::theorem "C1.5" (parent := "contact") (lean := "NaturalLatents.General.contact_quarticMoment_bound, NaturalLatents.General.contact_scalar_bound, NaturalLatents.General.contact_moments") (uses := "C1.1, C1.2, C1.4") (tags := "partly kernel-verified")
 *Lemma C1.5 (the contact quartic bound).* For every finite nonempty $`X,Y`, every nonempty common support $`S` with
 all rows and columns used, every feasible $`w>0` on $`S`, and every pair of positive contacts $`P,R`, the quantities
 defined in (C1.3) satisfy
@@ -312,6 +312,8 @@ J\leq6A_0B_0-s^2\leq\frac{s^2}{2}.
 :::
 
 :::proof "C1.5"
+Lean proves: $`J\le6A_0B_0-s^2\le s^2/2` for distinct $`P\ne R`; the equal-pair case ($`J=s=0`) is immediate and is not stated in Lean.
+
 Center the shifted ratio fields, apply the Hessian test, and use square nonnegativity. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/contact.md#1-contact-moments-and-the-feasible-hessian).
 :::
 

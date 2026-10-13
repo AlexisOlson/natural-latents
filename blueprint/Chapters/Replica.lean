@@ -63,7 +63,8 @@ Then $`K=2M+B-C-2N`, and hence $`K\le2M+B`.
 :::
 
 :::proof "Q3.1"
-Lean proves: $`K\le2M+B`, $`I(L_1;L_2\mid Z)=0`, and equality of each replica source-label marginal with the original latent joint law.
+Lean proves: $`K\le2M+B`, $`I(L_1;L_2\mid Z)=0`, equality of each replica source-label marginal with the original latent joint law, and the general two-coordinate chain-rule bound
+$`I(b;x\mid a)+I(b;y\mid a)\le2I(x;y\mid a)+I(b;x\mid y)+I(b;y\mid x)+2I(a;b\mid x,y)` in bits (`replica_total_chain_bound`).
 
 Expand the mutual information chain rule in two orders on both coordinates, use replica conditional independence, and discard the nonnegative remainders. See [the page section](https://github.com/AlexisOlson/natural-latents/blob/main/docs/replica.md#3-the-replica-budget).
 :::

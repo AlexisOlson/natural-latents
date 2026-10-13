@@ -191,7 +191,7 @@ Lean: `race_clock_probability` (the winner has law $`r`), `race_seed_probability
 `race_map_calibrated` (the calibrated family), all in `NaturalLatents/General/RaceTransport.lean`. Lean runs the race in
 Gumbel coordinates $`G_i=-\ln E_i` under `stoch_to_det.seedLaw` (`NaturalLatents/Upstream/Seed.lean`), with winner
 `stoch_to_det.SharedRace.weightedLexWinner`, the lexicographic maximizer of $`\ln r_i+G_i`
-(`NaturalLatents/Upstream/SharedRace/Definitions.lean`), which is $`\arg\min_iE_i/r_i` with a fixed tie rule. The
+(`NaturalLatents/Upstream/SharedRace/Definitions.lean`) (from pull request #5 by Satya Benson), which is $`\arg\min_iE_i/r_i` with a fixed tie rule. The
 density (R7) and the independence of $`W` and $`T` are not stated; their consequence for averages of a statistic of the
 winning clock is `race_selected_coordinate_average` (`NaturalLatents/General/ExponentialRace.lean`).
 

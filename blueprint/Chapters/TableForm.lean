@@ -99,7 +99,7 @@ Lean: `stoch_to_det.SourceCoarsening.ofJoint`, `ofJoint_joint` and `ofJoint_scor
 (`NaturalLatents/Upstream/SourceCoarsening.lean`).
 
 :::theorem "T6.4" (parent := "table-form") (lean := "NaturalLatents.finite_bound, stoch_to_det.exists_T_optimal_code, stoch_to_det.Latent.ofFunction_score_eq_detScore, stoch_to_det.tau_le_score, stoch_to_det.Latent.score_nonneg") (uses := "T6.1, T6.2, T6.3") (tags := "kernel-verified")
-*Lemma T6.4 (one code for every joint law).* For every finite law $`p`, the code $`\Gamma` of Lemma T6.2 satisfies
+*Lemma T6.4 (one code for every joint law).* For every finite law $`p`, there is a code $`\Gamma` such that
 $`D(\Gamma)\le c\,\mathrm{SE}(r)` for every finite $`K` and every law $`r` on $`K\times(A\times B)` with marginal $`p`.
 :::
 
@@ -113,7 +113,7 @@ Lean: `NaturalLatents.finite_bound` (`NaturalLatents/Main.lean`), which takes $`
 `stoch_to_det.Latent.score_nonneg` (same file).
 
 :::theorem "T6.5" (parent := "table-form") (lean := "NaturalLatents.table_bound, NaturalLatents.table_bound_entropy, NaturalLatents.table, TableBoundProof.deterministicTable_eq_push, TableBoundProof.deterministicTable_error, TableBoundProof.deterministicTable_entropy_error, TableBoundProof.deterministicTable_errors_equal, TableBoundProof.transpose_eq_push, TableInformationProof.entropy_eq_H, TableInformationProof.conditionalMutualInformation_push, TableInformationProof.latentError_eq_core, stoch_to_det.condMI_push_source, NaturalLatents.c_nonneg, NaturalLatents.c_lt_seven") (uses := "T6.4") (tags := "kernel-verified")
-*Lemma T6.5 (the table form).* For every finite law $`p`, the code $`\Gamma` satisfies
+*Lemma T6.5 (the table form).* For every finite law $`p`, there is a code $`\Gamma` such that
 $`\mathrm{DE}(t_{p,\Gamma})\le c\,\mathrm{SE}(q)` for every $`k` and every law $`q` on $`A\times B\times[k]` with
 marginal $`p`; since $`0\le c<7`, `TableClaim` holds with $`c`.
 :::

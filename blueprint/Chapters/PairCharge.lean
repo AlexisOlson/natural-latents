@@ -447,4 +447,4 @@ Lean: `pairCharge_C` (`NaturalLatents/General/PairCharge.lean`), stating `HasPai
 uses `contact_moments` for $`0<s<2` and `pairCharge_price`; for $`s\le1`, `pairCharge_information_floor`,
 `pairCharge_quarticRatio_bounds` and `pairCharge_scalar_certificate`; and for $`s>1`, `stoch_to_det.Knat_nonneg`
 (`NaturalLatents/Upstream/ContactInformation.lean`) for nonnegative information. Lean splits the cases at $`s\le1` and
-$`s>1`. Lean's `HasPairCharge` is the non-strict inequality, which the strict one implies.
+$`s>1`. Lean's `HasPairCharge` is the non-strict inequality; the strict form is proved on the page.
