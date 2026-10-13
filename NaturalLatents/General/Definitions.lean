@@ -214,8 +214,8 @@ def mismatch {p : Law X Y} (L : stoch_to_det.Latent p) : ℝ :=
 def replicaJoint {p : Law X Y} (L : stoch_to_det.Latent p) : L.ι × L.ι × (X × Y) → ℝ :=
   fun w => p w.2.2 * posterior L w.1 w.2.2 * posterior L w.2.1 w.2.2
 
-def pairMass {p : Law X Y} (L : stoch_to_det.Latent p) (i gammaPrice : L.ι) : ℝ :=
-  ∑ z, p z * posterior L i z * posterior L gammaPrice z
+def pairMass {p : Law X Y} (L : stoch_to_det.Latent p) (i j : L.ι) : ℝ :=
+  ∑ z, p z * posterior L i z * posterior L j z
 
 /-- Total replica budget including diagonal pairs, in nats. -/
 def replicaBudget {p : Law X Y} (L : stoch_to_det.Latent p) : ℝ :=
