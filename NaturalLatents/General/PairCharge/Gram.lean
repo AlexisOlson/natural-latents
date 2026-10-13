@@ -712,18 +712,6 @@ lemma pairCharge_cond_Y_congr_support {S : Finset (X × Y)} {w P : Law X Y}
   · have hzpos : 0 < P (x,y) := lt_of_le_of_ne (hP.1.nonneg _) (Ne.symm hz)
     rw [hFH x (Finset.mem_image.mpr ⟨(x,y), pairCharge_mem_S_of_pos hP hzpos, rfl⟩)]
 
-lemma pairCharge_mem_XSupport_of_mX_pos {S : Finset (X × Y)} {w P : Law X Y}
-    (hP : Contact S w P) {x : X} (hx : 0 < stoch_to_det.mX P x) : x ∈ XSupport S := by
-  rw [contact_mX_eq_sum] at hx
-  obtain ⟨y, _, hy⟩ := (Finset.sum_pos_iff_of_nonneg (fun y _ => hP.1.nonneg (x,y))).mp hx
-  exact Finset.mem_image.mpr ⟨(x,y), pairCharge_mem_S_of_pos hP hy, rfl⟩
-
-lemma pairCharge_mem_YSupport_of_mY_pos {S : Finset (X × Y)} {w P : Law X Y}
-    (hP : Contact S w P) {y : Y} (hy : 0 < stoch_to_det.mY P y) : y ∈ YSupport S := by
-  rw [contact_mY_eq_sum] at hy
-  obtain ⟨x, _, hx⟩ := (Finset.sum_pos_iff_of_nonneg (fun x _ => hP.1.nonneg (x,y))).mp hy
-  exact Finset.mem_image.mpr ⟨(x,y), pairCharge_mem_S_of_pos hP hx, rfl⟩
-
 -- Finite algebra for the global sum-of-squares certificate. No eigenvalue or Hilbert-space
 -- infrastructure is used.
 
@@ -1117,7 +1105,7 @@ lemma pairCharge_E_congr_rectangle {S : Finset (X × Y)} {w P : Law X Y}
       · linarith [h.2]
     apply hFG
     exact Finset.mem_product.mpr
-      ⟨pairCharge_mem_XSupport_of_mX_pos hP hmXpos, pairCharge_mem_YSupport_of_mY_pos hP hmYpos⟩
+      ⟨contact_mem_XSupport_of_mX_pos hP hmXpos, contact_mem_YSupport_of_mY_pos hP hmYpos⟩
 
 end
 

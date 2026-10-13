@@ -98,6 +98,18 @@ lemma contact_mY_pos {S : Finset (X × Y)} {w P : Law X Y}
     exact Finset.single_le_sum (fun x _ => hP.1.nonneg (x, z.2)) (Finset.mem_univ z.1)
   simpa only [hzy] using lt_of_lt_of_le (hpos z hz) hle
 
+lemma contact_mem_XSupport_of_mX_pos {S : Finset (X × Y)} {w P : Law X Y}
+    (hP : Contact S w P) {x : X} (hx : 0 < stoch_to_det.mX P x) : x ∈ XSupport S := by
+  rw [contact_mX_eq_sum] at hx
+  obtain ⟨y, _, hy⟩ := (Finset.sum_pos_iff_of_nonneg (fun y _ => hP.1.nonneg (x, y))).mp hx
+  exact Finset.mem_image.mpr ⟨(x, y), by contrapose! hy; exact (hP.2.1 (x, y) hy).le, rfl⟩
+
+lemma contact_mem_YSupport_of_mY_pos {S : Finset (X × Y)} {w P : Law X Y}
+    (hP : Contact S w P) {y : Y} (hy : 0 < stoch_to_det.mY P y) : y ∈ YSupport S := by
+  rw [contact_mY_eq_sum] at hy
+  obtain ⟨x, _, hx⟩ := (Finset.sum_pos_iff_of_nonneg (fun x _ => hP.1.nonneg (x, y))).mp hy
+  exact Finset.mem_image.mpr ⟨(x, y), by contrapose! hx; exact (hP.2.1 (x, y) hx).le, rfl⟩
+
 lemma contact_f_nonneg {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (x : X) : 0 ≤ f P R x := by
   rw [f_eq_cubeRoot]
