@@ -52,7 +52,7 @@ noncomputable def ofJoint {p : X × Y → ℝ} (hp : IsPMF p)
     have heq (k : K) : priorOf r k *
         (if priorOf r k = 0 then p z else r (k, z) / priorOf r k) = r (k, z) := by
       by_cases hk : priorOf r k = 0
-      · simp [hk, joint_zero hr.isFinMeas hk z]
+      · simp [hk, joint_zero hr.nonneg hk z]
       · simp [hk, mul_div_cancel₀ _ hk]
     simp_rw [heq]
     have h := congrFun hsource z
@@ -65,7 +65,7 @@ theorem ofJoint_joint {p : X × Y → ℝ} (hp : IsPMF p)
   change priorOf r k *
     (if priorOf r k = 0 then p z else r (k, z) / priorOf r k) = r (k, z)
   by_cases hk : priorOf r k = 0
-  · simp [hk, joint_zero hr.isFinMeas hk z]
+  · simp [hk, joint_zero hr.nonneg hk z]
   · simp [hk, mul_div_cancel₀ _ hk]
 
 theorem ofJoint_score {p : X × Y → ℝ} (hp : IsPMF p)

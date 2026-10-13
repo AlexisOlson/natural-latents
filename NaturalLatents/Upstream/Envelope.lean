@@ -124,7 +124,7 @@ private lemma Latent.Hvar_lift_pair_prior {γ : Type*} [Fintype γ] [DecidableEq
   · have hvpos : 0 < V.prior v :=
       lt_of_le_of_ne (V.prior_isPMF.nonneg v) (Ne.symm hv)
     simpa [Hvar] using
-      (H_smul (isFinMeas_push (V.comp_isPMF v).isFinMeas) hvpos.le)
+      (H_smul hvpos.le)
 
 private lemma Latent.MI_prior_lift {γ : Type*} [Fintype γ] [DecidableEq γ]
     (V : Latent p) (f : α × β → γ) :
@@ -427,7 +427,7 @@ private noncomputable def functionLatent {γ : Type} [Fintype γ] [DecidableEq �
         simp
 
 omit [DecidableEq α] [DecidableEq β] in
-private lemma functionLatent_isDet {γ : Type} [Fintype γ] [DecidableEq γ]
+lemma functionLatent_isDet {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) : (functionLatent hp f).IsDet := by
   unfold Latent.IsDet
   change ∀ z, ∀ c c' : γ,
@@ -448,13 +448,6 @@ private lemma functionLatent_isDet {γ : Type} [Fintype γ] [DecidableEq γ]
 noncomputable def Latent.ofFunction {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) : Latent p :=
   functionLatent hp f
-
-omit [DecidableEq α] [DecidableEq β] in
-/-- A function-induced latent is deterministic. -/
-theorem Latent.ofFunction_isDet {γ : Type} [Fintype γ] [DecidableEq γ]
-    (hp : IsPMF p) (f : α × β → γ) :
-    (Latent.ofFunction hp f).IsDet := by
-  exact functionLatent_isDet hp f
 
 /-- The joint law of a function-induced latent is the pushforward along its
 graph embedding. -/
@@ -496,24 +489,6 @@ private lemma Hvar_push_source
     Hvar a (push e m) = Hvar (a ∘ e) m := by
   unfold Hvar
   rw [push_push]
-
-private lemma condMI_push_source
-    {Ω Ω' κ δ ε : Type*} [Fintype Ω] [Fintype Ω'] [DecidableEq Ω']
-    [Fintype κ] [DecidableEq κ]
-    [Fintype δ] [DecidableEq δ]
-    [Fintype ε] [DecidableEq ε]
-    (e : Ω → Ω') (a : Ω' → κ) (b : Ω' → δ) (c : Ω' → ε)
-    (m : Ω → ℝ) :
-    condMI a b c (push e m) =
-      condMI (a ∘ e) (b ∘ e) (c ∘ e) m := by
-  unfold condMI
-  change Hvar (fun x => (a x, c x)) (push e m) +
-      Hvar (fun x => (b x, c x)) (push e m) -
-      Hvar (fun x => (a x, b x, c x)) (push e m) -
-      Hvar c (push e m) = _
-  rw [Hvar_push_source, Hvar_push_source, Hvar_push_source,
-    Hvar_push_source]
-  rfl
 
 /-- The score of a function-induced latent is exactly the deterministic
 LessWrong expression computed under `p`. -/
@@ -763,7 +738,7 @@ noncomputable def continuousEntropy {γ : Type*} [Fintype γ]
 
 lemma H_eq_continuousEntropy {γ : Type*} [Fintype γ]
     {m : γ → ℝ} (hm : IsPMF m) : H m = continuousEntropy m := by
-  have h := H_eq_negMulLog hm.isFinMeas
+  have h := H_eq_negMulLog hm.nonneg
   rw [hm.total, Real.log_one, mul_zero, zero_add] at h
   apply (eq_div_iff (Real.log_pos one_lt_two).ne').2
   rw [mul_comm]

@@ -169,15 +169,15 @@ lemma affinity_row_X {S : Finset (X × Y)} {w P R : Law X Y}
   · have hm := contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx
     have hsecond : (∑ y, P (x,y) * (g P R y)^2) =
         (∑ y, P (x,y)) * f P R x := by
-      rw [← contact_mX_eq_sum P x]
+      rw [← stoch_to_det.mX_eq_sum P x]
       have he := (div_eq_iff hm.ne').mp (hmoments.cond_g2 x hx)
       simpa only [mul_comm] using he
-    simpa only [← contact_mX_eq_sum P x] using
+    simpa only [← stoch_to_det.mX_eq_sum P x] using
       affinity_conditional_square (fun y => P (x,y)) (g P R) (f P R x)
         (fun y => hpair.2.1.1.nonneg (x,y))
-        (by simpa only [← contact_mX_eq_sum P x] using hm) (contact_f_pos hpair hx) hsecond
+        (by simpa only [← stoch_to_det.mX_eq_sum P x] using hm) (contact_f_pos hpair hx) hsecond
   · have hm : stoch_to_det.mX P x = 0 := by
-      rw [contact_mX_eq_sum]
+      rw [stoch_to_det.mX_eq_sum]
       apply Finset.sum_eq_zero
       intro y _
       apply hpair.2.1.2.1
@@ -194,15 +194,15 @@ lemma affinity_row_Y {S : Finset (X × Y)} {w P R : Law X Y}
   · have hm := contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy
     have hsecond : (∑ x, P (x,y) * (f P R x)^2) =
         (∑ x, P (x,y)) * g P R y := by
-      rw [← contact_mY_eq_sum P y]
+      rw [← stoch_to_det.mY_eq_sum P y]
       have he := (div_eq_iff hm.ne').mp (hmoments.cond_f2 y hy)
       simpa only [mul_comm] using he
-    simpa only [← contact_mY_eq_sum P y] using
+    simpa only [← stoch_to_det.mY_eq_sum P y] using
       affinity_conditional_square (fun x => P (x,y)) (f P R) (g P R y)
         (fun x => hpair.2.1.1.nonneg (x,y))
-        (by simpa only [← contact_mY_eq_sum P y] using hm) (contact_g_pos hpair hy) hsecond
+        (by simpa only [← stoch_to_det.mY_eq_sum P y] using hm) (contact_g_pos hpair hy) hsecond
   · have hm : stoch_to_det.mY P y = 0 := by
-      rw [contact_mY_eq_sum]
+      rw [stoch_to_det.mY_eq_sum]
       apply Finset.sum_eq_zero
       intro x _
       apply hpair.2.1.2.1

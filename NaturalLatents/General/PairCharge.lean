@@ -45,7 +45,7 @@ lemma pairCharge_cond_X_second_moment {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     let q : Y → ℝ := fun y => P (x,y)/stoch_to_det.mX P x
     have hqt : ∑ y, q y = 1 := by
       dsimp [q]
-      rw [← Finset.sum_div,← contact_mX_eq_sum]
+      rw [← Finset.sum_div,← stoch_to_det.mX_eq_sum]
       exact div_self hz
     have hv := pairCharge_variance_raw q G hqt
     have hp : 0 ≤ ∑ y, q y*(G y-∑ z, q z*G z)^2 :=
@@ -69,7 +69,7 @@ lemma pairCharge_cubic_conditional_X {S : Finset (X × Y)} {w P R : Law X Y}
   have hmx : stoch_to_det.mX P x ≠ 0 := (contact_mX_pos hpair.2.1 hpair.2.2.2.1 hx).ne'
   have hDX : DX = f P R x-2*m+1 := by
     have ht : (∑ y, P (x,y))/stoch_to_det.mX P x = 1 := by
-      rw [← contact_mX_eq_sum]
+      rw [← stoch_to_det.mX_eq_sum]
       exact div_self hmx
     have hgf := (contact_moments hpair).cond_g2 x hx
     have hid : (∑ y, P (x,y)*(V P R y)^2) =
@@ -215,7 +215,7 @@ lemma pairCharge_cond_Y_second_moment {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     let q : X → ℝ := fun x => P (x,y)/stoch_to_det.mY P y
     have hqt : ∑ x, q x = 1 := by
       dsimp [q]
-      rw [← Finset.sum_div,← contact_mY_eq_sum]
+      rw [← Finset.sum_div,← stoch_to_det.mY_eq_sum]
       exact div_self hz
     have hv := pairCharge_variance_raw q F hqt
     have hp : 0 ≤ ∑ x, q x*(F x-∑ z, q z*F z)^2 :=
@@ -238,7 +238,7 @@ lemma pairCharge_cubic_conditional_Y {S : Finset (X × Y)} {w P R : Law X Y}
   have hmy : stoch_to_det.mY P y ≠ 0 := (contact_mY_pos hpair.2.1 hpair.2.2.2.1 hy).ne'
   have hDY : DY = g P R y-2*m+1 := by
     have ht : (∑ x, P (x,y))/stoch_to_det.mY P y = 1 := by
-      rw [← contact_mY_eq_sum]
+      rw [← stoch_to_det.mY_eq_sum]
       exact div_self hmy
     have hfg := (contact_moments hpair).cond_f2 y hy
     have hid : (∑ x, P (x,y)*(U P R x)^2) =

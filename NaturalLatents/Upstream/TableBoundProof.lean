@@ -52,15 +52,6 @@ theorem deterministicTable_eq_push (p : A × B → ℝ) (Γ : A × B → C) :
   simp [deterministicTable, push, Finset.sum_filter, Fintype.sum_prod_type,
     Prod.mk.injEq, ite_and]
 
-theorem condMI_push_source
-    {Ω Ω' K D E : Type*} [Fintype Ω] [Fintype Ω'] [DecidableEq Ω']
-    [Fintype K] [DecidableEq K] [Fintype D] [DecidableEq D]
-    [Fintype E] [DecidableEq E]
-    (e : Ω → Ω') (a : Ω' → K) (b : Ω' → D) (c : Ω' → E)
-    (m : Ω → ℝ) :
-    condMI a b c (push e m) = condMI (a ∘ e) (b ∘ e) (c ∘ e) m := by
-  simp only [condMI, Hvar, push_push, Function.comp_def]
-
 theorem transpose_eq_push (q : A × B × C → ℝ) :
     (fun v : C × (A × B) => q (v.2.1, v.2.2, v.1)) =
       push (fun abc : A × B × C => (abc.2.2, (abc.1, abc.2.1))) q := by

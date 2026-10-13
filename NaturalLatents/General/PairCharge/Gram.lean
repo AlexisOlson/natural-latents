@@ -38,7 +38,7 @@ lemma pairCharge_cond_X_mul {P : Law X Y} (hP : stoch_to_det.IsPMF P)
       intro y
       apply le_antisymm
       · have hle : P (x,y) ≤ stoch_to_det.mX P x := by
-          rw [contact_mX_eq_sum]
+          rw [stoch_to_det.mX_eq_sum]
           exact Finset.single_le_sum (fun y _ => hP.nonneg (x,y)) (Finset.mem_univ y)
         simpa [hx] using hle
       · exact hP.nonneg _
@@ -54,7 +54,7 @@ lemma pairCharge_cond_Y_mul {P : Law X Y} (hP : stoch_to_det.IsPMF P)
       intro x
       apply le_antisymm
       · have hle : P (x,y) ≤ stoch_to_det.mY P y := by
-          rw [contact_mY_eq_sum]
+          rw [stoch_to_det.mY_eq_sum]
           exact Finset.single_le_sum (fun x _ => hP.nonneg (x,y)) (Finset.mem_univ x)
         simpa [hy] using hle
       · exact hP.nonneg _
@@ -207,7 +207,7 @@ lemma pairCharge_cond_X_affine {P : Law X Y} (G : Y → ℝ) (a b : ℝ)
       a * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x) + b := by
   have hsum : (∑ y, P (x,y) * (a * G y + b)) =
       a * (∑ y, P (x,y) * G y) + b * stoch_to_det.mX P x := by
-    rw [contact_mX_eq_sum]
+    rw [stoch_to_det.mX_eq_sum]
     simp only [mul_add, Finset.sum_add_distrib]
     rw [Finset.mul_sum, Finset.mul_sum]
     congr 1 <;> apply Finset.sum_congr rfl <;> intro y _ <;> ring
@@ -220,7 +220,7 @@ lemma pairCharge_cond_Y_affine {P : Law X Y} (F : X → ℝ) (a b : ℝ)
       a * ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) + b := by
   have hsum : (∑ x, P (x,y) * (a * F x + b)) =
       a * (∑ x, P (x,y) * F x) + b * stoch_to_det.mY P y := by
-    rw [contact_mY_eq_sum]
+    rw [stoch_to_det.mY_eq_sum]
     simp only [mul_add, Finset.sum_add_distrib]
     rw [Finset.mul_sum, Finset.mul_sum]
     congr 1 <;> apply Finset.sum_congr rfl <;> intro x _ <;> ring
@@ -235,7 +235,7 @@ lemma pairCharge_cond_X_sq_add_one {P : Law X Y} (G : Y → ℝ)
   have hsum : (∑ y, P (x,y) * (G y + 1)^2) =
       (∑ y, P (x,y) * (G y)^2) + 2 * (∑ y, P (x,y) * G y) +
         stoch_to_det.mX P x := by
-    rw [contact_mX_eq_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+    rw [stoch_to_det.mX_eq_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro y _
     ring
@@ -250,7 +250,7 @@ lemma pairCharge_cond_Y_sq_add_one {P : Law X Y} (F : X → ℝ)
   have hsum : (∑ x, P (x,y) * (F x + 1)^2) =
       (∑ x, P (x,y) * (F x)^2) + 2 * (∑ x, P (x,y) * F x) +
         stoch_to_det.mY P y := by
-    rw [contact_mY_eq_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+    rw [stoch_to_det.mY_eq_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro x _
     ring
@@ -714,13 +714,13 @@ lemma pairCharge_cond_Y_congr_support {S : Finset (X × Y)} {w P : Law X Y}
 
 lemma pairCharge_mem_XSupport_of_mX_pos {S : Finset (X × Y)} {w P : Law X Y}
     (hP : Contact S w P) {x : X} (hx : 0 < stoch_to_det.mX P x) : x ∈ XSupport S := by
-  rw [contact_mX_eq_sum] at hx
+  rw [stoch_to_det.mX_eq_sum] at hx
   obtain ⟨y, _, hy⟩ := (Finset.sum_pos_iff_of_nonneg (fun y _ => hP.1.nonneg (x,y))).mp hx
   exact Finset.mem_image.mpr ⟨(x,y), pairCharge_mem_S_of_pos hP hy, rfl⟩
 
 lemma pairCharge_mem_YSupport_of_mY_pos {S : Finset (X × Y)} {w P : Law X Y}
     (hP : Contact S w P) {y : Y} (hy : 0 < stoch_to_det.mY P y) : y ∈ YSupport S := by
-  rw [contact_mY_eq_sum] at hy
+  rw [stoch_to_det.mY_eq_sum] at hy
   obtain ⟨x, _, hx⟩ := (Finset.sum_pos_iff_of_nonneg (fun x _ => hP.1.nonneg (x,y))).mp hy
   exact Finset.mem_image.mpr ⟨(x,y), pairCharge_mem_S_of_pos hP hx, rfl⟩
 
