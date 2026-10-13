@@ -65,7 +65,7 @@ lemma pairCharge_cond_X_inner {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (G : Y → ℝ) :
     E P (fun z => F z.1 * ((∑ y, P (z.1,y) * G y) / stoch_to_det.mX P z.1)) =
       E P (fun z => F z.1 * G z.2) := by
-  rw [contact_q_E_fst P (fun x => F x * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x))]
+  rw [contact_E_fst P (fun x => F x * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x))]
   calc
     _ = ∑ x, (stoch_to_det.mX P x *
         ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x)) * F x := by
@@ -87,7 +87,7 @@ lemma pairCharge_cond_Y_inner {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (G : Y → ℝ) :
     E P (fun z => ((∑ x, P (x,z.2) * F x) / stoch_to_det.mY P z.2) * G z.2) =
       E P (fun z => F z.1 * G z.2) := by
-  rw [contact_q_E_snd P (fun y => ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) * G y)]
+  rw [contact_E_snd P (fun y => ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) * G y)]
   calc
     _ = ∑ y, (stoch_to_det.mY P y *
         ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y)) * G y := by
@@ -169,7 +169,7 @@ lemma pairCharge_E_sub_scale_sq (P : Law X Y) (F H : X × Y → ℝ) (a : ℝ) :
       funext z
       ring
     _ = _ := by
-      simp only [contact_q_E_add, contact_q_E_sub, contact_q_E_scale]
+      simp only [contact_E_add, contact_q_E_sub, contact_q_E_scale]
 
 lemma pairCharge_S0_norm_le_twice_form {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (F : X → ℝ) (G : Y → ℝ)
@@ -347,11 +347,11 @@ lemma pairCharge_contact_defects_norm_le {S : Finset (X × Y)} {w P R : Law X Y}
   let G : Y → ℝ := fun y => V P R y + B0 P R
   have hF : E P (fun z => F z.1) = 0 := by
     dsimp [F]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
     ring
   have hG : E P (fun z => G z.2) = 0 := by
     dsimp [G]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
     ring
   have hnorm := pairCharge_S0_norm_le_twice_form hpair F G hF hG
   have hX : E P (fun z => (F z.1 -
@@ -451,7 +451,7 @@ lemma pairCharge_E_lincomb_sq (P : Law X Y) (F H : X × Y → ℝ) (a b : ℝ) :
       congr 1
       funext z
       ring
-    _ = _ := by simp only [contact_q_E_add, contact_q_E_scale]
+    _ = _ := by simp only [contact_E_add, contact_q_E_scale]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_E_lincomb_prod (P : Law X Y) (F G H K : X × Y → ℝ) (a b : ℝ) :
@@ -466,7 +466,7 @@ lemma pairCharge_E_lincomb_prod (P : Law X Y) (F G H K : X × Y → ℝ) (a b : 
       funext z
       ring
     _ = _ := by
-      simp only [contact_q_E_add, contact_q_E_scale]
+      simp only [contact_E_add, contact_q_E_scale]
 
 lemma pairCharge_psd_gram {a b c : ℝ} (ha : 0 < a)
     (h : ∀ u v : ℝ, 0 ≤ a * u^2 + 2 * b * u * v + c * v^2) :
@@ -491,10 +491,10 @@ lemma pairCharge_hessian_gram {S : Finset (X × Y)} {w P R : Law X Y}
   apply pairCharge_psd_gram ha
   intro a b
   have hcenterX : E P (fun z => a * F z.1 + b * H z.1) = 0 := by
-    rw [contact_q_E_add, contact_q_E_scale, contact_q_E_scale, hF, hH]
+    rw [contact_E_add, contact_q_E_scale, contact_q_E_scale, hF, hH]
     ring
   have hcenterY : E P (fun z => a * G z.2 + b * K z.2) = 0 := by
-    rw [contact_q_E_add, contact_q_E_scale, contact_q_E_scale, hG, hK]
+    rw [contact_E_add, contact_q_E_scale, contact_q_E_scale, hG, hK]
     ring
   have hh := (contact_moments hpair).hessian (fun x => a * F x + b * H x)
     (fun y => a * G y + b * K y) hcenterX hcenterY
@@ -539,9 +539,9 @@ lemma pairCharge_contact_defects_centered {S : Finset (X × Y)} {w P R : Law X Y
     E P (fun z => (∑ x, P (x,z.2) * (U P R x)^2) / stoch_to_det.mY P z.2 -
       (2 * A0 P R - B0 P R)) = 0 := by
   constructor
-  · rw [contact_q_E_sub, contact_q_E_const hpair.2.1.1, pairCharge_cond_X_mean hpair.2.1.1, (contact_moments hpair).V2]
+  · rw [contact_q_E_sub, contact_E_const hpair.2.1.1, pairCharge_cond_X_mean hpair.2.1.1, (contact_moments hpair).V2]
     ring
-  · rw [contact_q_E_sub, contact_q_E_const hpair.2.1.1, pairCharge_cond_Y_mean hpair.2.1.1, (contact_moments hpair).U2]
+  · rw [contact_q_E_sub, contact_E_const hpair.2.1.1, pairCharge_cond_Y_mean hpair.2.1.1, (contact_moments hpair).U2]
     ring
 
 lemma pairCharge_contact_defects_gram {S : Finset (X × Y)} {w P R : Law X Y}
@@ -563,11 +563,11 @@ lemma pairCharge_contact_defects_gram {S : Finset (X × Y)} {w P R : Law X Y}
   change (E P (fun z => (H z.1)^2) + E P (fun z => (K z.2)^2))^2 ≤ _
   have hF : E P (fun z => F z.1) = 0 := by
     dsimp [F]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
     ring
   have hG : E P (fun z => G z.2) = 0 := by
     dsimp [G]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
     ring
   have hH : E P (fun z => H z.1) = 0 := (pairCharge_contact_defects_centered hpair).1
   have hK : E P (fun z => K z.2) = 0 := (pairCharge_contact_defects_centered hpair).2
@@ -768,7 +768,7 @@ lemma pairCharge_finite_conditional_geometry {S : Finset (X × Y)} {w P R : Law 
         intro p q r
         change E P (fun z => (p.1 z.1 + q.1 z.1) * r.1 z.1) +
           E P (fun z => (p.2 z.2 + q.2 z.2) * r.2 z.2) = _
-        simp only [add_mul, contact_q_E_add]
+        simp only [add_mul, contact_E_add]
         ring)
       (by
         intro a p q
@@ -780,7 +780,7 @@ lemma pairCharge_finite_conditional_geometry {S : Finset (X × Y)} {w P R : Law 
         intro p q r
         change E P (fun z => p.1 z.1 * (q.1 z.1 + r.1 z.1)) +
           E P (fun z => p.2 z.2 * (q.2 z.2 + r.2 z.2)) = _
-        simp only [mul_add, contact_q_E_add]
+        simp only [mul_add, contact_E_add]
         ring)
       (by
         intro a p q
@@ -876,13 +876,13 @@ lemma pairCharge_operator_sos_centered_pair {P : Law X Y}
       (K (K u) + (19/12 : ℝ) • K u - (11/20 : ℝ) • u).1 z.1) = 0 := by
     change E P (fun z => ((K (K u)).1 z.1 + (19/12 : ℝ) * (K u).1 z.1) -
       (11/20 : ℝ) * u.1 z.1) = 0
-    rw [contact_q_E_sub, contact_q_E_add, contact_q_E_scale, contact_q_E_scale, h2.1, h1.1, huX]
+    rw [contact_q_E_sub, contact_E_add, contact_q_E_scale, contact_q_E_scale, h2.1, h1.1, huX]
     ring
   have hpY : E P (fun z =>
       (K (K u) + (19/12 : ℝ) • K u - (11/20 : ℝ) • u).2 z.2) = 0 := by
     change E P (fun z => ((K (K u)).2 z.2 + (19/12 : ℝ) * (K u).2 z.2) -
       (11/20 : ℝ) * u.2 z.2) = 0
-    rw [contact_q_E_sub, contact_q_E_add, contact_q_E_scale, contact_q_E_scale, h2.2, h1.2, huY]
+    rw [contact_q_E_sub, contact_E_add, contact_q_E_scale, contact_q_E_scale, h2.2, h1.2, huY]
     ring
   have hqX : E P (fun z => (K u - (243/787 : ℝ) • u).1 z.1) = 0 := by
     change E P (fun z => (K u).1 z.1 - (243/787 : ℝ) * u.1 z.1) = 0
@@ -965,11 +965,11 @@ lemma pairCharge_contact_additive_variance_bound {S : Finset (X × Y)} {w P R : 
     (E (productLaw P) (fun z => (C z)^2) / 30 + E P (fun z => (C z)^2) / 20) ≤ _
   have huX : E P (fun z => u.1 z.1) = 0 := by
     dsimp [u]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
     ring
   have huY : E P (fun z => u.2 z.2) = 0 := by
     dsimp [u]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
     ring
   have hKu := hmean u huX huY
   have hdX : E P (fun z => d.1 z.1) = 0 := by
@@ -983,11 +983,11 @@ lemma pairCharge_contact_additive_variance_bound {S : Finset (X × Y)} {w P R : 
   have hKd := hmean d hdX hdY
   have hpX : E P (fun z => p.1 z.1) = 0 := by
     change E P (fun z => d.1 z.1 + (K d).1 z.1) = 0
-    rw [contact_q_E_add, hdX, hKd.1]
+    rw [contact_E_add, hdX, hKd.1]
     ring
   have hpY : E P (fun z => p.2 z.2) = 0 := by
     change E P (fun z => d.2 z.2 + (K d).2 z.2) = 0
-    rw [contact_q_E_add, hdY, hKd.2]
+    rw [contact_E_add, hdY, hKd.2]
     ring
   have hvar := pairCharge_additive_variance_geometry hpair.2.1.1 B K hB hKX hKY p hpX hpY
   have hCQ : E (productLaw P) (fun z => (C z)^2) = B p p / (s P R)^2 := by
@@ -1062,7 +1062,7 @@ lemma pairCharge_additive_covariance_geometry {P : Law X Y} (hP : stoch_to_det.I
         congr 1
         funext z
         ring
-      _ = _ := by rw [contact_q_E_add, contact_q_E_add, contact_q_E_add]
+      _ = _ := by rw [contact_E_add, contact_E_add, contact_E_add]
   have hcross : B p (K q) = E P (fun z => p.1 z.1 * q.2 z.2) +
       E P (fun z => q.1 z.1 * p.2 z.2) := by
     rw [hB, hKX, hKY, pairCharge_cond_X_inner hP]

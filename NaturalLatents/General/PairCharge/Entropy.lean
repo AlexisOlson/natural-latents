@@ -31,20 +31,28 @@ variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
 /- The entropy payment is proved by second derivatives, avoiding integrals. -/
 
+lemma pairCharge_covariance_raw {Ω : Type*} [Fintype Ω]
+    (M A B : Ω → ℝ) (hMt : ∑ i, M i = 1) :
+    (∑ i, M i * (A i - ∑ j, M j * A j) * (B i - ∑ j, M j * B j)) =
+      (∑ i, M i * A i * B i) - (∑ i, M i * A i) * (∑ i, M i * B i) := by
+  let a := ∑ i, M i * A i
+  let b := ∑ i, M i * B i
+  have he (i : Ω) : M i * (A i - a) * (B i - b) =
+      M i * A i * B i - b * (M i * A i) - a * (M i * B i) + a * b * M i := by ring
+  change (∑ i, M i * (A i - a) * (B i - b)) = _
+  simp_rw [he]
+  rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib]
+  simp only [← Finset.mul_sum, hMt, mul_one]
+  change (∑ i, M i * A i * B i) - b * a - a * b + a * b =
+    (∑ i, M i * A i * B i) - a * b
+  ring
+
+
 lemma pairCharge_variance_raw {Ω : Type*} [Fintype Ω]
     (M F : Ω → ℝ) (hM : ∑ i, M i = 1) :
     (∑ i, M i * (F i - ∑ j, M j * F j)^2) =
       (∑ i, M i * (F i)^2) - (∑ i, M i * F i)^2 := by
-  let m := ∑ j, M j * F j
-  have hi (i : Ω) : M i * (F i - m)^2 =
-      M i * (F i)^2 - 2 * m * (M i * F i) + m^2 * M i := by ring
-  change (∑ i, M i * (F i - m)^2) = _
-  simp_rw [hi]
-  rw [Finset.sum_add_distrib, Finset.sum_sub_distrib]
-  simp only [← Finset.mul_sum, hM, mul_one]
-  change (∑ i, M i * (F i)^2) - 2 * m * m + m^2 =
-    (∑ i, M i * (F i)^2) - m^2
-  ring
+  simpa only [pow_two, mul_assoc] using pairCharge_covariance_raw M F F hM
 
 lemma pairCharge_chi_square_completion {Ω : Type*} [Fintype Ω]
     (M d F : Ω → ℝ) (hM : ∀ i, 0 ≤ M i)
@@ -107,6 +115,12 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
       (mul_nonneg hu.1 (hP i))
   have hMzero (u : ℝ) (i : Ω) (hz : Q i = 0) : M u i = 0 := by
     simp [M, d, hz, hzero i hz]
+  have hlin (u : ℝ) (i : Ω) :
+      HasDerivAt (fun v => M v i / Q i) (d i / Q i) u := by
+    simpa [M] using
+      (((hasDerivAt_id u).mul_const (d i)).const_add (Q i)).div_const (Q i)
+  have hratio (u : ℝ) (hu : u ∈ Set.Ico (0 : ℝ) 1) (i : Ω) (hz : Q i ≠ 0) :
+      M u i / Q i ≠ 0 := div_ne_zero (hMpos u hu i hz).ne' hz
   have hdK (u : ℝ) (hu : u ∈ Set.Ico (0 : ℝ) 1) :
       HasDerivAt K (K' u) u := by
     have hcell (i : Ω) : HasDerivAt
@@ -115,12 +129,7 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
       by_cases hz : Q i = 0
       · have hdi : d i = 0 := by simp [d, hz, hzero i hz]
         simpa [hz, hdi] using (hasDerivAt_const u (0 : ℝ))
-      · have hratio : M u i / Q i ≠ 0 :=
-          div_ne_zero (hMpos u hu i hz).ne' hz
-        have hlin : HasDerivAt (fun v => M v i / Q i) (d i / Q i) u := by
-          simpa [M] using
-            (((hasDerivAt_id u).mul_const (d i)).const_add (Q i)).div_const (Q i)
-        have hr := ((stoch_to_det.hasDerivAt_phi hratio).comp u hlin).const_mul (Q i)
+      · have hr := ((stoch_to_det.hasDerivAt_phi (hratio u hu i hz)).comp u (hlin u i)).const_mul (Q i)
         apply hr.congr_deriv
         field_simp [hz]
     simpa only [K, K'] using (HasDerivAt.fun_sum (u := Finset.univ) (fun i _ => hcell i))
@@ -131,12 +140,7 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
       by_cases hz : Q i = 0
       · have hdi : d i = 0 := by simp [d, hz, hzero i hz]
         simpa [hdi] using (hasDerivAt_const u (0 : ℝ))
-      · have hratio : M u i / Q i ≠ 0 :=
-          div_ne_zero (hMpos u hu i hz).ne' hz
-        have hlin : HasDerivAt (fun v => M v i / Q i) (d i / Q i) u := by
-          simpa [M] using
-            (((hasDerivAt_id u).mul_const (d i)).const_add (Q i)).div_const (Q i)
-        have hr := (hlin.log hratio).const_mul (d i)
+      · have hr := ((hlin u i).log (hratio u hu i hz)).const_mul (d i)
         apply hr.congr_deriv
         field_simp [hz, (hMpos u hu i hz).ne']
     simpa only [K'] using (HasDerivAt.fun_sum (u := Finset.univ) (fun i _ => hcell i))
@@ -240,34 +244,11 @@ lemma pairCharge_payment_positive (K Δ D : ℝ)
   rw [he] at hp
   linarith
 
-lemma pairCharge_payment_bound (K Δ D : ℝ) (hD : 0 < D)
+lemma pairCharge_payment_bound (K Δ D : ℝ)
     (hpay : ∀ τ : ℝ, τ * Δ ≤ K + τ^2 * D) : Δ^2 ≤ 4 * K * D := by
-  have hp := hpay (Δ / (2 * D))
-  have hm := mul_le_mul_of_nonneg_right hp (show 0 ≤ 4 * D by positivity)
-  have hl : (Δ / (2 * D) * Δ) * (4 * D) = 2 * Δ^2 := by
-    field_simp [hD.ne']
-    ring
-  have hr : (K + (Δ / (2 * D))^2 * D) * (4 * D) = 4 * K * D + Δ^2 := by
-    field_simp [hD.ne']
-    ring
-  rw [hl, hr] at hm
-  linarith
-
-lemma pairCharge_covariance_raw {Ω : Type*} [Fintype Ω]
-    (M A B : Ω → ℝ) (hMt : ∑ i, M i = 1) :
-    (∑ i, M i * (A i - ∑ j, M j * A j) * (B i - ∑ j, M j * B j)) =
-      (∑ i, M i * A i * B i) - (∑ i, M i * A i) * (∑ i, M i * B i) := by
-  let a := ∑ i, M i * A i
-  let b := ∑ i, M i * B i
-  have he (i : Ω) : M i * (A i - a) * (B i - b) =
-      M i * A i * B i - b * (M i * A i) - a * (M i * B i) + a * b * M i := by ring
-  change (∑ i, M i * (A i - a) * (B i - b)) = _
-  simp_rw [he]
-  rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib]
-  simp only [← Finset.mul_sum, hMt, mul_one]
-  change (∑ i, M i * A i * B i) - b * a - a * b + a * b =
-    (∑ i, M i * A i * B i) - a * b
-  ring
+  have h := discrim_le_zero (a := D) (b := -Δ) (c := K) (fun x => by nlinarith [hpay x])
+  unfold discrim at h
+  nlinarith [h]
 
 /-- Exact variance polynomial for A+uB when B has equal endpoint means. -/
 lemma pairCharge_variance_linear_field {Ω : Type*} [Fintype Ω]
@@ -428,29 +409,10 @@ lemma pairCharge_entropy_variance_bound {Ω : Type*} [Fintype Ω]
   let K := ∑ i, Q i * stoch_to_det.phi (P i / Q i)
   let D := (∑ i, Q i * (F i - ∑ j, Q j * F j)^2) / 3 +
     (∑ i, P i * (F i - ∑ j, P j * F j)^2) / 6 + Δ^2 / 12
-  have hVQ : 0 ≤ ∑ i, Q i * (F i - ∑ j, Q j * F j)^2 :=
-    Finset.sum_nonneg fun i _ => mul_nonneg (hQ i) (sq_nonneg _)
-  have hVP : 0 ≤ ∑ i, P i * (F i - ∑ j, P j * F j)^2 :=
-    Finset.sum_nonneg fun i _ => mul_nonneg (hP i) (sq_nonneg _)
-  have hD : 0 ≤ D := by dsimp [D]; positivity
-  by_cases hz : D = 0
-  · have hΔ : Δ^2 = 0 := by dsimp [D] at hz; nlinarith [sq_nonneg Δ]
-    change Δ^2 ≤ 4 * K * D
-    rw [hz, hΔ]
-    simp
-  · have hDp : 0 < D := lt_of_le_of_ne hD (Ne.symm hz)
-    have hp := pairCharge_entropy_variance_affine P Q F hP hQ hzero hPt hQt (Δ / (2 * D))
-    change Δ / (2 * D) * Δ ≤ K + (Δ / (2 * D))^2 * D at hp
-    have hm := mul_le_mul_of_nonneg_right hp (show 0 ≤ 4 * D by positivity)
-    have hleft : (Δ / (2 * D) * Δ) * (4 * D) = 2 * Δ^2 := by
-      field_simp [hz]
-      ring
-    have hright : (K + (Δ / (2 * D))^2 * D) * (4 * D) = 4 * K * D + Δ^2 := by
-      field_simp [hz]
-      ring
-    rw [hleft, hright] at hm
-    change Δ^2 ≤ 4 * K * D
-    linarith
+  apply pairCharge_payment_bound K Δ D
+  intro τ
+  exact pairCharge_entropy_variance_affine P Q F hP hQ hzero hPt hQt τ
+
 
 /-- The fixed one-quarter information floor, on all common supports. -/
 lemma pairCharge_quarter_floor {S : Finset (X × Y)} {w P R : Law X Y}

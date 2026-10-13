@@ -486,7 +486,7 @@ lemma pairCharge_residual_information {P : Law X Y} (hP : stoch_to_det.IsPMF P)
   have hr : 0 < residual := pairCharge_payment_positive (I P) gap residual hpay hg
   refine ⟨hr,?_⟩
   apply (div_le_iff₀ (show 0 < 4*residual by positivity)).2
-  have hp := pairCharge_payment_bound (I P) gap residual hr hpay
+  have hp := pairCharge_payment_bound (I P) gap residual hpay
   nlinarith only [hp]
 
 -- Actual averaged contact covariance.
@@ -504,7 +504,7 @@ lemma pairCharge_E_HC_split (P : Law X Y) (u DX PX : X → ℝ) (v DY PY : Y →
       congr 1
       funext z
       ring
-    _ = _ := contact_q_E_add _ _ _
+    _ = _ := contact_E_add _ _ _
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_E_FC_split (P : Law X Y) (H L C : X × Y → ℝ) :
@@ -515,7 +515,7 @@ lemma pairCharge_E_FC_split (P : Law X Y) (H L C : X × Y → ℝ) :
       congr 1
       funext z
       ring
-    _ = _ := by rw [contact_q_E_add, pairCharge_E_div]
+    _ = _ := by rw [contact_E_add, pairCharge_E_div]
 
 /-- The actual averaged HC covariance, with the four defect fields specified
 by their conditional expectation equations. -/

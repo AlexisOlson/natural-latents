@@ -234,11 +234,11 @@ lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
     (∀ z ∈ MarginalRectangle S, Cop z = C z) ∧ B d d = n at hb
   have huX : E P (fun z => u.1 z.1) = 0 := by
     dsimp [u]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).1]
     ring
   have huY : E P (fun z => u.2 z.2) = 0 := by
     dsimp [u]
-    rw [contact_q_E_add, contact_q_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
+    rw [contact_E_add, contact_E_const hpair.2.1.1, (pairCharge_mean_UV hpair).2]
     ring
   have hKu := hmean u huX huY
   have hdX : E P (fun z => d.1 z.1) = 0 := by
@@ -252,11 +252,11 @@ lemma pairCharge_raw_LC_identity {S : Finset (X × Y)} {w P R : Law X Y}
   have hKd := hmean d hdX hdY
   have hpX : E P (fun z => p.1 z.1) = 0 := by
     change E P (fun z => d.1 z.1 + (K d).1 z.1) = 0
-    rw [contact_q_E_add, hdX, hKd.1]
+    rw [contact_E_add, hdX, hKd.1]
     ring
   have hpY : E P (fun z => p.2 z.2) = 0 := by
     change E P (fun z => d.2 z.2 + (K d).2 z.2) = 0
-    rw [contact_q_E_add, hdY, hKd.2]
+    rw [contact_E_add, hdY, hKd.2]
     ring
   have hL (z : X × Y) : L z = u.1 z.1 + u.2 z.2 := by
     dsimp [L, u, pairCharge_rawL]
@@ -482,12 +482,12 @@ lemma pairCharge_raw_C_means {S : Finset (X × Y)} {w P R : Law X Y}
     rw [pairCharge_cond_Y_mean hpair.2.1.1, hDX]
   have hs : s P R = A0 P R + B0 P R := rfl
   constructor
-  · simp only [C, contact_q_E_add, contact_q_E_sub, pairCharge_E_div, contact_q_E_const hpair.2.1.1,
+  · simp only [C, contact_E_add, contact_q_E_sub, pairCharge_E_div, contact_E_const hpair.2.1.1,
       hDX, hDY, hPX, hPY]
     field_simp [(contact_moments hpair).s_pos.ne']
     linarith [hs]
-  · simp only [C, contact_q_E_add, contact_q_E_sub, pairCharge_E_div,
-      contact_q_E_const (pairCharge_product_isPMF hpair.2.1.1),
+  · simp only [C, contact_E_add, contact_q_E_sub, pairCharge_E_div,
+      contact_E_const (pairCharge_product_isPMF hpair.2.1.1),
       pairCharge_E_product_fst hpair.2.1.1, pairCharge_E_product_snd hpair.2.1.1,
       hDX, hDY, hPX, hPY]
     field_simp [(contact_moments hpair).s_pos.ne']
@@ -512,7 +512,7 @@ lemma pairCharge_V_reverse_scaled {S : Finset (X × Y)} {w P R : Law X Y}
 lemma pairCharge_E_reverse_fst {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (F : X → ℝ) :
     E R (fun z => F z.1) = E P (fun z => (f P R z.1)^3 * F z.1) := by
-  rw [contact_q_E_fst R F, contact_q_E_fst P (fun x => (f P R x)^3 * F x)]
+  rw [contact_E_fst R F, contact_E_fst P (fun x => (f P R x)^3 * F x)]
   apply Finset.sum_congr rfl
   intro x _
   rw [← contact_f_cube hpair x]
@@ -521,7 +521,7 @@ lemma pairCharge_E_reverse_fst {S : Finset (X × Y)} {w P R : Law X Y}
 lemma pairCharge_E_reverse_snd {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (G : Y → ℝ) :
     E R (fun z => G z.2) = E P (fun z => (g P R z.2)^3 * G z.2) := by
-  rw [contact_q_E_snd R G, contact_q_E_snd P (fun y => (g P R y)^3 * G y)]
+  rw [contact_E_snd R G, contact_E_snd P (fun y => (g P R y)^3 * G y)]
   apply Finset.sum_congr rfl
   intro y _
   rw [← contact_g_cube hpair y]
@@ -687,7 +687,7 @@ lemma pairCharge_omega_X_reverse {S : Finset (X × Y)} {w P R : Law X Y}
         funext z
         unfold g
         ring
-      _ = _ := contact_q_E_add _ _ _
+      _ = _ := contact_E_add _ _ _
   linarith only [hreverse, hbase, hexpand]
 
 lemma pairCharge_omega_Y_reverse {S : Finset (X × Y)} {w P R : Law X Y}
@@ -742,7 +742,7 @@ lemma pairCharge_omega_Y_reverse {S : Finset (X × Y)} {w P R : Law X Y}
         funext z
         unfold f
         ring
-      _ = _ := contact_q_E_add _ _ _
+      _ = _ := contact_E_add _ _ _
   linarith only [hreverse, hbase', hexpand]
 
 lemma pairCharge_U_conditional_identity {S : Finset (X × Y)} {w P R : Law X Y}
@@ -897,27 +897,7 @@ lemma pairCharge_H_additive_expectation (P : Law X Y) (u F : X → ℝ) (v G : Y
       (u z.1 * v z.2 * F z.1 + u z.1 * v z.2 * G z.2) / c ^ 2 -
         u z.1 * v z.2 / c := by
     field_simp [hc]
-  simp only [hpoint, contact_q_E_sub, pairCharge_E_div, contact_q_E_add]
-
-lemma pairCharge_E_product_three_fst (P : Law X Y) (u F : X → ℝ) (v : Y → ℝ) :
-    E (productLaw P) (fun z => u z.1 * v z.2 * F z.1) =
-      E P (fun z => u z.1 * F z.1) * E P (fun z => v z.2) := by
-  calc
-    _ = E (productLaw P) (fun z => (u z.1 * F z.1) * v z.2) := by
-      congr 1
-      funext z
-      ring
-    _ = _ := pairCharge_E_product P (fun x => u x * F x) v
-
-lemma pairCharge_E_product_three_snd (P : Law X Y) (u : X → ℝ) (v G : Y → ℝ) :
-    E (productLaw P) (fun z => u z.1 * v z.2 * G z.2) =
-      E P (fun z => u z.1) * E P (fun z => v z.2 * G z.2) := by
-  calc
-    _ = E (productLaw P) (fun z => u z.1 * (v z.2 * G z.2)) := by
-      congr 1
-      funext z
-      ring
-    _ = _ := pairCharge_E_product P u (fun y => v y * G y)
+  simp only [hpoint, contact_q_E_sub, pairCharge_E_div, contact_E_add]
 
 lemma pairCharge_H_additive_product (P : Law X Y) (u F : X → ℝ) (v G : Y → ℝ)
     (c : ℝ) (hc : c ≠ 0) :
@@ -925,8 +905,14 @@ lemma pairCharge_H_additive_product (P : Law X Y) (u F : X → ℝ) (v G : Y →
       (E P (fun z => u z.1 * F z.1) * E P (fun z => v z.2) +
         E P (fun z => u z.1) * E P (fun z => v z.2 * G z.2)) / c ^ 2 -
           E P (fun z => u z.1) * E P (fun z => v z.2) / c := by
-  rw [pairCharge_H_additive_expectation _ _ _ _ _ _ hc,
-    pairCharge_E_product_three_fst, pairCharge_E_product_three_snd, pairCharge_E_product]
+  have hf : (fun z : X × Y => u z.1 * v z.2 * F z.1) =
+      (fun z => (u z.1 * F z.1) * v z.2) := by funext z; ring
+  have hg : (fun z : X × Y => u z.1 * v z.2 * G z.2) =
+      (fun z => u z.1 * (v z.2 * G z.2)) := by funext z; ring
+  rw [pairCharge_H_additive_expectation _ _ _ _ _ _ hc, hf, hg,
+    pairCharge_E_product P (fun x => u x * F x) v,
+    pairCharge_E_product P u (fun y => v y * G y), pairCharge_E_product]
+
 
 /-- The unaveraged contact endpoint for `H` and `B0`. -/
 lemma pairCharge_HB0_joint {S : Finset (X × Y)} {w P R : Law X Y}
@@ -1126,35 +1112,16 @@ lemma pairCharge_E_cauchy {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F G : X × Y → ℝ) :
     (E P (fun z => F z*G z))^2 ≤
       E P (fun z => (F z)^2)*E P (fun z => (G z)^2) := by
-  let a := E P (fun z => (F z)^2)
-  let c := E P (fun z => F z*G z)
-  let b := E P (fun z => (G z)^2)
-  have ha : 0 ≤ a := contact_E_nonneg hP _ (fun _ => sq_nonneg _)
-  by_cases haz : a = 0
-  · have hcz : c = 0 := by
-      apply Finset.sum_eq_zero
-      intro z _
-      by_cases hpz : P z = 0
-      · simp [hpz]
-      · have hz : 0 < P z := lt_of_le_of_ne (hP.nonneg z) (Ne.symm hpz)
-        have hF := contact_weighted_sq_zero hP F haz hz
-        simp [hF]
-    change c^2 ≤ a*b
-    rw [hcz,haz]
-    norm_num
-  · have hap : 0 < a := lt_of_le_of_ne ha (Ne.symm haz)
-    have hn := contact_E_nonneg hP (fun z => (a*G z-c*F z)^2) (fun _ => sq_nonneg _)
-    have hid : E P (fun z => (a*G z-c*F z)^2) = a^2*b-2*a*c*c+c^2*a := by
-      calc
-        _ = E P (fun z => (a^2*(G z)^2-2*a*c*(F z*G z))+c^2*(F z)^2) := by
-          congr 1
-          funext z
-          ring
-        _ = _ := by simp only [contact_q_E_add,contact_q_E_sub,contact_q_E_scale];rfl
-    rw [hid] at hn
-    change c^2 ≤ a*b
-    apply (mul_le_mul_iff_of_pos_left hap).mp
-    nlinarith only [hn]
+  have h := Finset.sum_mul_sq_le_sq_mul_sq Finset.univ (fun z => Real.sqrt (P z) * F z)
+    (fun z => Real.sqrt (P z) * G z)
+  have e1 : ∀ z, Real.sqrt (P z) * F z * (Real.sqrt (P z) * G z) =
+      P z * (F z * G z) := fun z => by
+    rw [show Real.sqrt (P z) * F z * (Real.sqrt (P z) * G z) =
+      (Real.sqrt (P z) * Real.sqrt (P z)) * (F z * G z) by ring,
+      Real.mul_self_sqrt (hP.nonneg z)]
+  have e2 : ∀ (H : X × Y → ℝ) z, (Real.sqrt (P z) * H z)^2 =
+      P z * (H z)^2 := fun H z => by rw [mul_pow, Real.sq_sqrt (hP.nonneg z)]
+  simpa only [E, e1, e2] using h
 
 end
 

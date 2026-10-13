@@ -303,19 +303,6 @@ lemma contact_upper_separation {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
 
 /- Finite expectation algebra used only by the contact quartic. -/
 omit [DecidableEq X] [DecidableEq Y] in
-lemma contact_q_E_const {P : Law X Y} (hP : stoch_to_det.IsPMF P) (a : ℝ) :
-    E P (fun _ => a) = a := by
-  change (∑ z, P z * a) = a
-  rw [← Finset.sum_mul]
-  have ht : (∑ z, P z) = 1 := hP.total
-  rw [ht, one_mul]
-
-omit [DecidableEq X] [DecidableEq Y] in
-lemma contact_q_E_add (P : Law X Y) (F G : X × Y → ℝ) :
-    E P (fun z => F z + G z) = E P F + E P G := by
-  simp only [E, mul_add, Finset.sum_add_distrib]
-
-omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_q_E_sub (P : Law X Y) (F G : X × Y → ℝ) :
     E P (fun z => F z - G z) = E P F - E P G := by
   simp only [E, mul_sub, Finset.sum_sub_distrib]
@@ -326,16 +313,6 @@ lemma contact_q_E_scale (P : Law X Y) (a : ℝ) (F : X × Y → ℝ) :
   simp only [E]
   simp_rw [show ∀ z, P z * (a * F z) = a * (P z * F z) by intro z; ring]
   exact (Finset.mul_sum _ _ _).symm
-
-omit [DecidableEq Y] in
-lemma contact_q_E_fst (P : Law X Y) (F : X → ℝ) :
-    E P (fun z => F z.1) = ∑ x, stoch_to_det.mX P x * F x := by
-  exact (stoch_to_det.sum_push_mul Prod.fst P F).symm
-
-omit [DecidableEq X] in
-lemma contact_q_E_snd (P : Law X Y) (G : Y → ℝ) :
-    E P (fun z => G z.2) = ∑ y, stoch_to_det.mY P y * G y := by
-  exact (stoch_to_det.sum_push_mul Prod.snd P G).symm
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_q_E_shift_prod {P : Law X Y} (hP : stoch_to_det.IsPMF P)
@@ -348,8 +325,8 @@ lemma contact_q_E_shift_prod {P : Law X Y} (hP : stoch_to_det.IsPMF P)
       funext z
       ring
     _ = _ := by
-      rw [contact_q_E_add, contact_q_E_add, contact_q_E_add, contact_q_E_scale, contact_q_E_scale,
-        contact_q_E_const hP]
+      rw [contact_E_add, contact_E_add, contact_E_add, contact_q_E_scale, contact_q_E_scale,
+        contact_E_const hP]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_q_E_shift_sq {P : Law X Y} (hP : stoch_to_det.IsPMF P)
@@ -373,7 +350,7 @@ lemma contact_q_mixed_moments {P R : Law X Y}
     E P (fun z => f P R z.1 * (g P R z.2)^2) =
       E P (fun z => (f P R z.1)^2) := by
   constructor
-  · rw [contact_q_E_snd P (fun y => (g P R y)^2)]
+  · rw [contact_E_snd P (fun y => (g P R y)^2)]
     unfold E
     rw [Fintype.sum_prod_type, Finset.sum_comm]
     apply Finset.sum_congr rfl
@@ -381,7 +358,7 @@ lemma contact_q_mixed_moments {P R : Law X Y}
     simp_rw [← mul_assoc]
     rw [← Finset.sum_mul, hcond_f2]
     ring
-  · rw [contact_q_E_fst P (fun x => (f P R x)^2)]
+  · rw [contact_E_fst P (fun x => (f P R x)^2)]
     unfold E
     rw [Fintype.sum_prod_type]
     apply Finset.sum_congr rfl
@@ -427,7 +404,7 @@ lemma contact_quartic {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
         rw [hf, hg]
         ring
       _ = _ := by
-        simp only [contact_q_E_add, contact_q_E_sub, contact_q_E_scale, contact_q_E_const hP]
+        simp only [contact_E_add, contact_q_E_sub, contact_q_E_scale, contact_E_const hP]
   have huv : E P (fun z => U P R z.1 * V P R z.2) =
       E P (fun z => f P R z.1 * g P R z.2) -
       E P (fun z => f P R z.1) - E P (fun z => g P R z.2) + 1 := by
@@ -437,7 +414,7 @@ lemma contact_quartic {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
         funext z
         rw [hf, hg]
         ring
-      _ = _ := by rw [contact_q_E_add, contact_q_E_sub, contact_q_E_sub, contact_q_E_const hP]
+      _ = _ := by rw [contact_E_add, contact_q_E_sub, contact_q_E_sub, contact_E_const hP]
   rw [hm.1, hm.2, h22, hf2, hg2] at hj
   rw [hj, huv]
   unfold s A0 B0
@@ -455,20 +432,20 @@ lemma contact_J_bound {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
   have hU : E P (fun z => U P R z.1) = -A0 P R := by
     have he : E P (fun z => f P R z.1) = E P (fun z => U P R z.1) + 1 := by
       change E P (fun z => U P R z.1 + 1) = _
-      rw [contact_q_E_add, contact_q_E_const hP]
+      rw [contact_E_add, contact_E_const hP]
     unfold A0
     linarith
   have hV : E P (fun z => V P R z.2) = -B0 P R := by
     have he : E P (fun z => g P R z.2) = E P (fun z => V P R z.2) + 1 := by
       change E P (fun z => V P R z.2 + 1) = _
-      rw [contact_q_E_add, contact_q_E_const hP]
+      rw [contact_E_add, contact_E_const hP]
     unfold B0
     linarith
   have hF : E P (fun z => U P R z.1 + A0 P R) = 0 := by
-    rw [contact_q_E_add, contact_q_E_const hP, hU]
+    rw [contact_E_add, contact_E_const hP, hU]
     ring
   have hG : E P (fun z => V P R z.2 + B0 P R) = 0 := by
-    rw [contact_q_E_add, contact_q_E_const hP, hV]
+    rw [contact_E_add, contact_E_const hP, hV]
     ring
   have hh := hhessian (fun x => U P R x + A0 P R) (fun y => V P R y + B0 P R) hF hG
   rw [contact_q_E_shift_prod hP, contact_q_E_shift_sq hP, contact_q_E_shift_sq hP,
