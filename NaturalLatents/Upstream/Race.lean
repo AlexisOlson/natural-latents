@@ -328,6 +328,66 @@ private lemma map_losing_scaled_excess
     _ = (∏ i : {i : κ // i ≠ a}, d i) •
         weightedLosingExcessLaw t a := hscaled
 
+lemma strictClockWin_measurableSet
+    {κ : Type} [Fintype κ] [DecidableEq κ]
+    (t : κ → ℝ) (a : κ) :
+    MeasurableSet {E : κ → ℝ | strictClockWin t a E} := by
+  unfold strictClockWin
+  measurability
+
+/-- Reassemble a distinguished clock and the remaining coordinates into one
+full clock vector. -/
+private noncomputable def winnerClockJoin
+    {κ : Type} [DecidableEq κ] (a : κ)
+    (sr : ℝ × ({i : κ // i ≠ a} → ℝ)) : κ → ℝ :=
+  fun i => if h : i = a then sr.1 else sr.2 ⟨i, h⟩
+
+private lemma winnerClockJoin_measurable
+    {κ : Type} [Fintype κ] [DecidableEq κ] (a : κ) :
+    Measurable (winnerClockJoin a) := by
+  apply measurable_pi_lambda
+  intro i
+  by_cases hi : i = a
+  · simp only [winnerClockJoin, hi, dite_true]
+    exact measurable_fst
+  · simp only [winnerClockJoin, hi, dite_false]
+    exact (measurable_pi_apply (⟨i, hi⟩ : {j : κ // j ≠ a})).comp measurable_snd
+
+private lemma clockReindex_law
+    {κ : Type} [Fintype κ] [DecidableEq κ] (a : κ) :
+    let e : Option {i : κ // i ≠ a} ≃ κ := Equiv.optionSubtypeNe a
+    let f := (MeasurableEquiv.piOptionEquivProd
+      (fun _ : Option {i : κ // i ≠ a} => ℝ)).symm
+    let g := MeasurableEquiv.piCongrLeft (fun _ : κ => ℝ) e
+    let q := (Measure.pi (fun _ : {i : κ // i ≠ a} => expMeasure 1)).prod
+      (expMeasure 1)
+    Measure.map (g ∘ f) q = clockLaw κ := by
+  let : IsProbabilityMeasure (expMeasure 1) :=
+    isProbabilityMeasure_expMeasure zero_lt_one
+  let e : Option {i : κ // i ≠ a} ≃ κ := Equiv.optionSubtypeNe a
+  let f := (MeasurableEquiv.piOptionEquivProd
+    (fun _ : Option {i : κ // i ≠ a} => ℝ)).symm
+  let g := MeasurableEquiv.piCongrLeft (fun _ : κ => ℝ) e
+  let q := (Measure.pi (fun _ : {i : κ // i ≠ a} => expMeasure 1)).prod
+    (expMeasure 1)
+  have hfirst : Measure.map f q =
+      Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1) := by
+    dsimp [f, q]
+    exact Measure.pi_map_piOptionEquivProd
+      (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)
+  have hsecond : Measure.map g
+      (Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)) =
+      Measure.pi (fun _ : κ => expMeasure 1) := by
+    dsimp [g]
+    simpa [e] using Measure.pi_map_piCongrLeft e
+      (fun _ : κ => expMeasure 1)
+  dsimp only
+  unfold clockLaw
+  calc
+    Measure.map (g ∘ f) q = Measure.map g (Measure.map f q) :=
+      (Measure.map_map g.measurable f.measurable).symm
+    _ = _ := by rw [hfirst, hsecond]
+
 private lemma map_eval_restrict_strictClockWin
     {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
     (t : κ → ℝ) (ht : ∀ i, 0 < t i) (htotal : ∑ i, t i = 1)
@@ -345,28 +405,10 @@ private lemma map_eval_restrict_strictClockWin
   let g := MeasurableEquiv.piCongrLeft (fun _ : κ => ℝ) e
   let q := (Measure.pi (fun _ : {i : κ // i ≠ a} => expMeasure 1)).prod
     (expMeasure 1)
-  have hfirst :
-      Measure.map f q =
-        Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1) := by
-    dsimp [f, q]
-    exact Measure.pi_map_piOptionEquivProd
-      (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)
-  have hsecond :
-      Measure.map g
-          (Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)) =
-        Measure.pi (fun _ : κ => expMeasure 1) := by
-    dsimp [g]
-    simpa [e] using Measure.pi_map_piCongrLeft e
-      (fun _ : κ => expMeasure 1)
   have hmap : Measure.map (g ∘ f) q =
       Measure.pi (fun _ : κ => expMeasure 1) := by
-    calc
-      Measure.map (g ∘ f) q = Measure.map g (Measure.map f q) :=
-        (Measure.map_map g.measurable f.measurable).symm
-      _ = _ := by rw [hfirst, hsecond]
-  have hwin : MeasurableSet {E : κ → ℝ | strictClockWin t a E} := by
-    unfold strictClockWin
-    measurability
+    simpa [clockLaw, e, f, g, q] using clockReindex_law a
+  have hwin := strictClockWin_measurableSet t a
   have hcoord (xy : ({i : κ // i ≠ a} → ℝ) × ℝ) :
       (g (f xy)) a = xy.2 := by
     have hf_pair := (MeasurableEquiv.piOptionEquivProd
@@ -508,21 +550,6 @@ private lemma map_eval_restrict_strictClockWin
       ← withDensity_apply _ hs]
   rw [hclock, expMeasure_one_tilt (ht a)]
 
-private noncomputable def insertWinnerZero
-    {κ : Type} [DecidableEq κ] (a : κ)
-    (r : {i : κ // i ≠ a} → ℝ) : κ → ℝ :=
-  fun i => if h : i = a then 0 else r ⟨i, h⟩
-
-private lemma insertWinnerZero_measurable
-    {κ : Type} [Fintype κ] [DecidableEq κ] (a : κ) :
-    Measurable (insertWinnerZero a) := by
-  apply measurable_pi_lambda
-  intro i
-  by_cases h : i = a
-  · simp [insertWinnerZero, h]
-  · simpa [insertWinnerZero, h] using
-      (measurable_pi_apply (⟨i, h⟩ : {j : κ // j ≠ a}))
-
 /- On a fixed strict-winner cell, the scaled minimum has law
 `t_a • Exp(1)` and is independent of the full excess vector. -/
 private theorem clock_min_excess_restrict_factorization
@@ -534,7 +561,7 @@ private theorem clock_min_excess_restrict_factorization
           (E a / t a, fun i => E i / t i - E a / t a))
         ((clockLaw κ).restrict {E | strictClockWin t a E}) =
       (ENNReal.ofReal (t a) • expMeasure 1).prod
-        (Measure.map (insertWinnerZero a) (weightedLosingExcessLaw t a)) := by
+        (Measure.map (fun r => winnerClockJoin a (0, r)) (weightedLosingExcessLaw t a)) := by
   let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
   let (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
@@ -550,26 +577,9 @@ private theorem clock_min_excess_restrict_factorization
   let J : (({i : κ // i ≠ a} → ℝ) × ℝ) → ℝ × (κ → ℝ) :=
     fun xy =>
       (xy.2 / t a,
-        insertWinnerZero a (fun i => xy.1 i / t i.1 - xy.2 / t a))
-  have hfirst :
-      Measure.map f q =
-        Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1) := by
-    dsimp [f, q, loseμ]
-    exact Measure.pi_map_piOptionEquivProd
-      (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)
-  have hsecond :
-      Measure.map g
-          (Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)) =
-        Measure.pi (fun _ : κ => expMeasure 1) := by
-    dsimp [g]
-    simpa [e] using Measure.pi_map_piCongrLeft e
-      (fun _ : κ => expMeasure 1)
+        winnerClockJoin a (0, fun i => xy.1 i / t i.1 - xy.2 / t a))
   have hmap : Measure.map (g ∘ f) q = clockLaw κ := by
-    unfold clockLaw
-    calc
-      Measure.map (g ∘ f) q = Measure.map g (Measure.map f q) :=
-        (Measure.map_map g.measurable f.measurable).symm
-      _ = _ := by rw [hfirst, hsecond]
+    simpa [e, f, g, q, loseμ] using clockReindex_law a
   have hcoordA (xy : ({i : κ // i ≠ a} → ℝ) × ℝ) :
       (g (f xy)) a = xy.2 := by
     have hfPair := (MeasurableEquiv.piOptionEquivProd
@@ -587,9 +597,7 @@ private theorem clock_min_excess_restrict_factorization
     dsimp [g]
     rw [MeasurableEquiv.coe_piCongrLeft, Equiv.piCongrLeft_apply]
     simp [e, Equiv.optionSubtypeNe_symm_of_ne i.2, hfSome]
-  have hwin : MeasurableSet {E : κ → ℝ | strictClockWin t a E} := by
-    unfold strictClockWin
-    measurability
+  have hwin := strictClockWin_measurableSet t a
   have hP : MeasurableSet P :=
     hwin.preimage (g.measurable.comp f.measurable)
   have hsectionP (y : ℝ) :
@@ -635,7 +643,7 @@ private theorem clock_min_excess_restrict_factorization
       exact (hxi.div_const (t i.1)).sub (hy.div_const (t a))
     apply Measurable.prodMk
     · exact hy.div_const (t a)
-    · exact (insertWinnerZero_measurable a).comp hlose
+    · exact (winnerClockJoin_measurable a).comp (measurable_const.prodMk hlose)
   have horig : Measurable (fun E : κ → ℝ =>
       (E a / t a, fun i => E i / t i - E a / t a)) := by
     have hea : Measurable (fun E : κ → ℝ => E a) := measurable_pi_apply a
@@ -655,8 +663,8 @@ private theorem clock_min_excess_restrict_factorization
     · funext i
       by_cases hi : i = a
       · subst i
-        simp [J, insertWinnerZero, hcoordA]
-      · simp only [Function.comp_apply, J, insertWinnerZero, hi, dite_false]
+        simp [J, winnerClockJoin, hcoordA]
+      · simp only [Function.comp_apply, J, winnerClockJoin, hi, dite_false]
         rw [hcoordNe xy ⟨i, hi⟩, hcoordA]
   have hsplit :
       Measure.map
@@ -711,13 +719,13 @@ private theorem clock_min_excess_restrict_factorization
   rw [hsplit]
   let ρ : Measure ({i : κ // i ≠ a} → ℝ) :=
     weightedLosingExcessLaw t a
-  let embed : ({i : κ // i ≠ a} → ℝ) → κ → ℝ := insertWinnerZero a
+  let embed : ({i : κ // i ≠ a} → ℝ) → κ → ℝ := fun r => winnerClockJoin a (0, r)
   let ρfull : Measure (κ → ℝ) := Measure.map embed ρ
   have hρprob : IsProbabilityMeasure ρ := by
     dsimp [ρ, weightedLosingExcessLaw]
     infer_instance
   let : IsProbabilityMeasure ρ := hρprob
-  have hembed : Measurable embed := insertWinnerZero_measurable a
+  have hembed : Measurable embed := (winnerClockJoin_measurable a).comp (measurable_const.prodMk measurable_id)
   let : IsProbabilityMeasure ρfull := by
     dsimp [ρfull]
     exact Measure.isProbabilityMeasure_map hembed.aemeasurable
@@ -877,24 +885,6 @@ private lemma map_weightedLosingExcess_scale
   funext i
   exact map_mul_expMeasure (ht i.1)
 
-/-- Reassemble a distinguished clock and the remaining coordinates into one
-full clock vector. -/
-private noncomputable def winnerClockJoin
-    {κ : Type} [DecidableEq κ] (a : κ)
-    (sr : ℝ × ({i : κ // i ≠ a} → ℝ)) : κ → ℝ :=
-  fun i => if h : i = a then sr.1 else sr.2 ⟨i, h⟩
-
-private lemma winnerClockJoin_measurable
-    {κ : Type} [Fintype κ] [DecidableEq κ] (a : κ) :
-    Measurable (winnerClockJoin a) := by
-  apply measurable_pi_lambda
-  intro i
-  by_cases hi : i = a
-  · simp only [winnerClockJoin, hi, dite_true]
-    exact measurable_fst
-  · simp only [winnerClockJoin, hi, dite_false]
-    exact (measurable_pi_apply (⟨i, hi⟩ : {j : κ // j ≠ a})).comp measurable_snd
-
 /-- A fresh distinguished `Exp(1)` clock together with fresh iid losing
 clocks is just the original iid clock vector. -/
 private lemma winnerClockJoin_law
@@ -915,25 +905,8 @@ private lemma winnerClockJoin_law
     (fun _ : Option {i : κ // i ≠ a} => ℝ)).symm
   let g := MeasurableEquiv.piCongrLeft (fun _ : κ => ℝ) e
   let q := loseμ.prod (expMeasure 1)
-  have hfirst :
-      Measure.map f q =
-        Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1) := by
-    dsimp [f, q, loseμ]
-    exact Measure.pi_map_piOptionEquivProd
-      (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)
-  have hsecond :
-      Measure.map g
-          (Measure.pi (fun _ : Option {i : κ // i ≠ a} => expMeasure 1)) =
-        Measure.pi (fun _ : κ => expMeasure 1) := by
-    dsimp [g]
-    simpa [e] using Measure.pi_map_piCongrLeft e
-      (fun _ : κ => expMeasure 1)
   have hmap : Measure.map (g ∘ f) q = clockLaw κ := by
-    unfold clockLaw
-    calc
-      Measure.map (g ∘ f) q = Measure.map g (Measure.map f q) :=
-        (Measure.map_map g.measurable f.measurable).symm
-      _ = _ := by rw [hfirst, hsecond]
+    simpa [e, f, g, q, loseμ] using clockReindex_law a
   have hjoinSwap : winnerClockJoin a ∘ Prod.swap = g ∘ f := by
     funext xy i
     have hfPair := (MeasurableEquiv.piOptionEquivProd
@@ -1002,13 +975,13 @@ theorem winnerResidualClock_restrict_law
   let loseμ : Measure ({i : κ // i ≠ a} → ℝ) :=
     Measure.pi fun _ : {i : κ // i ≠ a} => expMeasure 1
   let A : Measure ℝ := ENNReal.ofReal (t a) • expMeasure 1
-  let embed : ({i : κ // i ≠ a} → ℝ) → κ → ℝ := insertWinnerZero a
+  let embed : ({i : κ // i ≠ a} → ℝ) → κ → ℝ := fun r => winnerClockJoin a (0, r)
   let norm : (κ → ℝ) → ℝ × (κ → ℝ) := fun E =>
     (E a / t a, fun i => E i / t i - E a / t a)
   let out : (ℝ × (κ → ℝ)) → κ → ℝ := fun sr i =>
     if i = a then sr.1 else t i * sr.2 i
-  let assemble : (ℝ × ({i : κ // i ≠ a} → ℝ)) → κ → ℝ := fun sr i =>
-    if h : i = a then sr.1 else t i * sr.2 ⟨i, h⟩
+  let assemble : (ℝ × ({i : κ // i ≠ a} → ℝ)) → κ → ℝ := fun sr =>
+    winnerClockJoin a (sr.1, fun i => t i.1 * sr.2 i)
   let loseScale : ({i : κ // i ≠ a} → ℝ) →
       ({i : κ // i ≠ a} → ℝ) := fun R i => t i.1 * R i
   let scale : (ℝ × ({i : κ // i ≠ a} → ℝ)) →
@@ -1027,21 +1000,7 @@ theorem winnerResidualClock_restrict_law
       have hmul : Measurable (fun sr : ℝ × (κ → ℝ) => t i * sr.2 i) := by
         fun_prop
       simpa only [out, hi, if_false] using hmul
-  have hembed : Measurable embed := insertWinnerZero_measurable a
-  have hassemble : Measurable assemble := by
-    apply measurable_pi_lambda
-    intro i
-    by_cases hi : i = a
-    · simpa only [assemble, hi, dite_true] using
-        (measurable_fst : Measurable
-          (fun sr : ℝ × ({j : κ // j ≠ a} → ℝ) => sr.1))
-    · have hcoord : Measurable
-          (fun sr : ℝ × ({j : κ // j ≠ a} → ℝ) => sr.2 ⟨i, hi⟩) :=
-        (measurable_pi_apply (⟨i, hi⟩ : {j : κ // j ≠ a})).comp measurable_snd
-      have hmul : Measurable
-          (fun sr : ℝ × ({j : κ // j ≠ a} → ℝ) => t i * sr.2 ⟨i, hi⟩) := by
-        fun_prop
-      simpa only [assemble, hi, dite_false] using hmul
+  have hembed : Measurable embed := (winnerClockJoin_measurable a).comp (measurable_const.prodMk measurable_id)
   have hloseScale : Measurable loseScale := by fun_prop
   have hscale : Measurable scale := measurable_id.prodMap hloseScale
   have hresidualNorm : winnerResidualClock t a = out ∘ norm := by
@@ -1056,14 +1015,10 @@ theorem winnerResidualClock_restrict_law
     funext sr i
     by_cases hi : i = a
     · subst i
-      simp [out, assemble]
-    · simp [out, assemble, embed, insertWinnerZero, hi]
+      simp [out, assemble, winnerClockJoin]
+    · simp [out, assemble, embed, winnerClockJoin, hi]
   have hassembleScale : assemble = winnerClockJoin a ∘ scale := by
-    funext sr i
-    by_cases hi : i = a
-    · subst i
-      simp [assemble, winnerClockJoin, scale]
-    · simp [assemble, winnerClockJoin, scale, loseScale, hi]
+    rfl
   let : IsProbabilityMeasure (expMeasure 1) :=
     isProbabilityMeasure_expMeasure zero_lt_one
   let (i : {i : κ // i ≠ a}) : IsProbabilityMeasure
@@ -1155,13 +1110,6 @@ lemma clockArgmin_eq_of_strictClockWin
 namespace SharedRace
 
 end SharedRace
-
-lemma strictClockWin_measurableSet
-    {κ : Type} [Fintype κ] [DecidableEq κ]
-    (t : κ → ℝ) (a : κ) :
-    MeasurableSet {E : κ → ℝ | strictClockWin t a E} := by
-  unfold strictClockWin
-  measurability
 
 private lemma strictClockWin_pairwise_disjoint
     {κ : Type} [Fintype κ] [DecidableEq κ]
