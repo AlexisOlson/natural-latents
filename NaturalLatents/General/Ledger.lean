@@ -34,36 +34,6 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
-lemma ledger_push_source {S Z G : Type*}
-    [Fintype S] [Fintype Z] [DecidableEq G]
-    {r : S → ℝ} {p : Z → ℝ} (hr : ∑ s, r s = 1) (f : Z → G) :
-    stoch_to_det.push (fun w : S × Z => f w.2) (fun w => r w.1 * p w.2) =
-      stoch_to_det.push f p := by
-  classical
-  funext c
-  simp only [stoch_to_det.push, Finset.sum_filter, Fintype.sum_prod_type]
-  calc
-    (∑ s, ∑ z, if f z = c then r s * p z else 0) =
-        ∑ s, r s * (∑ z, if f z = c then p z else 0) := by
-      apply Finset.sum_congr rfl
-      intro s _
-      rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro z _
-      by_cases hf : f z = c <;> simp [hf]
-    _ = (∑ s, r s) * (∑ z, if f z = c then p z else 0) := by
-      rw [Finset.sum_mul]
-    _ = ∑ z, if f z = c then p z else 0 := by
-      rw [hr, one_mul]
-
-lemma ledger_Hvar_source {S Z G : Type*}
-    [Fintype S] [Fintype Z] [Fintype G] [DecidableEq G]
-    {r : S → ℝ} {p : Z → ℝ} (hr : stoch_to_det.IsPMF r) (f : Z → G) :
-    stoch_to_det.Hvar (fun w : S × Z => f w.2) (fun w => r w.1 * p w.2) =
-      stoch_to_det.Hvar f p := by
-  unfold stoch_to_det.Hvar
-  rw [ledger_push_source hr.total f]
-
 lemma ledger_push_seed_slice {S Z G : Type*}
     [Fintype S] [Fintype Z] [DecidableEq S] [DecidableEq G]
     (r : S → ℝ) (k : Z → ℝ) (q : S × Z → G) (s : S) :
@@ -142,8 +112,27 @@ lemma ledger_MI_seed_source_zero {S Z K : Type*}
     change stoch_to_det.mass r * stoch_to_det.Hvar g p = stoch_to_det.Hvar g p
     rw [hr.total, one_mul]
   rw [stoch_to_det.MI_comm (stoch_to_det.product_isPMF_dom hr hp) Prod.fst (fun w => g w.2)]
+  have hsource : stoch_to_det.Hvar (fun w : S × Z => g w.2)
+      (fun w => r w.1 * p w.2) = stoch_to_det.Hvar g p := by
+    unfold stoch_to_det.Hvar
+    congr 1
+    funext c
+    simp only [stoch_to_det.push, Finset.sum_filter, Fintype.sum_prod_type]
+    calc
+      (∑ s, ∑ z, if g z = c then r s * p z else 0) =
+          ∑ s, r s * (∑ z, if g z = c then p z else 0) := by
+        apply Finset.sum_congr rfl
+        intro s _
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro z _
+        by_cases hg : g z = c <;> simp [hg]
+      _ = (∑ s, r s) * (∑ z, if g z = c then p z else 0) := by
+        rw [Finset.sum_mul]
+      _ = ∑ z, if g z = c then p z else 0 := by
+        rw [show ∑ s, r s = 1 by simpa [stoch_to_det.mass] using hr.total, one_mul]
   unfold stoch_to_det.MI
-  rw [ledger_Hvar_source hr g]
+  rw [hsource]
   unfold stoch_to_det.condH at hcond
   linarith
 
@@ -180,14 +169,6 @@ lemma ledger_calibrated_graph {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
   · rw [F.calibrated z (by simpa [stoch_to_det.support] using hz) i]
     exact p_mul_post L i z
 
-lemma ledger_MI_push {Ω Ω' Γ Δ : Type} [Fintype Ω] [Fintype Ω']
-    [DecidableEq Ω'] [Fintype Γ] [Fintype Δ] [DecidableEq Γ] [DecidableEq Δ]
-    (m : Ω → ℝ) (e : Ω → Ω') (f : Ω' → Γ) (g : Ω' → Δ) :
-    stoch_to_det.MI f g (stoch_to_det.push e m) =
-      stoch_to_det.MI (f ∘ e) (g ∘ e) m := by
-  unfold stoch_to_det.MI stoch_to_det.Hvar
-  simp only [stoch_to_det.push_push, Function.comp_def]
-
 /- Fixed-map scores and arbitrary-latent information balance. -/
 lemma ledger_detScore_coordinate_identity {γ : Type*} [Fintype γ] [DecidableEq γ]
     {p : Law X Y} (hp : stoch_to_det.IsPMF p) (A : X × Y → γ) :
@@ -217,7 +198,13 @@ lemma ledger_detScore_coordinate_identity {γ : Type*} [Fintype γ] [DecidableEq
   simp only [stoch_to_det.Hvar, stoch_to_det.mX, stoch_to_det.mY]
   ring
 
-lemma ledger_B_information {p : Law X Y} (L : FiniteLatent p) :
+lemma ledger_information_balance {p : Law X Y} (hp : stoch_to_det.IsPMF p)
+    (L : FiniteLatent p) :
+    M L - B L / 2 = Real.log 2 * (stoch_to_det.Ixy p -
+      (stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.1) L.joint +
+       stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.2) L.joint) / 2) := by
+  have hs := stoch_to_det.Latent.score_sub_Ixy hp L
+  have hb :
     stoch_to_det.condMI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.1)
         (fun v => v.2.2) L.joint +
       stoch_to_det.condMI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.2)
@@ -225,38 +212,30 @@ lemma ledger_B_information {p : Law X Y} (L : FiniteLatent p) :
     2 * stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2) L.joint -
       stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.1) L.joint -
       stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.2) L.joint := by
-  have hXY := stoch_to_det.MI_pair_left L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.2.2) (fun v => v.1)
-  have hYX := stoch_to_det.MI_pair_left L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2.2) (fun v => v.2.1) (fun v => v.1)
-  have hpairSwap :
-      stoch_to_det.MI (fun v : L.ι × (X × Y) => (v.2.2, v.2.1)) (fun v => v.1) L.joint =
-        stoch_to_det.MI (fun v : L.ι × (X × Y) => v.2) (fun v => v.1) L.joint := by
-    simpa only [Equiv.prodComm_apply, Prod.swap] using stoch_to_det.MI_equiv_left_local L.joint_isPMF
-      (fun v : L.ι × (X × Y) => v.2) (Equiv.prodComm X Y) (fun v => v.1)
-  have hZcomm := stoch_to_det.MI_comm L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2) (fun v => v.1)
-  have hXcomm := stoch_to_det.MI_comm L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.1)
-  have hYcomm := stoch_to_det.MI_comm L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2.2) (fun v => v.1)
-  have hcX := stoch_to_det.condMI_comm_local L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.1) (fun v => v.2.2)
-  have hcY := stoch_to_det.condMI_comm_local L.joint_isPMF
-    (fun v : L.ι × (X × Y) => v.2.2) (fun v => v.1) (fun v => v.2.1)
-  rw [← hcX, ← hcY]
-  rw [hpairSwap] at hYX
-  rw [hZcomm, hXcomm] at hXY
-  rw [hZcomm, hYcomm] at hYX
-  linarith only [hXY, hYX]
-
-lemma ledger_information_balance {p : Law X Y} (hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) :
-    M L - B L / 2 = Real.log 2 * (stoch_to_det.Ixy p -
-      (stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.1) L.joint +
-       stoch_to_det.MI (fun v : L.ι × (X × Y) => v.1) (fun v => v.2.2) L.joint) / 2) := by
-  have hs := stoch_to_det.Latent.score_sub_Ixy hp L
-  have hb := ledger_B_information L
+      have hXY := stoch_to_det.MI_pair_left L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.2.2) (fun v => v.1)
+      have hYX := stoch_to_det.MI_pair_left L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2.2) (fun v => v.2.1) (fun v => v.1)
+      have hpairSwap :
+          stoch_to_det.MI (fun v : L.ι × (X × Y) => (v.2.2, v.2.1)) (fun v => v.1) L.joint =
+            stoch_to_det.MI (fun v : L.ι × (X × Y) => v.2) (fun v => v.1) L.joint := by
+        simpa only [Equiv.prodComm_apply, Prod.swap] using stoch_to_det.MI_equiv_left_local L.joint_isPMF
+          (fun v : L.ι × (X × Y) => v.2) (Equiv.prodComm X Y) (fun v => v.1)
+      have hZcomm := stoch_to_det.MI_comm L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2) (fun v => v.1)
+      have hXcomm := stoch_to_det.MI_comm L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.1)
+      have hYcomm := stoch_to_det.MI_comm L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2.2) (fun v => v.1)
+      have hcX := stoch_to_det.condMI_comm_local L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.1) (fun v => v.2.2)
+      have hcY := stoch_to_det.condMI_comm_local L.joint_isPMF
+        (fun v : L.ι × (X × Y) => v.2.2) (fun v => v.1) (fun v => v.2.1)
+      rw [← hcX, ← hcY]
+      rw [hpairSwap] at hYX
+      rw [hZcomm, hXcomm] at hXY
+      rw [hZcomm, hYcomm] at hYX
+      linarith only [hXY, hYX]
   unfold stoch_to_det.Latent.score at hs
   have hbits :
       stoch_to_det.condMI (fun v : L.ι × (X × Y) => v.2.1) (fun v => v.2.2)
@@ -286,7 +265,9 @@ lemma ledger_average_MI_lower {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   have hJ : stoch_to_det.IsPMF J := stoch_to_det.product_isPMF_dom F.seed_isPMF hp
   have hcal : stoch_to_det.MI Prod.fst (fun w : L.ι × (X × Y) => g w.2) L.joint =
       stoch_to_det.MI Q G J := by
-    rw [← ledger_calibrated_graph hp L F, ledger_MI_push]
+    rw [← ledger_calibrated_graph hp L F]
+    unfold stoch_to_det.MI stoch_to_det.Hvar
+    simp only [stoch_to_det.push_push, Function.comp_def]
     rfl
   have hpair : stoch_to_det.MI (fun w => (Q w,w.1)) G J =
       stoch_to_det.MI (fun w => (w.1,Q w)) G J := by

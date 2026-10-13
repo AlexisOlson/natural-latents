@@ -8,7 +8,7 @@ namespace stoch_to_det
 
 open Finset MeasureTheory
 
-private lemma coordinate_condMI_eq_sum
+lemma coordinate_condMI_eq_sum
     {Ω Γ Δ Ξ : Type*} [Fintype Ω] [Fintype Γ] [Fintype Δ] [Fintype Ξ]
     [DecidableEq Γ] [DecidableEq Δ] [DecidableEq Ξ]
     {m : Ω → ℝ} (hm : IsPMF m) (f : Ω → Γ) (g : Ω → Δ) (h : Ω → Ξ) :

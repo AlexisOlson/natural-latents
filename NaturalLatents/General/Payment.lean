@@ -351,7 +351,7 @@ lemma payment_M_average {p : Law X Y} (L : FiniteLatent p) :
     simp only [stoch_to_det.push_push,Function.comp_def]
     rw [replica_push_id]
   unfold M
-  rw [replica_condMI_eq_sum_MI_fibers L.joint_isPMF]
+  rw [stoch_to_det.coordinate_condMI_eq_sum L.joint_isPMF]
   simp_rw [hfiber]
   rw [Finset.mul_sum]
   apply Finset.sum_congr rfl

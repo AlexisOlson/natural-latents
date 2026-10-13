@@ -50,13 +50,7 @@ omit [DecidableEq X] [DecidableEq Y] in
 lemma replica_sum_domain {p : Law X Y} (L : FiniteLatent p)
     (F : L.ι × L.ι × (X × Y) → ℝ) :
     (∑ u, F u) = ∑ i, ∑ j, ∑ z, F (i, j, z) := by
-  calc
-    (∑ u, F u) = ∑ i, ∑ u : L.ι × (X × Y), F (i, u) := by
-      rw [Fintype.sum_prod_type]
-    _ = ∑ i, ∑ j, ∑ z, F (i, j, z) := by
-      apply Finset.sum_congr rfl
-      intro i _
-      rw [Fintype.sum_prod_type]
+  simp only [Fintype.sum_prod_type]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma replica_sum_replica_second {p : Law X Y} (L : FiniteLatent p)
@@ -104,59 +98,28 @@ lemma replica_replica_isPMF {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p) :
             exact L.joint_isPMF.total
 
 open stoch_to_det in
-lemma replica_push_first {p : Law X Y} (_hp : IsPMF p) (L : FiniteLatent p) :
+lemma replica_push_first {p : Law X Y} (L : FiniteLatent p) :
     push (fun u : L.ι × L.ι × (X × Y) => (u.1, u.2.2)) (replicaJoint L) = L.joint := by
   funext v
   rcases v with ⟨i, z⟩
   unfold push
   rw [Finset.sum_filter, replica_sum_domain]
   simp only [Prod.mk.injEq]
-  have hite (a b : L.ι) (z' : X × Y) :
-      (if a = i ∧ z' = z then replicaJoint L (a, b, z') else 0) =
-        if a = i then if z' = z then replicaJoint L (a, b, z') else 0 else 0 := by
-    by_cases ha : a = i <;> by_cases hz : z' = z <;> simp [ha, hz]
-  simp_rw [hite]
+  simp_rw [ite_and]
   simp
   exact replica_sum_replica_second L i z
 
 open stoch_to_det in
-lemma replica_push_second {p : Law X Y} (_hp : IsPMF p) (L : FiniteLatent p) :
+lemma replica_push_second {p : Law X Y} (L : FiniteLatent p) :
     push (Prod.snd : L.ι × L.ι × (X × Y) → L.ι × (X × Y)) (replicaJoint L) = L.joint := by
   funext v
   rcases v with ⟨j, z⟩
   unfold push
   rw [Finset.sum_filter, replica_sum_domain]
   simp only [Prod.mk.injEq]
-  have hite (a b : L.ι) (z' : X × Y) :
-      (if b = j ∧ z' = z then replicaJoint L (a, b, z') else 0) =
-        if b = j then if z' = z then replicaJoint L (a, b, z') else 0 else 0 := by
-    by_cases hb : b = j <;> by_cases hz : z' = z <;> simp [hb, hz]
-  simp_rw [hite]
+  simp_rw [ite_and]
   simp
   exact replica_sum_replica_first L j z
-
-open stoch_to_det in
-lemma replica_condMI_eq_sum_MI_fibers
-    {A Γ Δ K : Type*} [Fintype A] [Fintype Γ] [Fintype Δ] [Fintype K]
-    [DecidableEq Γ] [DecidableEq Δ] [DecidableEq K]
-    {m : A → ℝ} (hm : IsPMF m) (f : A → Γ) (g : A → Δ) (h : A → K) :
-    condMI f g h m = ∑ k, MI f g (fun a => if h a = k then m a else 0) := by
-  let mh : K → A → ℝ := fun k a => if h a = k then m a else 0
-  have hF := Hvar_pair_eq_sum_fibers hm f h
-  have hG := Hvar_pair_eq_sum_fibers hm g h
-  have hFG := Hvar_pair_eq_sum_fibers hm (fun a => (f a, g a)) h
-  change Hvar (fun a => (f a, h a)) m = Hvar h m + ∑ k, H (push f (mh k)) at hF
-  change Hvar (fun a => (g a, h a)) m = Hvar h m + ∑ k, H (push g (mh k)) at hG
-  change Hvar (fun a => ((f a, g a), h a)) m = Hvar h m +
-    ∑ k, H (push (fun a => (f a, g a)) (mh k)) at hFG
-  have hAssoc : Hvar (fun a => (f a, g a, h a)) m =
-      Hvar (fun a => ((f a, g a), h a)) m := by
-    simpa using Hvar_equiv hm (fun a => ((f a, g a), h a))
-      (Equiv.prodAssoc Γ Δ K)
-  unfold condMI
-  rw [hF, hG, hAssoc, hFG]
-  simp only [MI, Hvar, Finset.sum_add_distrib, Finset.sum_sub_distrib]
-  ring
 
 open stoch_to_det in
 lemma replica_push_id {A : Type*} [Fintype A] [DecidableEq A] (m : A → ℝ) :
@@ -245,13 +208,7 @@ lemma replica_push_Zfiber_pair {p : Law X Y} (L : FiniteLatent p) (z : X × Y) :
   unfold push
   rw [Finset.sum_filter, replica_sum_domain]
   simp only [Prod.mk.injEq]
-  have hite (a b : L.ι) (z' : X × Y) :
-      (if a = i ∧ b = j then if z' = z then replicaJoint L (a, b, z') else 0 else 0) =
-        if a = i then if b = j then if z' = z then replicaJoint L (a, b, z')
-          else 0 else 0 else 0 := by
-    by_cases ha : a = i <;> by_cases hb : b = j <;> by_cases hz : z' = z <;>
-      simp [ha, hb, hz]
-  simp_rw [hite]
+  simp_rw [ite_and]
   simp [replicaJoint]
 
 open stoch_to_det in
@@ -293,7 +250,7 @@ open stoch_to_det in
 lemma replica_replica_markov {p : Law X Y} (hp : IsPMF p) (L : FiniteLatent p) :
     condMI (fun u : L.ι × L.ι × (X × Y) => u.1) (fun u => u.2.1)
       (fun u => u.2.2) (replicaJoint L) = 0 := by
-  rw [replica_condMI_eq_sum_MI_fibers (replica_replica_isPMF hp L)]
+  rw [stoch_to_det.coordinate_condMI_eq_sum (replica_replica_isPMF hp L)]
   exact Finset.sum_eq_zero fun z _ => replica_MI_Zfiber_zero hp L z
 
 /-- Two conditional chain rules bound one replica coordinate. -/
@@ -370,8 +327,8 @@ theorem replica_budget {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLate
   have hBY := stoch_to_det.condMI_push_source
     (fun w : L.ι × L.ι × (X × Y) => w.2)
     (fun w => w.1) (fun w => w.2.2) (fun w => w.2.1) (replicaJoint L)
-  rw [replica_push_first hp L] at hM
-  rw [replica_push_second hp L] at hBX hBY
+  rw [replica_push_first L] at hM
+  rw [replica_push_second L] at hBX hBY
   simp only [Function.comp_def] at hM hBX hBY
   change stoch_to_det.condMI (fun w => w.1) (fun w => w.2.1)
     (fun w => (w.2.2.1, w.2.2.2)) (replicaJoint L) = 0 at hmarkov

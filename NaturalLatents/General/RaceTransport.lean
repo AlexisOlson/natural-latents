@@ -63,25 +63,6 @@ lemma race_post_isPMF {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   · unfold stoch_to_det.mass post
     rw [← Finset.sum_div, L.mixture z, div_self hz]
 
-lemma race_posteriorJoint {p : Law X Y} (_hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) :
-    stoch_to_det.SharedRace.posteriorJoint p (fun z i => post L i z) =
-      stoch_to_det.push Prod.swap L.joint := by
-  funext zi
-  rcases zi with ⟨⟨x,y⟩,i⟩
-  rw [stoch_to_det.SharedRace.posteriorJoint, p_mul_post L i (x,y)]
-  unfold stoch_to_det.push
-  symm
-  apply Finset.sum_eq_single (i,(x,y))
-  · intro b hb hne
-    have hh := (Finset.mem_filter.mp hb).2
-    have he : b = (i,(x,y)) := by
-      have hs := congrArg Prod.swap hh
-      simpa using hs
-    exact (hne he).elim
-  · intro hz
-    simp at hz
-
 lemma race_clock_probability {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
     (r : κ → ℝ) (hr : stoch_to_det.IsPMF r) (hpos : ∀ i, 0 < r i) (i : κ) :
     (∫ E : κ → ℝ, (if stoch_to_det.SharedRace.clockArgmin r E = i then (1 : ℝ) else 0)
@@ -203,12 +184,29 @@ lemma race_map_calibrated {p : Law X Y} (hp : stoch_to_det.IsPMF p)
       (race_post_isPMF hp L z (by simpa [stoch_to_det.support] using hz)) (hrows z hz) i
   exact ⟨⟨w,hw,hc⟩,rfl⟩
 
-lemma race_condMI_transport {p : Law X Y} (hp : stoch_to_det.IsPMF p)
-    (L : FiniteLatent p) {Γ : Type} [Fintype Γ] [DecidableEq Γ] (g : X × Y → Γ) :
+lemma race_condMI_transport {p : Law X Y} (L : FiniteLatent p)
+    {Γ : Type} [Fintype Γ] [DecidableEq Γ] (g : X × Y → Γ) :
     stoch_to_det.condMI Prod.fst Prod.snd (fun zi : (X × Y) × L.ι => g zi.1)
         (stoch_to_det.SharedRace.posteriorJoint p (fun z i => post L i z)) =
       stoch_to_det.condMI Prod.fst Prod.snd (fun lz : L.ι × (X × Y) => g lz.2) L.joint := by
-  rw [race_posteriorJoint hp L]
+  have hposterior :
+    stoch_to_det.SharedRace.posteriorJoint p (fun z i => post L i z) =
+      stoch_to_det.push Prod.swap L.joint := by
+      funext zi
+      rcases zi with ⟨⟨x,y⟩,i⟩
+      rw [stoch_to_det.SharedRace.posteriorJoint, p_mul_post L i (x,y)]
+      unfold stoch_to_det.push
+      symm
+      apply Finset.sum_eq_single (i,(x,y))
+      · intro b hb hne
+        have hh := (Finset.mem_filter.mp hb).2
+        have he : b = (i,(x,y)) := by
+          have hs := congrArg Prod.swap hh
+          simpa using hs
+        exact (hne he).elim
+      · intro hz
+        simp at hz
+  rw [hposterior]
   have hswap :
       stoch_to_det.condMI Prod.fst Prod.snd (fun zi : (X × Y) × L.ι => g zi.1)
         (stoch_to_det.push Prod.swap L.joint) =
@@ -250,22 +248,6 @@ lemma race_condMI_coordinate_sum {p : Law X Y} (L : FiniteLatent p) :
   unfold B
   ring
 
-lemma race_h_eq {p : Law X Y} {L : FiniteLatent p} (F : CalibratedSeededFamily L)
-    (hw : F.seedLaw = fun A => ∫ G : L.ι → ℝ,
-      (if stoch_to_det.SharedRace.sharedWinner (fun z i => post L i z) G = A then (1 : ℝ) else 0)
-      ∂stoch_to_det.seedLaw L.ι) :
-    h F = Real.log 2 *
-      ((∫ G : L.ι → ℝ,
-          stoch_to_det.condH (stoch_to_det.SharedRace.sharedWinner (fun z i => post L i z) G)
-            Prod.fst p ∂stoch_to_det.seedLaw L.ι) +
-       (∫ G : L.ι → ℝ,
-          stoch_to_det.condH (stoch_to_det.SharedRace.sharedWinner (fun z i => post L i z) G)
-            Prod.snd p ∂stoch_to_det.seedLaw L.ι)) := by
-  unfold h
-  rw [hw, race_finite_expectation, integral_const_mul, integral_add]
-  · exact stoch_to_det.SharedRace.integrable_sharedWinner_code _ (fun A => stoch_to_det.condH A Prod.fst p)
-  · exact stoch_to_det.SharedRace.integrable_sharedWinner_code _ (fun A => stoch_to_det.condH A Prod.snd p)
-
 /-- The complete-map and coordinate transport needs only the single-law analytic comparison. -/
 lemma race_of_single_law {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     (L : FiniteLatent p)
@@ -301,9 +283,21 @@ lemma race_of_single_law {p : Law X Y} (hp : stoch_to_det.IsPMF p)
   change _ ≤ a * stoch_to_det.condMI Prod.fst Prod.snd
     (fun zi : (X × Y) × L.ι => zi.1.2)
       (stoch_to_det.SharedRace.posteriorJoint p (fun z i => post L i z)) + b * d L at hY
-  rw [race_condMI_transport hp L Prod.fst] at hX
-  rw [race_condMI_transport hp L Prod.snd] at hY
-  rw [race_h_eq F hw]
+  rw [race_condMI_transport L Prod.fst] at hX
+  rw [race_condMI_transport L Prod.snd] at hY
+  have hh :
+    h F = Real.log 2 *
+      ((∫ G : L.ι → ℝ,
+          stoch_to_det.condH (stoch_to_det.SharedRace.sharedWinner (fun z i => post L i z) G)
+            Prod.fst p ∂stoch_to_det.seedLaw L.ι) +
+       (∫ G : L.ι → ℝ,
+          stoch_to_det.condH (stoch_to_det.SharedRace.sharedWinner (fun z i => post L i z) G)
+            Prod.snd p ∂stoch_to_det.seedLaw L.ι)) := by
+      unfold h
+      rw [hw, race_finite_expectation, integral_const_mul, integral_add]
+      · exact stoch_to_det.SharedRace.integrable_sharedWinner_code _ (fun A => stoch_to_det.condH A Prod.fst p)
+      · exact stoch_to_det.SharedRace.integrable_sharedWinner_code _ (fun A => stoch_to_det.condH A Prod.snd p)
+  rw [hh]
   have hsum := mul_le_mul_of_nonneg_left (add_le_add hX hY) (Real.log_pos (by norm_num : (1 : ℝ) < 2)).le
   have hB := race_condMI_coordinate_sum L
   rw [← hB]
