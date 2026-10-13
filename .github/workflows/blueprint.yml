@@ -1,0 +1,105 @@
+name: blueprint
+
+on:
+  push:
+    paths:
+      - 'blueprint/**'
+      - 'NaturalLatents/**'
+      - '.github/workflows/blueprint.yml'
+  pull_request:
+    paths:
+      - 'blueprint/**'
+      - 'NaturalLatents/**'
+      - '.github/workflows/blueprint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blueprint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      LEAN_NUM_THREADS: 2
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1.6.0
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-mathlib-cache: false
+          use-github-cache: false
+      - name: Fetch root Mathlib artifacts
+        shell: bash
+        run: |
+          if pgrep -x 'lean|lake|lean.exe|lake.exe'; then exit 75; fi
+          lake exe cache get 2>&1 | tee "$RUNNER_TEMP/blueprint-root-cache.log"
+      - name: Cache root build products
+        uses: actions/cache@v5
+        with:
+          path: .lake/build
+          key: lake-build-${{ runner.os }}-${{ hashFiles('lake-manifest.json', 'lean-toolchain') }}-${{ hashFiles('NaturalLatents.lean', 'NaturalLatents/**/*.lean', 'Verify.lean') }}
+          restore-keys: |
+            lake-build-${{ runner.os }}-${{ hashFiles('lake-manifest.json', 'lean-toolchain') }}-
+      - name: Build the root library
+        shell: bash
+        run: |
+          if pgrep -x 'lean|lake|lean.exe|lake.exe'; then exit 75; fi
+          lake build 2>&1 | tee "$RUNNER_TEMP/blueprint-root-build.log"
+      - name: Fetch nested Mathlib artifacts
+        working-directory: blueprint
+        shell: bash
+        run: |
+          if pgrep -x 'lean|lake|lean.exe|lake.exe'; then exit 75; fi
+          lake exe cache get 2>&1 | tee "$RUNNER_TEMP/blueprint-nested-cache.log"
+      - name: Cache Verso build products
+        uses: actions/cache@v5
+        with:
+          path: |
+            blueprint/.lake/packages/verso/.lake/build
+            blueprint/.lake/packages/VersoBlueprint/.lake/build
+            blueprint/.lake/packages/subverso/.lake/build
+            blueprint/.lake/packages/MD4Lean/.lake/build
+            blueprint/.lake/packages/illuminate/.lake/build
+            blueprint/.lake/packages/verso-slides/.lake/build
+            blueprint/.lake/build
+          key: verso-build-${{ runner.os }}-${{ hashFiles('blueprint/lake-manifest.json', 'blueprint/lean-toolchain') }}-${{ hashFiles('blueprint/**/*.lean') }}
+          restore-keys: |
+            verso-build-${{ runner.os }}-${{ hashFiles('blueprint/lake-manifest.json', 'blueprint/lean-toolchain') }}-
+      - name: Build the nested library
+        working-directory: blueprint
+        shell: bash
+        run: |
+          if pgrep -x 'lean|lake|lean.exe|lake.exe'; then exit 75; fi
+          lake build
+      - name: Build and check the blueprint
+        working-directory: blueprint
+        shell: bash
+        run: bash -l -c 'bash scripts/ci.sh'
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: blueprint/_out/site/html-multi
+
+  deploy:
+    needs: build
+    # Pages deployment is a separate decision for the repository owner.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    concurrency: pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@v4
