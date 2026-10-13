@@ -1,2 +1,4 @@
 /.lake/
 scripts/out/
+__pycache__/
+*.pyc
