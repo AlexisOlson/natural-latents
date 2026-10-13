@@ -2,21 +2,38 @@ Natural Latents
 
 Copyright 2026 Alexis Olson. Licensed under the Apache License, Version 2.0.
 
-This repository contains code adapted from DLorell/stoch_to_det, distributed
-under the Apache License, Version 2.0:
+Portions are derived from DLorell/stoch_to_det, licensed under Apache-2.0:
 
     https://github.com/DLorell/stoch_to_det
 
 The files under NaturalLatents/Upstream/ are adapted from that project at
 revision 7b41957da9500716102cba323b3a48af0f23751c, the head of its pull
-request #6 by Jeremy Gillen (jezgillen). Each such file names its source path
-and revision in its first line and states its modifications. That revision
-includes upstream's finite-information foundation, duality, optimum existence,
-seed and race machinery, and pull request #6's shared-race, coordinate-race,
-floor and probability-table modules. The assembly in this repository follows
-pull request #6's method: powered-reference race coding with a coordinate
-ledger. The shape of the probability-table statement follows its readable
-theorem.
+request #6 by Jeremy Gillen (jezgillen). The first lines of each such file
+name its source path and that revision, summarize the changes, and say
+whether it comes from upstream's main branch, from pull request #5 as
+carried by pull request #6, or from pull request #6 itself; a Local changes
+line lists any helper lemmas the file adds, moves or re-proves, among them
+reduce_to_connected, re-proved from two one-sided component inequalities.
+That revision includes upstream's finite-information
+foundation, duality, optimum existence, seed and race machinery, and pull
+request #6's coordinate-race, powered-race-winner, contact-information and
+probability-table modules. The assembly in this repository follows pull
+request #6's method: powered-reference race coding with a coordinate ledger.
+The shape of the probability-table statement follows its readable theorem.
 
-The remaining files are the author's own work, some adapted from the author's
-earlier repository; those files state so in their first line.
+That revision also includes the shared exponential race of pull request #5 by
+Satya Benson (satchlj), which pull request #6 carries: the SharedRace/
+modules, the clock-race lemmas in Race.lean, the contact secants in
+Floor.lean, and first versions of DomFloorCore.lean and PhiBounds.lean, which
+pull request #6 revises.
+
+The remaining files are the author's own work. Together, the files under
+NaturalLatents/General/ build on the upstream definitions, which
+NaturalLatents/General/Definitions.lean imports, and most of them use those
+definitions under their upstream names in the namespace stoch_to_det. Each
+of them states in its first lines that it was first developed in the
+author's earlier repository,
+https://github.com/AlexisOlson/stochastic-to-deterministic-latents (Lean
+package StochasticToDeterministicLatents), and reorganised for this
+repository: namespace NaturalLatents.General, declarations renamed, unused
+material removed.

@@ -2,7 +2,7 @@
 
 A Lean 4 proof, depending on Mathlib only, that a deterministic natural latent is never worse than a stochastic one
 by more than a factor $`13999/2000 < 7`$: the best function of the observations has error at most $`13999/2000`$ times
-the best error of any finite stochastic latent, with both errors as defined below.
+the infimum $`\tau(p)`$ of the errors of finite stochastic latents, with both errors as defined below.
 
 ## The theorem
 
@@ -21,7 +21,8 @@ $`\Gamma = g(X,Y)`$. Its error is
 I(X;Y \mid \Gamma) + H(\Gamma \mid X) + H(\Gamma \mid Y),
 ```
 
-and $`T(p)`$ is the minimum over all such functions. All quantities are in bits. This repository proves
+and $`T(p)`$ is the minimum over all such functions. All quantities are in bits; $`T`$ and $`\tau`$ change units by
+the same factor, so their ratio has no unit. This repository proves
 
 ```math
 T(p) \le \tfrac{13999}{2000}\,\tau(p) \quad\text{for every finite law } p, \qquad \tfrac{13999}{2000} = 6.9995 < 7.
@@ -29,7 +30,10 @@ T(p) \le \tfrac{13999}{2000}\,\tau(p) \quad\text{for every finite law } p, \qqua
 
 Equivalently, for each law $`p`$ there is one deterministic code $`g`$, depending on $`p`$ alone, whose error is at
 most $`\tfrac{13999}{2000}`$ times the error of every finite stochastic latent of $`p`$. No independence or positivity
-assumption is made on $`p`$. The constant is not claimed to be the least possible.
+assumption is made on $`p`$. The written proof gives the exact constant $`5249623/750000 \approx 6.999497`$, and the
+Lean theorems use its rounding up; neither constant is claimed to be the least possible. A first version of this
+repository proved the smaller constant $`2789/400 = 6.9725`$ with a different pair charge; it remains in the commit
+history.
 
 ## The formal statements
 
@@ -43,74 +47,97 @@ proofs:
 - `ScoreClaim`: there is a real $`c`$ with $`0 \le c < 7`$ such that `T p ≤ c * tau p` for every finite law $`p`$.
 
 [NaturalLatents/Main.lean](NaturalLatents/Main.lean) proves `NaturalLatents.table : TableClaim` and
-`NaturalLatents.score : ScoreClaim`, both with $`c = 13999/2000`$.
+`NaturalLatents.score : ScoreClaim`, both with $`c = 13999/2000`$; `NaturalLatents.T_le_mul_tau` states
+`T p ≤ (13999 / 2000) * tau p` directly.
 
 ## The idea of the proof
 
-Work in nats, and first suppose that the support of $`p`$ is connected, as a bipartite graph between the values of
-$`X`$ and the values of $`Y`$. Then `exists_setup_of_connected` constructs a finite stochastic latent $`L`$ that
-attains $`\tau(p)`$ and has two further properties: its components are distinct contacts of one feasible kernel (a
-dual object from the optimality conditions), and every posterior probability $`\Pr[L = i \mid (X,Y) = z]`$ is
-positive for $`z`$ in the support. Split the error of $`L`$ into the two budgets $`M = I(X;Y \mid L)`$ and
-$`B = I(L;X \mid Y) + I(L;Y \mid X)`$, so that $`M + B = \tau(p)`$. The proof chains four inequalities, each a theorem
-in `NaturalLatents/General/`.
+Work in nats on a law whose support is connected, as a bipartite graph between the values of $`X`$ and $`Y`$. The setup
+(`exists_setup_of_connected`) gives a latent $`L`$ that attains $`\tau(p)`$, whose components are distinct contacts of
+one feasible kernel (a dual object from the optimality conditions), with every posterior probability
+$`\Pr[L = i \mid (X,Y) = z]`$ positive on the support. Split its error into the budgets $`M = I(X;Y \mid L)`$ and
+$`B = I(L;X \mid Y) + I(L;Y \mid X)`$, so that $`M + B = \tau(p)`$, and let $`d`$ be the probability that two labels
+drawn independently from the posterior at a cell $`z \sim p`$ disagree.
 
-1. **Ledger** (`T_le_ledger`). Let $`F`$ be a probability law on maps $`g`$ from $`X \times Y`$ to the labels of
-   $`L`$ such that, at each cell $`z`$ of the support, $`g(z)`$ is distributed as the posterior of $`L`$ at $`z`$.
-   Let $`h`$ be the $`F`$-average, over the maps $`g`$, of $`H(g \mid X) + H(g \mid Y)`$ computed for each fixed
-   $`g`$. Then $`T(p) \le M - B/2 + 3h/2`$.
-2. **Race** (`exists_race`). Since the posteriors are positive, for every $`a > 1`$ an exponential race among the
-   labels gives such an $`F`$ with $`h \le aB + 2\,j(a)\,d`$. Here
-   $`d = \sum_z p(z)\bigl(1 - \sum_i \Pr[L = i \mid (X,Y) = z]^2\bigr)`$ is the probability that two labels drawn
-   independently from the posterior at a cell $`z \sim p`$ disagree, and
-   $`j(a) = a \log \Gamma(1 - 1/a) - \gamma_{\mathrm{E}}`$, with $`\gamma_{\mathrm{E}}`$ Euler's constant.
-3. **Cap** (`racePrice_lt_capC3b`). For $`a > 1`$,
-   $`j(a) < \frac{533}{648a} + \frac{241}{600a^2} + \frac{6503}{24000a^2(a-1)}`$; at $`a = 211/45`$ the right side is
-   below $`u = 3941/20000`$.
-4. **Payment** (`mismatch_payment`). For this latent, $`\gamma\,d \le (1+2\beta)M + \beta B`$ at
-   $`(\beta, \gamma) = (23 / 250, 7/60)`$. The proof combines three separately proved bounds: an affinity bound for each
-   pair of components, a budget for two independent posterior replicas, and a charge on pairs of contacts of one
-   feasible kernel.
+1. **Ledger and race.** An exponential race among the labels, with exponent $`a > 1`$ and clocks shared by all cells,
+   gives a random deterministic code with $`T(p) \le M - B/2 + 3h/2`$ and $`h \le aB + 2\,j(a)\,d`$, where
+   $`j(a) = a \ln \Gamma(1 - 1/a) - \gamma_{\mathrm{E}}`$ (`T_le_ledger`, `exists_race`).
+2. **Cap.** $`j(a) < \frac{533}{648a} + \frac{241}{600a^2} + \frac{6503}{24000a^2(a-1)}`$ for $`a > 1`$
+   (`racePrice_lt_capC3b`); at $`a = 211/45`$ the right side is below $`u = 3941/20000`$, an exact comparison made by
+   the `norm_num [gammaPriceCap]` step in `T_le_of_connected`.
+3. **Payment.** The pair charge $`PC(23/250,\,7/60)`$, proved for every two distinct positive contacts of one feasible
+   kernel (`pairCharge_C`), combines with a Bhattacharyya affinity bound and a budget for two posterior replicas into
+   $`\gamma\,d \le (1+2\beta)M + \beta B`$ at $`(\beta, \gamma) = (23/250,\, 7/60)`$ (`mismatch_payment`).
 
-Since $`d \ge 0`$, $`u \ge 0`$ and $`\gamma > 0`$, the four combine into
+Since $`M, B, d \ge 0`$, these combine (`T_le_of_connected`) into
 
 ```math
 T(p) \le \left(1 + \frac{3u(1+2\beta)}{\gamma}\right) M + \left(\frac{3a-1}{2} + \frac{3u\beta}{\gamma}\right) B
-= \frac{218729}{31250}\,M + \frac{5249623}{750000}\,B \le \frac{13999}{2000}\,\tau(p),
+= \frac{218729}{31250}\,M + \frac{5249623}{750000}\,B \le \frac{5249623}{750000}\,\tau(p).
 ```
 
-where the last step uses $`M \ge 0`$, $`B \ge 0`$ and $`M + B = \tau(p)`$. Finally, $`T`$ and $`\tau`$ both split over the connected
-components of the support, so the bound extends to every finite law (`extension_of_connected`).
+Over the connected components of the support, with weights $`\rho_k`$ and component laws $`\bar p_k`$,
+$`T(p) \le \sum_k \rho_k T(\bar p_k)`$ and $`\sum_k \rho_k \tau(\bar p_k) \le \tau(p)`$, so the bound extends to every finite law
+(`extension_of_connected`). [docs/overview.md](docs/overview.md) maps each step to its page and Lean declaration.
+
+## Proof pages
+
+The written proof, in reading order:
+
+- [overview](docs/overview.md): the theorem, the route in ten steps, and where each step lives in Lean.
+- [contact](docs/contact.md): section 0 fixes units and notation; section 1, on contacts, is read after the cap.
+- [setup](docs/setup.md): an attaining latent whose components are contacts of one feasible kernel.
+- [ledger](docs/ledger.md): $`T(p)`$ bounded by the budgets and the entropy cost of a random code.
+- [race](docs/race.md): the exponential race and its price $`j(a)`$.
+- [cap](docs/cap.md): a rational upper bound on $`j(a)`$.
+- [affinity](docs/affinity.md): the marginals of two distinct contacts are separated.
+- [replica budget](docs/replica.md): the information cost of two independent posterior labels.
+- [payment](docs/payment.md): a pair charge pays for the mismatch $`d`$.
+- [pair charge](docs/pair-charge.md): the proof of $`PC(23/250,\,7/60)`$.
+- [assembly](docs/assembly.md): the pricing and its exact arithmetic.
+- [extension](docs/extension.md): from connected supports to every finite law.
+- [table form](docs/table-form.md): bits, probability tables and the two statements.
+- [upstream](docs/upstream.md): what the proof takes from the adapted upstream code.
+
+[docs/landscape.md](docs/landscape.md) describes other routes, and what a smaller constant would cost.
 
 ## Verify
 
-Install [elan](https://github.com/leanprover/elan), then run from the repository root:
+Install [elan](https://github.com/leanprover/elan), then run from the repository root the steps that continuous
+integration runs:
 
 ```sh
-lake exe cache get
-lake build
-lake env lean -DrelaxedAutoImplicit=false Verify.lean
 python3 scripts/check_statement.py
+bash scripts/trust_scan.sh
+lake exe cache get
+lake build --wfail
+lake env lean -DrelaxedAutoImplicit=false Verify.lean
+lake env leanchecker NaturalLatents.Main
 ```
 
-Verification passes when all four commands exit with code 0; on success the last two print nothing. [Verify.lean](Verify.lean) pins the
-type of each headline theorem and pins its axioms to exactly `[propext, Classical.choice, Quot.sound]`;
-`scripts/check_statement.py` checks the SHA-256 of `Statement.lean`. Continuous integration checks the statement
-hash, scans the Lean files of the proof (`NaturalLatents/`, `NaturalLatents.lean` and `Verify.lean`) for `sorry`,
-`axiom`, `native_decide` and other trust shortcuts, fetches the Mathlib cache, builds, and runs the same silent audit.
+Verification passes when all six exit with code 0, and the Verify.lean step prints nothing. `check_statement.py` checks the SHA-256 of `Statement.lean`;
+`trust_scan.sh` scans the Lean files (`NaturalLatents/`, `NaturalLatents.lean`, `Verify.lean`) for `sorry`, `axiom`,
+`native_decide` and other trust shortcuts, including new syntax and notation. The build fails on any warning.
+[Verify.lean](Verify.lean) pins the types of `table` and `score`, checks `T_le_mul_tau` by an example, and pins the
+axioms of these three and of the main proof steps to exactly `[propext, Classical.choice, Quot.sound]`;
+`leanchecker` replays the headlines in the kernel. Optionally, and only locally (it is not part of continuous
+integration), `bash scripts/mutation_check.sh` checks on a disposable copy that the first two gates catch an edited
+statement, an added `axiom` and a `sorry`.
 
 ## Acknowledgments
 
 This repository builds on [DLorell/stoch_to_det](https://github.com/DLorell/stoch_to_det) (Apache-2.0), which
-formalized the problem and a proof of a finite constant. The files under `NaturalLatents/Upstream/` are adapted from
-that project at the head of its [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen:
-the finite information theory, the duality and the existence of optimal latents, the shared and coordinate races,
-and the passage from latents to probability tables. The proof here follows pull request #6's method,
-powered-reference race coding with a coordinate ledger, and the probability-table statement and its bridge to
-latents follow pull request #6's `TableInformationProof` and `TableBoundProof` (adapted here under
-`NaturalLatents/Upstream/`).
-See [LICENSE](LICENSE) for the Apache-2.0 terms and [NOTICE](NOTICE) for copyright and provenance; each adapted file
-names its source and revision in its first line.
+formalized the problem and a proof of a finite constant; its finite information theory, duality, existence of optimal
+latents and reduction to connected supports are adapted here. The files under `NaturalLatents/Upstream/` are adapted from
+that project at the head of its [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen,
+which carries the shared-race formalization of [pull request #5](https://github.com/DLorell/stoch_to_det/pull/5) by
+Satya Benson: the `SharedRace/` modules, the clock-race lemmas in `Race.lean`, the contact secants in `Floor.lean`, and
+first versions of `DomFloorCore.lean` and `PhiBounds.lean`. The proof here follows pull request #6's method,
+powered-reference race coding with a coordinate ledger, and uses its modules `ContactInformation`,
+`CoordinateRace`, `PoweredRaceWinner`, `SourceCoarsening`, `TableBoundProof` and
+`TableInformationProof`; the probability-table statement follows the shape of its readable theorem. See
+[LICENSE](LICENSE) for the Apache-2.0 terms and [NOTICE](NOTICE) for copyright and provenance; each adapted file names
+its source and revision in its first line.
 
 ## How this was made
 
