@@ -508,10 +508,10 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
     by_cases hSempty : S = ∅
     · simp [Lambda, hSempty]
     let K : Set ((α → ℝ) × (β → ℝ)) :=
-      Set.prod ({q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)}) ({q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)})
-    have huΔ : u ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := by
+      Set.prod (probabilityWeights α) (probabilityWeights β)
+    have huΔ : u ∈ probabilityWeights α := by
       exact ⟨hu.nonneg, by simpa [mass] using hu.total⟩
-    have hvΔ : v ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := by
+    have hvΔ : v ∈ probabilityWeights β := by
       exact ⟨hv.nonneg, by simpa [mass] using hv.total⟩
     have huvK : (u, v) ∈ K := ⟨huΔ, hvΔ⟩
     have hK : IsCompact K :=
@@ -524,8 +524,8 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
       hK.exists_isMaxOn ⟨(u, v), huvK⟩ hcont.continuousOn
     let u₀ : α → ℝ := uv.1
     let v₀ : β → ℝ := uv.2
-    have hu₀Δ : u₀ ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := huv.1
-    have hv₀Δ : v₀ ∈ {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} := huv.2
+    have hu₀Δ : u₀ ∈ probabilityWeights α := huv.1
+    have hv₀Δ : v₀ ∈ probabilityWeights β := huv.2
     have hu₀ : IsPMF u₀ :=
       ⟨hu₀Δ.1, by simpa [mass] using hu₀Δ.2⟩
     have hv₀ : IsPMF v₀ :=
@@ -945,7 +945,7 @@ private lemma isCompact_dualPmfSet (S : Finset (α × β)) :
       isClosed_eq (continuous_apply z) continuous_const
   have heq :
       dualPmfSet S =
-        {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} ∩ Z := by
+        probabilityWeights (α × β) ∩ Z := by
     ext q
     constructor
     · rintro ⟨hq, hqS⟩
@@ -983,7 +983,7 @@ private noncomputable def dualHullBarycenter
 private noncomputable def dualHullParams (S : Finset (α × β)) :
     Set ((Fin (dualHullSize (α := α) (β := β)) → ℝ) ×
       (Fin (dualHullSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :=
-  {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = (1 : ℝ)} ×ˢ
+  probabilityWeights _ ×ˢ
     Set.pi (Set.univ : Set (Fin (dualHullSize (α := α) (β := β))))
       (fun _ => dualPhiGraph S)
 

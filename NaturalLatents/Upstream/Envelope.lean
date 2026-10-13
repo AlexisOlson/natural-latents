@@ -17,8 +17,12 @@ namespace stoch_to_det
 
 open Finset
 
+/-- Probability weights on a finite type: the standard simplex in `ι → ℝ`. -/
+abbrev probabilityWeights (ι : Type*) [Fintype ι] : Set (ι → ℝ) :=
+  {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1}
+
 lemma isCompact_probabilityWeights (ι : Type*) [Fintype ι] :
-    IsCompact {q : ι → ℝ | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1} := by
+    IsCompact (probabilityWeights ι) := by
   let := Convexity.StdSimplex.compactSpace ℝ ι
   convert isCompact_range (continuous_pi fun i =>
     Convexity.StdSimplex.continuous_weights_apply ℝ i) using 1
@@ -787,7 +791,7 @@ noncomputable def phiGraph : Set ((α × β → ℝ) × ℝ) :=
 omit [DecidableEq α] [DecidableEq β] in
 lemma isCompact_pmfSet : IsCompact (pmfSet : Set (α × β → ℝ)) := by
   have heq : (pmfSet : Set (α × β → ℝ)) =
-      {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1} := by
+      probabilityWeights (α × β) := by
     ext q
     constructor
     · intro hq
@@ -824,7 +828,7 @@ private noncomputable def envelopeBarycenter
 private noncomputable def envelopeParams :
     Set ((Fin (envelopeSize (α := α) (β := β)) → ℝ) ×
       (Fin (envelopeSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :=
-  {q | (∀ i, 0 ≤ q i) ∧ ∑ i, q i = 1} ×ˢ
+  probabilityWeights _ ×ˢ
     Set.pi (Set.univ : Set (Fin (envelopeSize (α := α) (β := β))))
       (fun _ => phiGraph)
 
