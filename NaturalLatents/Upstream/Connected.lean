@@ -5,8 +5,8 @@ import NaturalLatents.Upstream.Duality
 /-!
 # Reduction to connected supports
 
-This file constructs component decompositions of finite joint laws, proves that
-`tau` and `T` are additive over their connected components, and derives
+This file constructs component decompositions of finite joint laws, proves
+the component inequalities for `tau` and `T`, and derives
 `reduce_to_connected`. `General.extension_of_connected` uses that reduction to pass from
 connected supports to arbitrary finite laws.
 -/
@@ -23,7 +23,7 @@ weights `a i`, whose supports are the connected components of `support p`.
 The two `hcol`/`hrow` fields encode the key observation: components occupy
 disjoint columns and disjoint rows, so
 the component index `K` is a function of `X` alone *and* of `Y` alone. That is
-what makes the `(≥)` direction work. -/
+what makes the lower bound on `tau` work. -/
 structure ComponentDecomp (p : α × β → ℝ) where
   /-- Index type of the components. -/
   κ : Type
@@ -906,110 +906,52 @@ private lemma restrict_score_le {p : α × β → ℝ} (hp : IsPMF p)
       (H_nonneg_of_isPMF (fiberWeight_isPMF D V v))
   linarith
 
-/-- Additivity of `tau`: `τ(p) = ∑ᵢ αᵢ τ(p⁽ⁱ⁾)`. -/
-theorem tau_eq_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
-    tau p = ∑ i, D.wt i * tau (D.part i) := by
+/-- The weighted component optima give a lower bound on `tau`. -/
+theorem sum_components_tau_le {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
+    (∑ i, D.wt i * tau (D.part i)) ≤ tau p := by
   classical
-  apply le_antisymm
-  · let V : ∀ i, Latent (D.part i) := fun i =>
-      Classical.choose (exists_tau_optimal_latent (D.part_isPMF i))
-    have hV : ∀ i, (V i).score = tau (D.part i) := fun i =>
-      Classical.choose_spec (exists_tau_optimal_latent (D.part_isPMF i))
-    calc
-      tau p ≤ (glueLatent D V).score := tau_le_score (glueLatent D V)
-      _ = ∑ i, D.wt i * (V i).score := glueLatent_score hp D V
-      _ = ∑ i, D.wt i * tau (D.part i) := by
-        apply Finset.sum_congr rfl
-        intro i _
-        rw [hV i]
-  · obtain ⟨V, hV⟩ := exists_tau_optimal_latent hp
-    calc
-      (∑ i, D.wt i * tau (D.part i)) ≤
-          ∑ i, D.wt i * (restrictLatent D V i).score := by
-        apply Finset.sum_le_sum
-        intro i _
-        exact mul_le_mul_of_nonneg_left (tau_le_score (restrictLatent D V i))
-          (D.wt_isPMF.nonneg i)
-      _ ≤ V.score := restrict_score_le hp D V
-      _ = tau p := hV
+  obtain ⟨V, hV⟩ := exists_tau_optimal_latent hp
+  calc
+    (∑ i, D.wt i * tau (D.part i)) ≤
+        ∑ i, D.wt i * (restrictLatent D V i).score := by
+      apply Finset.sum_le_sum
+      intro i _
+      exact mul_le_mul_of_nonneg_left (tau_le_score (restrictLatent D V i))
+        (D.wt_isPMF.nonneg i)
+    _ ≤ V.score := restrict_score_le hp D V
+    _ = tau p := hV
 
-private lemma conditionalLatent_isDet {p : α × β → ℝ}
-    (D : ComponentDecomp p) (V : Latent p) (hV : V.IsDet)
-    (i : D.κ) (hwt : D.wt i ≠ 0) : (conditionalLatent D V i hwt).IsDet := by
-  intro z v v' hv hv'
-  have original_ne_zero : ∀ u : V.ι,
-      (conditionalLatent D V i hwt).prior u *
-          (conditionalLatent D V i hwt).comp u z ≠ 0 →
-        V.prior u * V.comp u z ≠ 0 := by
-    intro u hu
-    change (((D.wt i)⁻¹ * V.prior u * fiberWeight D V u i) *
-      fiberLaw D V u i z) ≠ 0 at hu
-    have hleft := (mul_ne_zero_iff.mp hu).1
-    have hlaw := (mul_ne_zero_iff.mp hu).2
-    have hprior : V.prior u ≠ 0 := (mul_ne_zero_iff.mp
-      (mul_ne_zero_iff.mp hleft).1).2
-    have hrho : fiberWeight D V u i ≠ 0 := (mul_ne_zero_iff.mp hleft).2
-    have hprod : fiberWeight D V u i * fiberLaw D V u i z ≠ 0 :=
-      mul_ne_zero hrho hlaw
-    rw [fiberWeight_mul_fiberLaw] at hprod
-    have hcomp : V.comp u z ≠ 0 := by
-      intro hzero
-      apply hprod
-      simp [hzero]
-    exact mul_ne_zero hprior hcomp
-  exact hV z v v' (original_ne_zero v hv) (original_ne_zero v' hv')
-
-private lemma restrictLatent_isDet {p : α × β → ℝ}
-    (D : ComponentDecomp p) (V : Latent p) (hV : V.IsDet) (i : D.κ) :
-    (restrictLatent D V i).IsDet := by
-  by_cases hwt : D.wt i = 0
-  · simpa [restrictLatent, hwt] using Latent.const_isDet (D.part_isPMF i)
-  · simpa [restrictLatent, hwt] using conditionalLatent_isDet D V hV i hwt
-
-/-- Additivity of `T`: `T(p) = ∑ᵢ αᵢ T(p⁽ⁱ⁾)`. -/
-theorem T_eq_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
-    T p = ∑ i, D.wt i * T (D.part i) := by
+/-- Gluing deterministic component optima gives an upper bound on `T`. -/
+theorem T_le_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
+    T p ≤ ∑ i, D.wt i * T (D.part i) := by
   classical
-  apply le_antisymm
-  · let V : ∀ i, Latent (D.part i) := fun i =>
-      Classical.choose (exists_T_optimal_latent (D.part_isPMF i))
-    have hVdet : ∀ i, (V i).IsDet := fun i =>
-      (Classical.choose_spec (exists_T_optimal_latent (D.part_isPMF i))).1
-    have hVscore : ∀ i, (V i).score = T (D.part i) := fun i =>
-      (Classical.choose_spec (exists_T_optimal_latent (D.part_isPMF i))).2
-    calc
-      T p ≤ (glueLatent D V).score := T_le_score (glueLatent D V)
-        (glueLatent_isDet D V hVdet)
-      _ = ∑ i, D.wt i * (V i).score := glueLatent_score hp D V
-      _ = ∑ i, D.wt i * T (D.part i) := by
-        apply Finset.sum_congr rfl
-        intro i _
-        rw [hVscore i]
-  · obtain ⟨V, hVdet, hVscore⟩ := exists_T_optimal_latent hp
-    calc
-      (∑ i, D.wt i * T (D.part i)) ≤
-          ∑ i, D.wt i * (restrictLatent D V i).score := by
-        apply Finset.sum_le_sum
-        intro i _
-        exact mul_le_mul_of_nonneg_left
-          (T_le_score (restrictLatent D V i) (restrictLatent_isDet D V hVdet i))
-          (D.wt_isPMF.nonneg i)
-      _ ≤ V.score := restrict_score_le hp D V
-      _ = T p := hVscore
+  let V : ∀ i, Latent (D.part i) := fun i =>
+    Classical.choose (exists_T_optimal_latent (D.part_isPMF i))
+  have hVdet : ∀ i, (V i).IsDet := fun i =>
+    (Classical.choose_spec (exists_T_optimal_latent (D.part_isPMF i))).1
+  have hVscore : ∀ i, (V i).score = T (D.part i) := fun i =>
+    (Classical.choose_spec (exists_T_optimal_latent (D.part_isPMF i))).2
+  calc
+    T p ≤ (glueLatent D V).score := T_le_score (glueLatent D V)
+      (glueLatent_isDet D V hVdet)
+    _ = ∑ i, D.wt i * (V i).score := glueLatent_score hp D V
+    _ = ∑ i, D.wt i * T (D.part i) := by
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [hVscore i]
 
 /-- Reduction consequence used by the table bound.
 
-If `T ≤ C τ` holds for every finite law with connected support, it holds for
-every finite law. -/
-theorem reduce_to_connected (C : ℝ)
+For `0 ≤ C`, if `T ≤ C τ` holds for every finite law with connected support,
+it holds for every finite law. -/
+theorem reduce_to_connected (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ q : α × β → ℝ, IsPMF q → IsConnected (support q) → T q ≤ C * tau q) :
     ∀ q : α × β → ℝ, IsPMF q → T q ≤ C * tau q := by
   intro q hq
   obtain ⟨D⟩ := exists_componentDecomp hq
-  rw [T_eq_sum_components hq D, tau_eq_sum_components hq D]
   calc
-    (∑ i, D.wt i * T (D.part i)) ≤
-        ∑ i, D.wt i * (C * tau (D.part i)) := by
+    T q ≤ ∑ i, D.wt i * T (D.part i) := T_le_sum_components hq D
+    _ ≤ ∑ i, D.wt i * (C * tau (D.part i)) := by
       apply Finset.sum_le_sum
       intro i _
       exact mul_le_mul_of_nonneg_left
@@ -1020,5 +962,6 @@ theorem reduce_to_connected (C : ℝ)
       apply Finset.sum_congr rfl
       intro i _
       ring
+    _ ≤ C * tau q := mul_le_mul_of_nonneg_left (sum_components_tau_le hq D) hC
 
 end stoch_to_det

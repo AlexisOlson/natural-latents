@@ -35,7 +35,7 @@ variable {α β : Type} [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq 
 /-- The optimum form in bits, over bundled latents. -/
 theorem T_le_c_mul_tau {p : α × β → ℝ} (hp : IsPMF p) :
     stoch_to_det.T p ≤ c * stoch_to_det.tau p := by
-  have hb := NaturalLatents.General.extension_of_connected c
+  have hb := NaturalLatents.General.extension_of_connected c c_nonneg
     (fun _ hq hqconn => NaturalLatents.General.T_le_of_connected hq hqconn) hp
   have hlog : 0 < Real.log 2 := Real.log_pos one_lt_two
   apply (mul_le_mul_iff_of_pos_left hlog).mp

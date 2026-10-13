@@ -801,20 +801,71 @@ lemma isCompact_pmfSet : IsCompact (pmfSet : Set (α × β → ℝ)) := by
   rw [heq]
   exact isCompact_probabilityWeights (α × β)
 
-lemma isCompact_phiGraph : IsCompact (phiGraph : Set ((α × β → ℝ) × ℝ)) := by
+/-- The graph of `Phi` over a chosen set of probability laws. -/
+noncomputable def phiGraphOn (Q : Set (α × β → ℝ)) : Set ((α × β → ℝ) × ℝ) :=
+  (fun q => (q, Phi q)) '' Q
+
+lemma isCompact_phiGraphOn {Q : Set (α × β → ℝ)} (hQ : IsCompact Q)
+    (hpmf : ∀ q ∈ Q, IsPMF q) : IsCompact (phiGraphOn Q) := by
   let graphMap : (α × β → ℝ) → (α × β → ℝ) × ℝ :=
     fun q => (q, continuousPhi q)
   have hgraphMap : Continuous graphMap :=
     continuous_id.prodMk continuous_continuousPhi
-  have heq : phiGraph = graphMap '' pmfSet := by
+  have heq : phiGraphOn Q = graphMap '' Q := by
     ext x
     constructor
     · rintro ⟨q, hq, rfl⟩
-      exact ⟨q, hq, by simp [graphMap, Phi_eq_continuousPhi hq]⟩
+      exact ⟨q, hq, by simp [graphMap, Phi_eq_continuousPhi (hpmf q hq)]⟩
     · rintro ⟨q, hq, rfl⟩
-      exact ⟨q, hq, by simp [graphMap, Phi_eq_continuousPhi hq]⟩
+      exact ⟨q, hq, by simp [graphMap, Phi_eq_continuousPhi (hpmf q hq)]⟩
   rw [heq]
-  exact isCompact_pmfSet.image hgraphMap
+  exact hQ.image hgraphMap
+
+lemma isCompact_phiGraph : IsCompact (phiGraph : Set ((α × β → ℝ) × ℝ)) :=
+  isCompact_phiGraphOn isCompact_pmfSet (fun _ hq => hq)
+
+/-- Probability laws vanishing outside `S`. -/
+def supportedPmfSet (S : Finset (α × β)) : Set (α × β → ℝ) :=
+  {q | IsPMF q ∧ Supported S q}
+
+/-- The graph of `Phi` over probability laws supported on `S`. -/
+noncomputable def supportedPhiGraph (S : Finset (α × β)) :
+    Set ((α × β → ℝ) × ℝ) :=
+  phiGraphOn (supportedPmfSet S)
+
+lemma isCompact_supportedPmfSet (S : Finset (α × β)) :
+    IsCompact (supportedPmfSet S : Set (α × β → ℝ)) := by
+  let Z : Set (α × β → ℝ) := {q | Supported S q}
+  have hZ :
+      Z = ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
+        {q : α × β → ℝ | q z = 0} := by
+    ext q
+    simp only [Z, Set.mem_ofPred_eq, Set.mem_iInter, Finset.mem_filter,
+      Finset.mem_univ, true_and]
+    constructor
+    · intro h z hz
+      exact h z hz
+    · intro h z hz
+      exact h z hz
+  have hZclosed : IsClosed Z := by
+    rw [hZ]
+    exact isClosed_biInter fun z _ =>
+      isClosed_eq (continuous_apply z) continuous_const
+  have heq :
+      supportedPmfSet S =
+        probabilityWeights (α × β) ∩ Z := by
+    ext q
+    constructor
+    · rintro ⟨hq, hqS⟩
+      exact ⟨⟨hq.nonneg, by simpa [mass] using hq.total⟩, hqS⟩
+    · rintro ⟨⟨hq, htotal⟩, hqS⟩
+      exact ⟨⟨hq, by simpa [mass] using htotal⟩, hqS⟩
+  rw [heq]
+  exact (isCompact_probabilityWeights (α × β)).inter_right hZclosed
+
+lemma isCompact_supportedPhiGraph (S : Finset (α × β)) :
+    IsCompact (supportedPhiGraph S) :=
+  isCompact_phiGraphOn (isCompact_supportedPmfSet S) (fun _ hq => hq.1)
 
 private noncomputable def envelopeSize : ℕ :=
   Module.finrank ℝ ((α × β → ℝ) × ℝ) + 1
@@ -825,12 +876,12 @@ private noncomputable def envelopeBarycenter
     (α × β → ℝ) × ℝ :=
   ∑ i, a.1 i • a.2 i
 
-private noncomputable def envelopeParams :
+private noncomputable def envelopeParams (G : Set ((α × β → ℝ) × ℝ)) :
     Set ((Fin (envelopeSize (α := α) (β := β)) → ℝ) ×
       (Fin (envelopeSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :=
   probabilityWeights _ ×ˢ
     Set.pi (Set.univ : Set (Fin (envelopeSize (α := α) (β := β))))
-      (fun _ => phiGraph)
+      (fun _ => G)
 
 omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
 private lemma continuous_envelopeBarycenter :
@@ -838,20 +889,25 @@ private lemma continuous_envelopeBarycenter :
   unfold envelopeBarycenter
   fun_prop
 
-private lemma isCompact_envelopeParams :
-    IsCompact (envelopeParams (α := α) (β := β)) := by
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
+private lemma isCompact_envelopeParams {G : Set ((α × β → ℝ) × ℝ)}
+    (hG : IsCompact G) :
+    IsCompact (envelopeParams G) := by
   unfold envelopeParams
   apply IsCompact.prod (isCompact_probabilityWeights _)
-  exact isCompact_univ_pi fun _ => isCompact_phiGraph
+  exact isCompact_univ_pi fun _ => hG
 
-private lemma isCompact_envelopeBarycenter_image :
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
+private lemma isCompact_envelopeBarycenter_image {G : Set ((α × β → ℝ) × ℝ)}
+    (hG : IsCompact G) :
     IsCompact (envelopeBarycenter (α := α) (β := β) ''
-      envelopeParams (α := α) (β := β)) :=
-  isCompact_envelopeParams.image continuous_envelopeBarycenter
+      envelopeParams G) :=
+  (isCompact_envelopeParams hG).image continuous_envelopeBarycenter
 
-private lemma envelopeBarycenter_image_subset_convexHull :
-    envelopeBarycenter (α := α) (β := β) '' envelopeParams ⊆
-      convexHull ℝ (phiGraph : Set ((α × β → ℝ) × ℝ)) := by
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
+private lemma envelopeBarycenter_image_subset_convexHull (G : Set ((α × β → ℝ) × ℝ)) :
+    envelopeBarycenter (α := α) (β := β) '' envelopeParams G ⊆
+      convexHull ℝ G := by
   rintro x ⟨a, ha, rfl⟩
   rcases ha with ⟨hw, hq⟩
   apply mem_convexHull_of_exists_fintype a.1 a.2
@@ -861,9 +917,11 @@ private lemma envelopeBarycenter_image_subset_convexHull :
     exact hq i (Set.mem_univ i)
   · rfl
 
-private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
-    convexHull ℝ (phiGraph : Set ((α × β → ℝ) × ℝ)) ⊆
-      envelopeBarycenter (α := α) (β := β) '' envelopeParams := by
+omit [DecidableEq α] [DecidableEq β] in
+private lemma convexHull_subset_envelopeBarycenter_image
+    {G : Set ((α × β → ℝ) × ℝ)} {x₀ : (α × β → ℝ) × ℝ} (hx₀ : x₀ ∈ G) :
+    convexHull ℝ G ⊆
+      envelopeBarycenter (α := α) (β := β) '' envelopeParams G := by
   intro x hx
   rw [convexHull_eq_union] at hx
   simp only [Set.mem_iUnion, exists_prop] at hx
@@ -882,7 +940,7 @@ private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
   let weights : Fin (envelopeSize (α := α) (β := β)) → ℝ :=
     fun j => ∑ i : t, if e i = j then w i.1 else 0
   let points : Fin (envelopeSize (α := α) (β := β)) → (α × β → ℝ) × ℝ :=
-    fun j => if h : ∃ i : t, e i = j then (Classical.choose h).1 else (p, Phi p)
+    fun j => if h : ∃ i : t, e i = j then (Classical.choose h).1 else x₀
   have hinner_weight (i : t) :
       (∑ j, if e i = j then w i.1 else 0) = w i.1 := by
     have hsingle :
@@ -914,12 +972,12 @@ private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
         simp only [univ_eq_attach]
         rw [Finset.sum_attach]
       _ = 1 := hw_sum
-  have hpoints (j : Fin (envelopeSize (α := α) (β := β))) : points j ∈ phiGraph := by
+  have hpoints (j : Fin (envelopeSize (α := α) (β := β))) : points j ∈ G := by
     by_cases hj : ∃ i : t, e i = j
     · rw [show points j = (Classical.choose hj).1 by simp [points, hj]]
       exact htGraph (Classical.choose hj).2
-    · rw [show points j = (p, Phi p) by simp [points, hj]]
-      exact ⟨p, hp, rfl⟩
+    · rw [show points j = x₀ by simp [points, hj]]
+      exact hx₀
   have hterm (j : Fin (envelopeSize (α := α) (β := β))) :
       weights j • points j =
         ∑ i : t, if e i = j then w i.1 • i.1 else 0 := by
@@ -989,16 +1047,25 @@ private lemma convexHull_subset_envelopeBarycenter_image (hp : IsPMF p) :
   refine ⟨(weights, points), ?_, hbary⟩
   exact ⟨⟨hweights_nonneg, hweights_sum⟩, fun j _ => hpoints j⟩
 
-private lemma convexHull_phiGraph_eq_barycenter_image (hp : IsPMF p) :
-    convexHull ℝ (phiGraph : Set ((α × β → ℝ) × ℝ)) =
-      envelopeBarycenter (α := α) (β := β) '' envelopeParams :=
-  Set.Subset.antisymm (convexHull_subset_envelopeBarycenter_image hp)
-    envelopeBarycenter_image_subset_convexHull
+omit [DecidableEq α] [DecidableEq β] in
+/-- Compactness of a nonempty graph hull via the finite Carathéodory parameter space. -/
+lemma isCompact_envelopeConvexHull {G : Set ((α × β → ℝ) × ℝ)}
+    (hG : IsCompact G) {x₀ : (α × β → ℝ) × ℝ} (hx₀ : x₀ ∈ G) :
+    IsCompact (convexHull ℝ G) := by
+  have heq : convexHull ℝ G = envelopeBarycenter '' envelopeParams G :=
+    Set.Subset.antisymm (convexHull_subset_envelopeBarycenter_image hx₀)
+      (envelopeBarycenter_image_subset_convexHull G)
+  rw [heq]
+  exact isCompact_envelopeBarycenter_image hG
 
 lemma isCompact_convexHull_phiGraph (hp : IsPMF p) :
-    IsCompact (convexHull ℝ (phiGraph : Set ((α × β → ℝ) × ℝ))) := by
-  rw [convexHull_phiGraph_eq_barycenter_image hp]
-  exact isCompact_envelopeBarycenter_image
+    IsCompact (convexHull ℝ (phiGraph : Set ((α × β → ℝ) × ℝ))) :=
+  isCompact_envelopeConvexHull isCompact_phiGraph ⟨p, hp, rfl⟩
+
+lemma isCompact_convexHull_supportedPhiGraph {S : Finset (α × β)}
+    (hp : IsPMF p) (hpS : Supported S p) :
+    IsCompact (convexHull ℝ (supportedPhiGraph S)) :=
+  isCompact_envelopeConvexHull (isCompact_supportedPhiGraph S) ⟨p, ⟨hp, hpS⟩, rfl⟩
 
 private lemma Latent.graphMixture_mem_convexHull (V : Latent p) :
     (p, ∑ v, V.prior v * Phi (V.comp v)) ∈

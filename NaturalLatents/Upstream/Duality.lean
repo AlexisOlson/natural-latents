@@ -866,298 +866,6 @@ private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} 
 
 /-! ## Attainment and an affine minorant -/
 
-private noncomputable def dualContinuousEntropy {γ : Type*} [Fintype γ]
-    (m : γ → ℝ) : ℝ :=
-  (∑ a, Real.negMulLog (m a)) / Real.log 2
-
-private lemma H_eq_dualContinuousEntropy {γ : Type*} [Fintype γ]
-    {m : γ → ℝ} (hm : IsPMF m) : H m = dualContinuousEntropy m := by
-  have h := H_eq_negMulLog hm.nonneg
-  rw [hm.total, Real.log_one, mul_zero, zero_add] at h
-  apply (eq_div_iff (Real.log_pos one_lt_two).ne').2
-  rw [mul_comm]
-  exact h
-
-private lemma continuous_dualContinuousEntropy {γ : Type*} [Fintype γ] :
-    Continuous (dualContinuousEntropy : (γ → ℝ) → ℝ) := by
-  unfold dualContinuousEntropy
-  fun_prop
-
-private noncomputable def dualContinuousPhi (q : α × β → ℝ) : ℝ :=
-  3 * dualContinuousEntropy q
-    - 2 * dualContinuousEntropy (push Prod.fst q)
-    - 2 * dualContinuousEntropy (push Prod.snd q)
-
-private lemma dual_continuous_push_map {γ δ : Type*} [Fintype γ] [Fintype δ]
-    [DecidableEq δ] (f : γ → δ) :
-    Continuous (fun m : γ → ℝ => push f m) := by
-  apply continuous_pi
-  intro c
-  unfold push
-  fun_prop
-
-private lemma continuous_dualContinuousPhi :
-    Continuous (dualContinuousPhi : (α × β → ℝ) → ℝ) := by
-  unfold dualContinuousPhi
-  have hq : Continuous (fun q : α × β → ℝ => dualContinuousEntropy q) :=
-    continuous_dualContinuousEntropy
-  have hqX : Continuous (fun q : α × β → ℝ =>
-      dualContinuousEntropy (push Prod.fst q)) :=
-    continuous_dualContinuousEntropy.comp (dual_continuous_push_map Prod.fst)
-  have hqY : Continuous (fun q : α × β → ℝ =>
-      dualContinuousEntropy (push Prod.snd q)) :=
-    continuous_dualContinuousEntropy.comp (dual_continuous_push_map Prod.snd)
-  exact ((continuous_const.mul hq).sub (continuous_const.mul hqX)).sub
-    (continuous_const.mul hqY)
-
-private lemma Phi_eq_dualContinuousPhi {q : α × β → ℝ} (hq : IsPMF q) :
-    Phi q = dualContinuousPhi q := by
-  have hqX : IsPMF (mX q) := isPMF_push hq
-  have hqY : IsPMF (mY q) := isPMF_push hq
-  unfold Phi dualContinuousPhi
-  rw [H_eq_dualContinuousEntropy hq, H_eq_dualContinuousEntropy hqX,
-    H_eq_dualContinuousEntropy hqY]
-
-private def dualPmfSet (S : Finset (α × β)) : Set (α × β → ℝ) :=
-  {q | IsPMF q ∧ Supported S q}
-
-private noncomputable def dualPhiGraph (S : Finset (α × β)) :
-    Set ((α × β → ℝ) × ℝ) :=
-  (fun q => (q, Phi q)) '' dualPmfSet S
-
-private lemma isCompact_dualPmfSet (S : Finset (α × β)) :
-    IsCompact (dualPmfSet S : Set (α × β → ℝ)) := by
-  let Z : Set (α × β → ℝ) := {q | Supported S q}
-  have hZ :
-      Z = ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
-        {q : α × β → ℝ | q z = 0} := by
-    ext q
-    simp only [Z, Set.mem_ofPred_eq, Set.mem_iInter, Finset.mem_filter,
-      Finset.mem_univ, true_and]
-    constructor
-    · intro h z hz
-      exact h z hz
-    · intro h z hz
-      exact h z hz
-  have hZclosed : IsClosed Z := by
-    rw [hZ]
-    exact isClosed_biInter fun z _ =>
-      isClosed_eq (continuous_apply z) continuous_const
-  have heq :
-      dualPmfSet S =
-        probabilityWeights (α × β) ∩ Z := by
-    ext q
-    constructor
-    · rintro ⟨hq, hqS⟩
-      exact ⟨⟨hq.nonneg, by simpa [mass] using hq.total⟩, hqS⟩
-    · rintro ⟨⟨hq, htotal⟩, hqS⟩
-      exact ⟨⟨hq, by simpa [mass] using htotal⟩, hqS⟩
-  rw [heq]
-  exact (isCompact_probabilityWeights (α × β)).inter_right hZclosed
-
-private lemma isCompact_dualPhiGraph (S : Finset (α × β)) :
-    IsCompact (dualPhiGraph S : Set ((α × β → ℝ) × ℝ)) := by
-  let graphMap : (α × β → ℝ) → (α × β → ℝ) × ℝ :=
-    fun q => (q, dualContinuousPhi q)
-  have hgraphMap : Continuous graphMap :=
-    continuous_id.prodMk continuous_dualContinuousPhi
-  have heq : dualPhiGraph S = graphMap '' dualPmfSet S := by
-    ext x
-    constructor
-    · rintro ⟨q, hq, rfl⟩
-      exact ⟨q, hq, by simp [graphMap, Phi_eq_dualContinuousPhi hq.1]⟩
-    · rintro ⟨q, hq, rfl⟩
-      exact ⟨q, hq, by simp [graphMap, Phi_eq_dualContinuousPhi hq.1]⟩
-  rw [heq]
-  exact (isCompact_dualPmfSet S).image hgraphMap
-
-private noncomputable def dualHullSize : ℕ :=
-  Module.finrank ℝ ((α × β → ℝ) × ℝ) + 1
-
-private noncomputable def dualHullBarycenter
-    (a : (Fin (dualHullSize (α := α) (β := β)) → ℝ) ×
-      (Fin (dualHullSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :
-    (α × β → ℝ) × ℝ :=
-  ∑ i, a.1 i • a.2 i
-
-private noncomputable def dualHullParams (S : Finset (α × β)) :
-    Set ((Fin (dualHullSize (α := α) (β := β)) → ℝ) ×
-      (Fin (dualHullSize (α := α) (β := β)) → (α × β → ℝ) × ℝ)) :=
-  probabilityWeights _ ×ˢ
-    Set.pi (Set.univ : Set (Fin (dualHullSize (α := α) (β := β))))
-      (fun _ => dualPhiGraph S)
-
-omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
-private lemma continuous_dualHullBarycenter :
-    Continuous (dualHullBarycenter (α := α) (β := β)) := by
-  unfold dualHullBarycenter
-  fun_prop
-
-private lemma isCompact_dualHullParams (S : Finset (α × β)) :
-    IsCompact (dualHullParams S) := by
-  unfold dualHullParams
-  apply IsCompact.prod (isCompact_probabilityWeights _)
-  exact isCompact_univ_pi fun _ => isCompact_dualPhiGraph S
-
-private lemma dualHullBarycenter_image_subset (S : Finset (α × β)) :
-    dualHullBarycenter (α := α) (β := β) '' dualHullParams S ⊆
-      convexHull ℝ (dualPhiGraph S) := by
-  rintro x ⟨a, ha, rfl⟩
-  rcases ha with ⟨hweights, hpoints⟩
-  apply mem_convexHull_of_exists_fintype a.1 a.2
-  · exact hweights.1
-  · exact hweights.2
-  · intro i
-    exact hpoints i (Set.mem_univ i)
-  · rfl
-
-private lemma dualConvexHull_subset_barycenter_image
-    {S : Finset (α × β)} {p : α × β → ℝ}
-    (hp : IsPMF p) (hpS : Supported S p) :
-    convexHull ℝ (dualPhiGraph S) ⊆
-      dualHullBarycenter (α := α) (β := β) '' dualHullParams S := by
-  intro x hx
-  rw [convexHull_eq_union] at hx
-  simp only [Set.mem_iUnion, exists_prop] at hx
-  rcases hx with ⟨t, htGraph, htIndependent, hxt⟩
-  have htcard : Fintype.card t ≤ dualHullSize (α := α) (β := β) := by
-    calc
-      Fintype.card t ≤
-          Module.finrank ℝ (vectorSpan ℝ
-            (Set.range ((↑) : t → (α × β → ℝ) × ℝ))) + 1 :=
-        htIndependent.card_le_finrank_succ
-      _ ≤ Module.finrank ℝ ((α × β → ℝ) × ℝ) + 1 :=
-        Nat.add_le_add_right (Submodule.finrank_le _) 1
-      _ = dualHullSize (α := α) (β := β) := rfl
-  let e : t ↪ Fin (dualHullSize (α := α) (β := β)) :=
-    Classical.choice (Function.Embedding.nonempty_of_card_le (by simpa using htcard))
-  rcases (Finset.mem_convexHull'.mp hxt) with
-    ⟨weights₀, hweights₀_nonneg, hweights₀_sum, hcenter⟩
-  let weights : Fin (dualHullSize (α := α) (β := β)) → ℝ :=
-    fun j => ∑ i : t, if e i = j then weights₀ i.1 else 0
-  let points : Fin (dualHullSize (α := α) (β := β)) →
-      (α × β → ℝ) × ℝ :=
-    fun j => if h : ∃ i : t, e i = j then (Classical.choose h).1 else (p, Phi p)
-  have hinner_weight (i : t) :
-      (∑ j, if e i = j then weights₀ i.1 else 0) = weights₀ i.1 := by
-    have hsingle :
-        (∑ j, if e i = j then weights₀ i.1 else 0) =
-          (if e i = e i then weights₀ i.1 else 0) := by
-      apply Finset.sum_eq_single (e i)
-      · intro j _ hji
-        simp [Ne.symm hji]
-      · simp
-    simp
-  have hweights_nonneg : ∀ j, 0 ≤ weights j := by
-    intro j
-    dsimp [weights]
-    apply Finset.sum_nonneg
-    intro i _
-    split
-    · exact hweights₀_nonneg i.1 i.2
-    · exact le_rfl
-  have hweights_sum : ∑ j, weights j = 1 := by
-    calc
-      (∑ j, weights j) =
-          ∑ j, ∑ i : t, if e i = j then weights₀ i.1 else 0 := rfl
-      _ = ∑ i : t, ∑ j, if e i = j then weights₀ i.1 else 0 := by
-        rw [Finset.sum_comm]
-      _ = ∑ i : t, weights₀ i.1 := by
-        apply Finset.sum_congr rfl
-        intro i _
-        exact hinner_weight i
-      _ = ∑ y ∈ t, weights₀ y := by
-        simp only [univ_eq_attach]
-        rw [Finset.sum_attach]
-      _ = 1 := hweights₀_sum
-  have hpoints (j : Fin (dualHullSize (α := α) (β := β))) :
-      points j ∈ dualPhiGraph S := by
-    by_cases hj : ∃ i : t, e i = j
-    · rw [show points j = (Classical.choose hj).1 by simp [points, hj]]
-      exact htGraph (Classical.choose hj).2
-    · rw [show points j = (p, Phi p) by simp [points, hj]]
-      exact ⟨p, ⟨hp, hpS⟩, rfl⟩
-  have hterm (j : Fin (dualHullSize (α := α) (β := β))) :
-      weights j • points j =
-        ∑ i : t, if e i = j then weights₀ i.1 • i.1 else 0 := by
-    by_cases hj : ∃ i : t, e i = j
-    · let i₀ : t := Classical.choose hj
-      have hi₀ : e i₀ = j := Classical.choose_spec hj
-      have hweight : weights j = weights₀ i₀.1 := by
-        dsimp [weights]
-        have hsingle :
-            (∑ i : t, if e i = j then weights₀ i.1 else 0) =
-              (if e i₀ = j then weights₀ i₀.1 else 0) := by
-          apply Finset.sum_eq_single i₀
-          · intro i _ hii₀
-            have hei : e i ≠ j := by
-              intro hei
-              exact hii₀ (e.injective (hei.trans hi₀.symm))
-            simp [hei]
-          · simp
-        simpa [hi₀] using hsingle
-      have hpoint : points j = i₀.1 := by
-        dsimp [points, i₀]
-        rw [dite_eq_left hj]
-      rw [hweight, hpoint]
-      symm
-      have hsingle :
-          (∑ i : t, if e i = j then weights₀ i.1 • i.1 else 0) =
-            (if e i₀ = j then weights₀ i₀.1 • i₀.1 else 0) := by
-        apply Finset.sum_eq_single i₀
-        · intro i _ hii₀
-          have hei : e i ≠ j := by
-            intro hei
-            exact hii₀ (e.injective (hei.trans hi₀.symm))
-          simp [hei]
-        · simp
-      simpa [hi₀] using hsingle
-    · have hnot (i : t) : e i ≠ j := fun hi => hj ⟨i, hi⟩
-      have hweight : weights j = 0 := by
-        dsimp [weights]
-        exact Finset.sum_eq_zero fun i _ => by simp [hnot i]
-      rw [hweight, zero_smul]
-      symm
-      exact Finset.sum_eq_zero fun i _ => by simp [hnot i]
-  have hbary : dualHullBarycenter (weights, points) = x := by
-    calc
-      dualHullBarycenter (weights, points) = ∑ j, weights j • points j := rfl
-      _ = ∑ j, ∑ i : t, if e i = j then weights₀ i.1 • i.1 else 0 := by
-        apply Finset.sum_congr rfl
-        intro j _
-        exact hterm j
-      _ = ∑ i : t, ∑ j, if e i = j then weights₀ i.1 • i.1 else 0 := by
-        rw [Finset.sum_comm]
-      _ = ∑ i : t, weights₀ i.1 • i.1 := by
-        apply Finset.sum_congr rfl
-        intro i _
-        have hsingle :
-            (∑ j, if e i = j then weights₀ i.1 • i.1 else 0) =
-              (if e i = e i then weights₀ i.1 • i.1 else 0) := by
-          apply Finset.sum_eq_single (e i)
-          · intro j _ hji
-            simp [Ne.symm hji]
-          · simp
-        simp
-      _ = ∑ y ∈ t, weights₀ y • y := by
-        simp only [univ_eq_attach]
-        simpa using (Finset.sum_attach t (fun y => weights₀ y • y))
-      _ = x := hcenter
-  refine ⟨(weights, points), ?_, hbary⟩
-  exact ⟨⟨hweights_nonneg, hweights_sum⟩, fun j _ => hpoints j⟩
-
-private lemma isCompact_dualConvexHull
-    {S : Finset (α × β)} {p : α × β → ℝ}
-    (hp : IsPMF p) (hpS : Supported S p) :
-    IsCompact (convexHull ℝ (dualPhiGraph S)) := by
-  have heq :
-      convexHull ℝ (dualPhiGraph S) =
-        dualHullBarycenter (α := α) (β := β) '' dualHullParams S :=
-    Set.Subset.antisymm (dualConvexHull_subset_barycenter_image hp hpS)
-      (dualHullBarycenter_image_subset S)
-  rw [heq]
-  exact (isCompact_dualHullParams S).image continuous_dualHullBarycenter
-
 omit [DecidableEq α] [DecidableEq β] in
 private lemma supported_support_self (p : α × β → ℝ) :
     Supported (support p) p := by
@@ -1166,50 +874,14 @@ private lemma supported_support_self (p : α × β → ℝ) :
 
 private lemma dualConvexHull_fiber_le_envelope
     {S : Finset (α × β)} {p : α × β → ℝ} (hp : IsPMF p)
-    (hpS : Supported S p) {r : ℝ}
-    (hr : (p, r) ∈ convexHull ℝ (dualPhiGraph S)) :
+    (_hpS : Supported S p) {r : ℝ}
+    (hr : (p, r) ∈ convexHull ℝ (supportedPhiGraph S)) :
     r ≤ concaveEnvelopePhi p := by
-  rcases dualConvexHull_subset_barycenter_image hp hpS hr with
-    ⟨a, ha, hbary⟩
-  have hpoint (i : Fin (dualHullSize (α := α) (β := β))) :
-      a.2 i ∈ dualPhiGraph S :=
-    ha.2 i (Set.mem_univ i)
-  have hcompPMF (i : Fin (dualHullSize (α := α) (β := β))) :
-      IsPMF (a.2 i).1 := by
-    rcases hpoint i with ⟨q, hq, hqi⟩
-    rw [← hqi]
-    exact hq.1
-  have hcompPhi (i : Fin (dualHullSize (α := α) (β := β))) :
-      Phi (a.2 i).1 = (a.2 i).2 := by
-    rcases hpoint i with ⟨q, _, hqi⟩
-    rw [← hqi]
-  let L : Latent p := {
-    ι := Fin (dualHullSize (α := α) (β := β))
-    fin := inferInstance
-    dec := inferInstance
-    prior := a.1
-    comp := fun i => (a.2 i).1
-    prior_isPMF := ⟨ha.1.1, by simpa [mass] using ha.1.2⟩
-    comp_isPMF := hcompPMF
-    mixture := by
-      intro z
-      have hfirst := congrArg Prod.fst hbary
-      rw [dualHullBarycenter, Prod.fst_sum] at hfirst
-      have hfirstz := congrFun hfirst z
-      simpa [smul_eq_mul] using hfirstz
-  }
-  have hpayoff : (∑ i, L.prior i * Phi (L.comp i)) = r := by
-    have hsnd := congrArg Prod.snd hbary
-    rw [dualHullBarycenter, Prod.snd_sum] at hsnd
-    simp only [Prod.smul_snd, smul_eq_mul] at hsnd
-    calc
-      (∑ i, L.prior i * Phi (L.comp i)) =
-          ∑ i, a.1 i * (a.2 i).2 := by
-            apply Finset.sum_congr rfl
-            intro i _
-            dsimp [L]
-            rw [hcompPhi i]
-      _ = r := hsnd
+  have hgraph : supportedPhiGraph S ⊆ phiGraph := by
+    rintro _ ⟨q, hq, rfl⟩
+    exact ⟨q, hq.1, rfl⟩
+  obtain ⟨L, hpayoff⟩ :=
+    exists_latent_of_mem_convexHull_phiGraph hp (convexHull_mono hgraph hr)
   have hbdd :
       BddAbove (Set.range fun V : Latent p =>
         ∑ i, V.prior i * Phi (V.comp i)) := by
@@ -1225,7 +897,7 @@ private lemma dualConvexHull_fiber_le_envelope
 private lemma dual_envelope_point_mem_convexHull
     {p : α × β → ℝ} (hp : IsPMF p) :
     (p, concaveEnvelopePhi p) ∈
-      convexHull ℝ (dualPhiGraph (support p)) := by
+      convexHull ℝ (supportedPhiGraph (support p)) := by
   obtain ⟨V, hVopt⟩ := exists_tau_optimal_latent hp
   have hpS : Supported (support p) p := supported_support_self p
   have hcompS (i : V.ι) (hi : V.prior i ≠ 0) :
@@ -1241,10 +913,10 @@ private lemma dual_envelope_point_mem_convexHull
   let points : V.ι → (α × β → ℝ) × ℝ := fun i =>
     if hi : V.prior i = 0 then (p, Phi p)
     else (V.comp i, Phi (V.comp i))
-  have hpoints : ∀ i, points i ∈ dualPhiGraph (support p) := by
+  have hpoints : ∀ i, points i ∈ supportedPhiGraph (support p) := by
     intro i
     by_cases hi : V.prior i = 0
-    · simp [points, hi, dualPhiGraph, dualPmfSet, hp, hpS]
+    · simp [points, hi, supportedPhiGraph, phiGraphOn, supportedPmfSet, hp, hpS]
     · exact ⟨V.comp i, ⟨V.comp_isPMF i, hcompS i hi⟩, by simp [points, hi]⟩
   have hpayoff :
       (∑ i, V.prior i * Phi (V.comp i)) = concaveEnvelopePhi p := by
@@ -1329,10 +1001,10 @@ private lemma envelope_le_valid_objective
       apply Finset.sum_congr rfl
       intro z _
       ring
-  have hgraph : dualPhiGraph (support p) ⊆ {x | ell x ≤ 0} := by
+  have hgraph : supportedPhiGraph (support p) ⊆ {x | ell x ≤ 0} := by
     rintro _ ⟨q, hq, rfl⟩
     exact sub_nonpos.mpr (hc q hq.1 hq.2)
-  have hhull : convexHull ℝ (dualPhiGraph (support p)) ⊆
+  have hhull : convexHull ℝ (supportedPhiGraph (support p)) ⊆
       {x | ell x ≤ 0} :=
     convexHull_min hgraph (convex_halfSpace_le hell 0)
   have htop := hhull (dual_envelope_point_mem_convexHull hp)
@@ -1379,7 +1051,7 @@ private lemma exists_approx_valid_certificate
     ∃ c : α × β → ℝ,
       Valid (support p) c ∧
         (∑ z ∈ support p, c z * p z) = concaveEnvelopePhi p + ε := by
-  let K := convexHull ℝ (dualPhiGraph (support p))
+  let K := convexHull ℝ (supportedPhiGraph (support p))
   have hpS : Supported (support p) p := supported_support_self p
   have htop : (p, concaveEnvelopePhi p) ∈ K :=
     dual_envelope_point_mem_convexHull hp
@@ -1387,7 +1059,7 @@ private lemma exists_approx_valid_certificate
     intro hmem
     have hle := dualConvexHull_fiber_le_envelope hp hpS hmem
     linarith
-  have hKcompact : IsCompact K := isCompact_dualConvexHull hp hpS
+  have hKcompact : IsCompact K := isCompact_convexHull_supportedPhiGraph hp hpS
   obtain ⟨f, u, hbelow, habove'⟩ :=
     geometric_hahn_banach_closed_point (convex_convexHull ℝ _)
       hKcompact.isClosed habove
