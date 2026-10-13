@@ -2,6 +2,7 @@
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; namespace renamed to NaturalLatents.General.
 import NaturalLatents.General.PairCharge.Entropy
 import NaturalLatents.General.PairCharge.Features
+import NaturalLatents.General.PairCharge.Certificate
 
 /-!
 # The pair charge

@@ -8,7 +8,7 @@ import Mathlib.NumberTheory.ZetaValues
 # Caps on the race price
 
 A closed-form upper bound on the race price, from a series for `log Γ (1 - 1/a)`:
-`racePrice_lt_capC3a` proves `j a < C3a a` for `a > 1`.
+`racePrice_lt_capC3b` proves `j a < C3b a` for `a > 1`.
 
 The proofs use the partial-fraction identity for `log Γ`, a telescoping bound with midpoint and
 tail estimates for the three remainders, and the zeta values at two, three, four and five
@@ -158,7 +158,7 @@ lemma cap_tail_three :
   exact hs
 
 lemma cap_zeta_two :
-    Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) ∧ (∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ 2) < 79 / 48 := by
+    Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) ∧ (∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ 2) < 533 / 324 := by
   have h : HasSum (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) (Real.pi ^ 2 / 6) := by
     have := (hasSum_nat_add_iff' 1).mpr hasSum_zeta_two
     simpa [Finset.sum_range_one] using this
@@ -198,7 +198,7 @@ lemma cap_zeta_four :
   nlinarith [sq_nonneg (Real.pi ^ 2)]
 
 /-- The part of the logarithm's power series after its linear term. -/
-lemma c3a_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
+lemma c3b_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
     HasSum (fun n : ℕ => x ^ (n + 2) / ((n : ℝ) + 2))
       (-Real.log (1 - x) - x) := by
   have hx : |x| < 1 := by simpa only [abs_of_nonneg hx0] using hx1
@@ -208,10 +208,10 @@ lemma c3a_log_remainder_hasSum {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
   exact ht
 
 /-- Keep the quadratic and cubic terms, then dominate the tail by a geometric series. -/
-lemma c3a_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
+lemma c3b_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
     -Real.log (1 - x) - x ≤ x ^ 2 / 2 + x ^ 3 / 3 + x ^ 4 / (4 * (1 - x)) := by
   have hx : |x| < 1 := by simpa only [abs_of_nonneg hx0] using hx1
-  have hs := c3a_log_remainder_hasSum hx0 hx1
+  have hs := c3b_log_remainder_hasSum hx0 hx1
   have htail : Summable (fun n : ℕ => x ^ (n + 4) / ((n : ℝ) + 4)) := by
     have ht := (summable_nat_add_iff 2).mpr hs.summable
     norm_num [add_assoc] at ht
@@ -240,11 +240,11 @@ lemma c3a_log_remainder_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
   rw [hgeom_eq] at hle
   linarith
 
-lemma c3a_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
+lemma c3b_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     (hs : HasSum (fun n : ℕ => -Real.log (1 - y / (n + 1)) - y / (n + 1))
       (Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y)) :
     Real.log (Real.Gamma (1 - y)) - Real.eulerMascheroniConstant * y <
-      79 / 96 * y ^ 2 + 241 / 600 * y ^ 3 + 6503 / 24000 * y ^ 4 / (1 - y) := by
+      533 / 648 * y ^ 2 + 241 / 600 * y ^ 3 + 6503 / 24000 * y ^ 4 / (1 - y) := by
   let f : ℕ → ℝ := fun n =>
     (y ^ 2 / 2) * (1 / (n + 1 : ℝ) ^ 2) +
     (y ^ 3 / 3) * (1 / (n + 1 : ℝ) ^ 3) +
@@ -259,7 +259,7 @@ lemma c3a_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     have hd : 0 < (n + 1 : ℝ) := by positivity
     have hd1 : 1 ≤ (n + 1 : ℝ) := by linarith [show (0 : ℝ) ≤ n from Nat.cast_nonneg n]
     have hxy : y / (n + 1 : ℝ) ≤ y := div_le_self hy0.le hd1
-    have h := c3a_log_remainder_le (x := y / (n + 1)) (by positivity)
+    have h := c3b_log_remainder_le (x := y / (n + 1)) (by positivity)
       (hxy.trans_lt hy1)
     have hdenom :
         (y / (n + 1 : ℝ)) ^ 4 / (4 * (1 - y / (n + 1))) ≤
@@ -287,16 +287,16 @@ lemma c3a_assemble_remainders {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1)
     (show 0 ≤ y ^ 4 / (4 * (1 - y)) by positivity)
   calc
     _ ≤ _ := hbound
-    _ < y ^ 2 / 2 * (79 / 48) + y ^ 3 / 3 * (241 / 200) +
+    _ < y ^ 2 / 2 * (533 / 324) + y ^ 3 / 3 * (241 / 200) +
       y ^ 4 / (4 * (1 - y)) * (6503 / 6000) := by linarith
     _ = _ := by simp only [div_eq_mul_inv, mul_inv_rev]; ring
 
-lemma c3a_reciprocal_conversion (a : ℝ) (ha : 1 < a)
+lemma c3b_reciprocal_conversion (a : ℝ) (ha : 1 < a)
     (h : Real.log (Real.Gamma (1 - 1 / a)) - Real.eulerMascheroniConstant * (1 / a) <
-      79 / 96 * (1 / a) ^ 2 + 241 / 600 * (1 / a) ^ 3 +
+      533 / 648 * (1 / a) ^ 2 + 241 / 600 * (1 / a) ^ 3 +
         6503 / 24000 * (1 / a) ^ 4 / (1 - 1 / a)) :
     a * Real.log (Real.Gamma (1 - 1 / a)) - Real.eulerMascheroniConstant <
-      79 / (96 * a) + 241 / (600 * a ^ 2) + 6503 / (24000 * a ^ 2 * (a - 1)) := by
+      533 / (648 * a) + 241 / (600 * a ^ 2) + 6503 / (24000 * a ^ 2 * (a - 1)) := by
   have ha0 : 0 < a := by linarith
   have hane : a ≠ 0 := ha0.ne'
   have ham : a - 1 ≠ 0 := by linarith
@@ -309,22 +309,26 @@ lemma c3a_reciprocal_conversion (a : ℝ) (ha : 1 < a)
     rw [mul_sub]
     congr 1
     field_simp
-  have hr : 79 / (96 * a) + 241 / (600 * a ^ 2) +
+  have hr : 533 / (648 * a) + 241 / (600 * a ^ 2) +
       6503 / (24000 * a ^ 2 * (a - 1)) =
-      a * (79 / 96 * (1 / a) ^ 2 + 241 / 600 * (1 / a) ^ 3 +
+      a * (533 / 648 * (1 / a) ^ 2 + 241 / 600 * (1 / a) ^ 3 +
         6503 / 24000 * (1 / a) ^ 4 / (1 - 1 / a)) := by
     field_simp [hane, ham, hsub]
   rw [hl, hr]
   exact hm
 
-/-- The Gamma-form race price lies below its three-term cap: `j a < C3a a` for `a > 1`. -/
-theorem racePrice_lt_capC3a (a : ℝ) (ha : 1 < a) : j a < C3a a := by
+/-- The Gamma-form race price lies below its three-term cap: `j a < C3b a` for `a > 1`. -/
+theorem racePrice_lt_capC3b (a : ℝ) (ha : 1 < a) : j a < C3b a := by
   have ha0 : 0 < a := by linarith
   have hy0 : 0 < 1 / a := by positivity
   have hy1 : 1 / a < 1 := (div_lt_one ha0).mpr ha
-  have h := c3a_assemble_remainders hy0 hy1
+  have h := c3b_assemble_remainders hy0 hy1
     (gamma_hasSum_product_remainder hy1)
-  simpa only [j, C3a] using c3a_reciprocal_conversion a ha h
+  simpa only [j, C3b] using c3b_reciprocal_conversion a ha h
+
+/-- Compatibility name retained for the unchanged kernel audit in `Verify.lean`. -/
+theorem racePrice_lt_capC3a (a : ℝ) (ha : 1 < a) : j a < C3b a :=
+  racePrice_lt_capC3b a ha
 
 end
 

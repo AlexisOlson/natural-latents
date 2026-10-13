@@ -74,7 +74,7 @@ private noncomputable def componentSetoid (S : Finset (α × β)) :
           (r := fun a b : {z // z ∈ S} => Adj a.1 b.1)
           (Relation.ReflTransGen.single (adj_symm hbc)) ih
 
-/-- Every finite law admits a component decomposition. -/
+/-- Every finite law has a component decomposition. -/
 theorem exists_componentDecomp {p : α × β → ℝ} (hp : IsPMF p) :
     Nonempty (ComponentDecomp p) := by
   classical

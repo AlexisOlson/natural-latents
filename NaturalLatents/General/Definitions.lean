@@ -34,7 +34,7 @@ cancels in `NaturalLatents.Main`.
   one-cell marginals are the posteriors, and `h` is the seed-averaged conditional entropy of
   the fixed maps.
 * **Race prices.** `j a` is the Gamma form of the exponential-race price, `jET a` its
-  exponential-time form `∫ m a t dt` with `m a t = E log (1 + Vtail a t)`, and `C3a` is
+  exponential-time form `∫ m a t dt` with `m a t = E log (1 + Vtail a t)`, and `C3b` is
   the explicit three-term cap on `j a`.
 
 ## Attribution
@@ -254,7 +254,7 @@ def m (a t : ℝ) : ℝ := ∫ increments, Real.log (1 + Vtail a t increments) �
 def jET (a : ℝ) : ℝ := ∫ t, m a t ∂expOne
 
 /-- The three-term cap on the Gamma-form race price `j a`. -/
-def C3a (a : ℝ) : ℝ := 79/(96*a) + 241/(600*a^2) + 6503/(24000*a^2*(a-1))
+def C3b (a : ℝ) : ℝ := 533/(648*a) + 241/(600*a^2) + 6503/(24000*a^2*(a-1))
 end
 
 end NaturalLatents.General
