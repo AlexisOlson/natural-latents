@@ -62,9 +62,6 @@ lemma race_gain_joint_integrable_of_unit_log
     (a : ℝ) (ha : 1 < a) :
     Integrable (fun z : ℝ × (ℕ → ℝ) =>
       Real.log (1 + Vtail a z.1 z.2)) (expOne.prod arrivalLaw) := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   have hlogT : Integrable Real.log expOne :=
     race_scalar_exp_log_integrable_mean.1
   have htpos : ∀ᵐ z : ℝ × (ℕ → ℝ) ∂expOne.prod arrivalLaw, 0 < z.1 :=
@@ -121,15 +118,11 @@ lemma race_Vtail_mono_of_summable
   rw [← tsum_mul_left, ← tsum_mul_left]
   exact (hst.mul_left (t ^ a)).tsum_le_tsum hterm (hsu.mul_left (u ^ a))
 
-lemma race_gain_section_integrable_of_joint
-    (a : ℝ) (ha : 1 < a)
-    (hjoint : Integrable (fun z : ℝ × (ℕ → ℝ) =>
-      Real.log (1 + Vtail a z.1 z.2)) (expOne.prod arrivalLaw)) :
+lemma race_gain_sections_of_unit_log_integrable
+    (a : ℝ) (ha : 1 < a) :
     ∀ t : ℝ, 0 ≤ t →
-      Integrable (fun ω : ℕ → ℝ => Real.log (1 + Vtail a t ω)) arrivalLaw := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
+      Integrable (fun ω : ℕ → ℝ => Real.log (1 + Vtail a t ω)) arrivalLaw :=  by
+  have hjoint := race_gain_joint_integrable_of_unit_log a ha
   intro t ht
   obtain rfl | ht := eq_or_lt_of_le ht
   · have ha0 : a ≠ 0 := (lt_trans zero_lt_one ha).ne'
@@ -161,13 +154,6 @@ lemma race_gain_section_integrable_of_joint
   rw [Real.norm_eq_abs, abs_of_nonneg hnonneg]
   exact Real.log_le_log (by linarith : 0 < 1 + Vtail a t ω) (by linarith)
 
-lemma race_gain_sections_of_unit_log_integrable
-    (a : ℝ) (ha : 1 < a) :
-    ∀ t : ℝ, 0 ≤ t →
-      Integrable (fun ω : ℕ → ℝ => Real.log (1 + Vtail a t ω)) arrivalLaw := by
-  exact race_gain_section_integrable_of_joint a ha
-    (race_gain_joint_integrable_of_unit_log a ha)
-
 lemma race_m_zero (a : ℝ) (ha : a ≠ 0) : m a 0 = 0 := by
   simp [m, Vtail, Real.zero_rpow ha]
 
@@ -179,7 +165,6 @@ lemma race_m_nonneg (a t : ℝ) (ht : 0 ≤ t) : 0 ≤ m a t := by
   exact Real.log_nonneg (by linarith)
 
 lemma race_measurable_m (a : ℝ) : Measurable (m a) := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   have hgain : Measurable (fun z : ℝ × (ℕ → ℝ) =>
       Real.log (1 + Vtail a z.1 z.2)) :=
     Real.measurable_log.comp (measurable_const.add (race_measurable_Vtail a))
@@ -209,9 +194,6 @@ lemma race_scaled_m_integrable_of_unit_log
     (a : ℝ) (ha : 1 < a)
     (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
     Integrable (fun t : ℝ => m a (r * t)) expOne := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   have hjoint := race_gain_joint_integrable_of_unit_log a ha
   have hmint : Integrable (m a) expOne := by
     change Integrable (fun t : ℝ => ∫ ω, Real.log (1 + Vtail a t ω) ∂arrivalLaw) expOne
@@ -453,7 +435,6 @@ lemma race_Vtail_laplace_of_shifted_transform (a : ℝ) (ha : 1 < a) :
       (∫ ω : ℕ → ℝ, Real.exp (-(v * Vtail a t ω)) ∂arrivalLaw) =
         Real.exp (-(t * ∫ u : ℝ in Set.Ioi 0,
           1 - Real.exp (-(v * (1 + u) ^ (-a))))) := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   intro t ht v hv
   rcases ht.eq_or_lt with rfl | htpos
   · have ha0 : a ≠ 0 := (lt_trans zero_lt_one ha).ne'
@@ -480,7 +461,6 @@ lemma race_Vtail_laplace_of_shifted_transform (a : ℝ) (ha : 1 < a) :
 lemma race_gain_scaling_of_shifted_transform (a : ℝ) (ha : 1 < a)
     (t r : ℝ) (ht : 0 ≤ t) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
     r * m a t ≤ m a (r * t) := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   have hVm (s : ℝ) (_hs : 0 ≤ s) : Measurable (Vtail a s) := by
     have hA : Measurable (fun ω : ℕ → ℝ =>
         ∑' n : ℕ, (s + arrival ω (n + 1)) ^ (-a)) :=
@@ -496,32 +476,6 @@ lemma race_gain_scaling_of_shifted_transform (a : ℝ) (ha : 1 < a)
     hVm hVnn (race_gain_sections_of_unit_log_integrable a ha)
     (race_Vtail_laplace_of_shifted_transform a ha)
     t r ht hr0 hr1
-
-/-- Almost every appendage sequence has nonnegative increments. -/
-lemma race_selected_arrival_ae_nonneg :
-    ∀ᵐ D ∂arrivalLaw, ∀ n : ℕ, 0 ≤ D n := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure (by norm_num)
-  have hcoord (n : ℕ) : ∀ᵐ D ∂arrivalLaw, 0 ≤ D n := by
-    have hp : MeasurePreserving (Function.eval n) arrivalLaw expOne := by
-      simpa only [arrivalLaw] using
-        (measurePreserving_eval_infinitePi (fun _ : ℕ => expOne) n)
-    have hpos : ∀ᵐ t ∂arrivalLaw.map (Function.eval n), 0 ≤ t := by
-      rw [hp.map_eq]
-      exact race_scalar_exp_ae_pos.mono (fun t ht => ht.le)
-    exact ae_of_ae_map hp.measurable.aemeasurable hpos
-  exact (ae_all_iff).mpr hcoord
-
-/-- Totalized real tsum stays nonnegative on nonnegative appendages. -/
-lemma race_selected_Vtail_nonneg (a t : ℝ) (ht : 0 ≤ t)
-    (D : ℕ → ℝ) (hD : ∀ n, 0 ≤ D n) : 0 ≤ Vtail a t D := by
-  unfold Vtail
-  apply mul_nonneg (Real.rpow_nonneg ht a)
-  apply tsum_nonneg
-  intro n
-  apply Real.rpow_nonneg
-  apply add_nonneg ht
-  unfold arrival
-  exact Finset.sum_nonneg (fun k _ => hD k)
 
 /-- A general coordinate statistic selected by the race can be averaged
 by first integrating the independent appendages and then using the exact
@@ -547,7 +501,6 @@ lemma race_selected_coordinate_average
   let νκ : Measure (κ → Ξ) := Measure.pi (fun _ : κ => ν)
   let ρ := (stoch_to_det.clockLaw κ).prod νκ
   let : IsProbabilityMeasure νκ := by dsimp [νκ]; infer_instance
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure (by norm_num)
   let : ∀ _ : κ, IsProbabilityMeasure expOne := fun _ => inferInstance
   let W : (κ → ℝ) → κ := stoch_to_det.SharedRace.clockArgmin r
   let selected : (κ → ℝ) × (κ → Ξ) → ℝ := fun w => f (W w.1) (w.1 (W w.1), w.2 (W w.1))
@@ -628,12 +581,10 @@ lemma race_selected_logmass_inner
     (hgain : Integrable (fun D => Real.log (1 + Vtail a t D)) arrivalLaw) :
     (∫ D, Real.log (π^a * t^(-a) * (1 + max 0 (Vtail a t D))) ∂arrivalLaw) =
       a * Real.log π - a * Real.log t + m a t := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure (by norm_num)
-  let : IsProbabilityMeasure arrivalLaw := by unfold arrivalLaw; infer_instance
   have hpoint : (fun D => Real.log (π^a * t^(-a) * (1 + max 0 (Vtail a t D)))) =ᵐ[arrivalLaw]
       fun D => (a * Real.log π - a * Real.log t) + Real.log (1 + Vtail a t D) := by
-    filter_upwards [race_selected_arrival_ae_nonneg] with D hD
-    have hV := race_selected_Vtail_nonneg a t ht.le D hD
+    filter_upwards [race_arrival_ae_nonneg] with D hD
+    have hV := race_Vtail_nonneg_of_nonneg a t ht.le D hD
     have hone : 0 < 1 + Vtail a t D := by linarith
     rw [max_eq_right hV,
       Real.log_mul (mul_pos (Real.rpow_pos_of_pos hπ a) (Real.rpow_pos_of_pos ht (-a))).ne' hone.ne',
@@ -660,8 +611,6 @@ lemma race_selected_appended_log_mean
         -a * (∑ i, r i * Real.log (r i / π i)) + a * Real.eulerMascheroniConstant +
           ∑ i, r i * (∫ t, m a (r i * t) ∂expOne) := by
   dsimp only
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure (by norm_num)
-  let : IsProbabilityMeasure arrivalLaw := by unfold arrivalLaw; infer_instance
   let f : κ → ℝ × (ℕ → ℝ) → ℝ := fun i tD =>
     Real.log ((π i)^a * tD.1^(-a) * (1 + max 0 (Vtail a tD.1 tD.2)))
   have hmeas (i : κ) : Measurable (f i) := by
@@ -798,8 +747,6 @@ lemma race_superposition_clock_append_laplace
       Real.exp (-(v * ∑ i, (π i)^a * R (w.1 i, w.2 i)))
       ∂(stoch_to_det.clockLaw κ).prod (Measure.pi (fun _ : κ => arrivalLaw))) =
         Real.exp (-(G * v^(1/a))) := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure (by norm_num)
-  let : IsProbabilityMeasure arrivalLaw := by unfold arrivalLaw; infer_instance
   let : ∀ _ : κ, IsProbabilityMeasure expOne := fun _ => inferInstance
   let : ∀ _ : κ, IsProbabilityMeasure arrivalLaw := fun _ => inferInstance
   let P := Measure.pi (fun _ : κ => expOne.prod arrivalLaw)
@@ -835,8 +782,6 @@ lemma race_clock_appended_logloss_of_unit_laplace
         ∑ i, r i * (∫ t, m a (r i * t) ∂expOne) := by
   classical
   dsimp only
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   let ν : Measure (κ → ℕ → ℝ) := Measure.pi (fun _ : κ => arrivalLaw)
   let ρ := (stoch_to_det.clockLaw κ).prod ν
   let R : ℝ × (ℕ → ℝ) → ℝ :=
@@ -951,8 +896,6 @@ lemma race_appended_logloss_of_unit_laplace
   classical
   dsimp only
   let : MeasurableSpace κ := ⊤
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   let ν : Measure (κ → ℕ → ℝ) := Measure.pi (fun _ : κ => arrivalLaw)
   let : IsProbabilityMeasure ν := by dsimp [ν]; infer_instance
   let ρc := (stoch_to_det.clockLaw κ).prod ν
@@ -1057,37 +1000,15 @@ lemma race_appended_logloss_of_unit_laplace
     _ = ∫ w, Lc w ∂ρc := integral_congr_ae hLossEq
     _ = _ := hcMean
 
-lemma race_appended_logloss {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
-    (a : ℝ) (ha : 1 < a) (π : κ → ℝ)
-    (hπ : stoch_to_det.IsPMF π) (hπpos : ∀ i, 0 < π i) :
-    let ν : Measure (κ → ℕ → ℝ) := Measure.pi (fun _ : κ => arrivalLaw)
-    let ρ := (stoch_to_det.seedLaw κ).prod ν
-    let S : (κ → ℝ) × (κ → ℕ → ℝ) → κ → ℝ := fun w i =>
-      (π i)^a * (Real.exp (-w.1 i))^(-a) *
-        (1 + max 0 (Vtail a (Real.exp (-w.1 i)) (w.2 i)))
-    let Q := fun w i => S w i / ∑ k, S w k
-    ∀ (r : κ → ℝ), stoch_to_det.IsPMF r → (∀ i, 0 < r i) →
-      Integrable (fun w =>
-        Real.log (1 / Q w (stoch_to_det.SharedRace.weightedLexWinner r w.1))) ρ ∧
-      (∫ w, Real.log (1 / Q w (stoch_to_det.SharedRace.weightedLexWinner r w.1)) ∂ρ) =
-        a * (∑ i, r i * Real.log (r i / π i)) + jET a -
-          ∑ i, r i * (∫ t, m a (r i * t) ∂expOne) := by
-  dsimp only
-  intro r hr hrpos
-  exact race_appended_logloss_of_unit_laplace a ha π hπ hπpos r hr hrpos
-
-lemma race_gain_scaling (a : ℝ) (ha : 1 < a) (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
-    Integrable (fun t => m a (r * t)) expOne ∧
-      ∀ t, 0 ≤ t → r * m a t ≤ m a (r * t) := by
-  refine ⟨race_scaled_m_integrable_of_unit_log a ha r hr0 hr1, ?_⟩
-  intro t ht
-  exact race_gain_scaling_of_shifted_transform a ha t r ht hr0 hr1
-
 lemma race_gain_average (a : ℝ) (ha : 1 < a) (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
     r * j a ≤ ∫ t, m a (r * t) ∂expOne := by
-  have hscale := race_gain_scaling a ha r hr0 hr1
+  have hscale : Integrable (fun t => m a (r * t)) expOne ∧
+      ∀ t, 0 ≤ t → r * m a t ≤ m a (r * t) := by
+    refine ⟨race_scaled_m_integrable_of_unit_log a ha r hr0 hr1, ?_⟩
+    intro t ht
+    exact race_gain_scaling_of_shifted_transform a ha t r ht hr0 hr1
   have hint : Integrable (m a) expOne := by
-    simpa using (race_gain_scaling a ha 1 (by norm_num) (by norm_num)).1
+    simpa using race_scaled_m_integrable_of_unit_log a ha 1 (by norm_num) (by norm_num)
   have hpos : ∀ᵐ t ∂expOne, 0 ≤ t := by
     have he : expOne (Set.Iic 0) = 0 := stoch_to_det.expMeasure_one_Iic_zero
     have hn := measure_eq_zero_iff_ae_notMem.mp he
@@ -1116,7 +1037,7 @@ lemma race_reference_loss_bound {κ : Type} [Fintype κ] [DecidableEq κ] [Nonem
     (∫ w, Real.log (1 / Q w (stoch_to_det.SharedRace.weightedLexWinner r w.1)) ∂ρ) ≤
       a * (∑ i, r i * Real.log (r i / π i)) + j a * (1 - ∑ i, (r i)^2) := by
   dsimp only
-  have he := race_appended_logloss a ha π hπ hπpos r hr hrpos
+  have he := race_appended_logloss_of_unit_laplace a ha π hπ hπpos r hr hrpos
   dsimp only at he
   refine ⟨he.1, ?_⟩
   rw [he.2, race_gamma_price a ha]
@@ -1144,8 +1065,6 @@ lemma race_single_law {Ω κ : Type} [Fintype Ω] [Fintype κ]
   have hπ := stoch_to_det.SharedRace.posteriorMean_isPMF_of_support hμ hr
   have hπpos := stoch_to_det.SharedRace.posteriorMean_pos_of_support hμ hrpos
   let ν : Measure (κ → ℕ → ℝ) := Measure.pi (fun _ : κ => arrivalLaw)
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure (by norm_num)
-  let : IsProbabilityMeasure arrivalLaw := by unfold arrivalLaw; infer_instance
   let : IsProbabilityMeasure ν := by dsimp [ν]; infer_instance
   let S : (κ → ℝ) × (κ → ℕ → ℝ) → κ → ℝ := fun w i =>
     (π i)^a * (Real.exp (-w.1 i))^(-a) *
@@ -1166,10 +1085,8 @@ lemma race_single_law {Ω κ : Type} [Fintype Ω] [Fintype κ]
 /-- The exponential race: for `a > 1`, a latent with positive prior and positive posterior rows has a
 calibrated seeded family `F` with `h F ≤ a * B L + 2 * j a * d L`. -/
 theorem exists_race {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : FiniteLatent p)
-    (hprior : ∀ i, 0 < L.prior i)
     (hrows : ∀ z ∈ stoch_to_det.support p, ∀ i, 0 < post L i z)
     (a : ℝ) (ha : 1 < a) : ∃ F : CalibratedSeededFamily L, h F ≤ a*B L + 2*j a*d L := by
-  have _ := hprior
   obtain ⟨F, hF⟩ := race_of_single_law hp L hrows a (j a / Real.log 2)
     (fun μ r hμ hr hrpos => race_single_law a ha hμ hr hrpos)
   refine ⟨F, ?_⟩

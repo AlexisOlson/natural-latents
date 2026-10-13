@@ -66,7 +66,7 @@ theorem T_le_of_connected {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     (hconn : stoch_to_det.IsConnected (stoch_to_det.support p)) :
     T p ≤ (2789/400 : ℝ)*tau p := by
   obtain ⟨D⟩ := exists_setup_of_connected hp hconn
-  obtain ⟨F, hF⟩ := exists_race hp D.L D.prior_pos D.rows_pos (93/20) (by norm_num)
+  obtain ⟨F, hF⟩ := exists_race hp D.L D.rows_pos (93/20) (by norm_num)
   have hT := T_le_ledger hp D.L F
   have hj : j (93/20) < (199/1000 : ℝ) :=
     lt_trans (racePrice_lt_capC3a (93/20) (by norm_num)) constants_arithmetic.2.2.2.2.1

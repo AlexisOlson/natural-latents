@@ -288,16 +288,15 @@ lemma race_scalar_log_mean_of_stable_laplace
   field_simp [ne_of_gt halpha] at hmeans ⊢
   nlinarith
 
-lemma race_arrival_probability : IsProbabilityMeasure arrivalLaw := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
+instance : IsProbabilityMeasure expOne :=
+  isProbabilityMeasure_expMeasure zero_lt_one
+
+instance : IsProbabilityMeasure arrivalLaw := by
   change IsProbabilityMeasure (Measure.infinitePi (fun _ : ℕ => expOne))
   infer_instance
 
 lemma race_arrival_ae_nonneg :
     ∀ᵐ ω ∂arrivalLaw, ∀ n : ℕ, 0 ≤ ω n := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
   apply ae_all_iff.2
   intro n
   have heval : arrivalLaw.map (fun ω : ℕ → ℝ => ω n) = expOne := by
@@ -332,9 +331,6 @@ lemma race_unit_log_mean_eq_jET (a : ℝ)
       Real.log (z.1 ^ (-a) * (1 + max 0 (Vtail a z.1 z.2)))
       ∂expOne.prod arrivalLaw) =
         a * Real.eulerMascheroniConstant + jET a := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   let R : ℝ × (ℕ → ℝ) → ℝ :=
     fun z => z.1 ^ (-a) * (1 + max 0 (Vtail a z.1 z.2))
   let gain : ℝ × (ℕ → ℝ) → ℝ :=
@@ -393,9 +389,6 @@ lemma race_gamma_price_of_unit_laplace (a : ℝ) (ha : 1 < a) :
         Real.exp (-(Real.Gamma (1 - 1/a) * v ^ (1/a)))) →
     jET a = j a
   intro hMeas hInt hLap
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   have ha0 : 0 < a := lt_trans zero_lt_one ha
   have hα : 0 < 1/a := one_div_pos.mpr ha0
   have harg : 0 < 1 - 1/a := by
@@ -423,11 +416,6 @@ lemma race_gamma_price_of_unit_laplace (a : ℝ) (ha : 1 < a) :
   unfold j
   linarith
 
-lemma race_measurable_real_tsum {Z ι : Type*} [MeasurableSpace Z]
-    [Countable ι] (f : ι → Z → ℝ) (hf : ∀ i, Measurable (f i)) :
-    Measurable (fun z => ∑' i, f i z) := by
-  exact Measurable.tsum hf
-
 lemma race_measurable_arrival (n : ℕ) :
     Measurable (fun ω : ℕ → ℝ => arrival ω n) := by
   unfold arrival
@@ -439,7 +427,7 @@ lemma race_measurable_Vtail (a : ℝ) :
   unfold Vtail
   apply Measurable.mul
   · exact measurable_fst.pow measurable_const
-  · apply race_measurable_real_tsum
+  · apply Measurable.tsum
     intro n
     exact (measurable_fst.add
       ((race_measurable_arrival (n+1)).comp measurable_snd)).pow
@@ -554,7 +542,6 @@ lemma race_product_laplace_factorization
 /-- Shifting one coordinate preserves the iid exponential product law. -/
 lemma race_shift_arrival_law :
     arrivalLaw.map (fun ω : ℕ → ℝ => fun n : ℕ => ω (n + 1)) = arrivalLaw := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
   unfold arrivalLaw
   exact Measure.map_infinitePi_infinitePi_of_inj (P := fun _ : ℕ => expOne)
     (f := fun n : ℕ => n + 1) (fun _ _ h => Nat.add_right_cancel h)
@@ -583,7 +570,6 @@ lemma race_arrival_mass_head
 lemma race_arrival_ratio_tendsto :
     ∀ᵐ ω ∂arrivalLaw,
       Filter.Tendsto (fun n : ℕ => arrival ω n / (n : ℝ)) Filter.atTop (nhds 1) := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
   let X : ℕ → (ℕ → ℝ) → ℝ := fun n ω => ω n
   have hexp : Integrable (fun y : ℝ => y) expOne := by
     have h := (race_exp_rpow_moment 1 (by norm_num)).1
@@ -653,7 +639,6 @@ lemma race_arrival_mass_ae_summable (a : ℝ) (ha : 1 < a) :
 lemma race_arrival_head_tail_independent :
     IndepFun (fun ω : ℕ → ℝ => ω 0)
       (fun ω : ℕ → ℝ => fun n : ℕ => ω (n + 1)) arrivalLaw := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
   let M : ℕ → MeasurableSpace (ℕ → ℝ) := fun n =>
     MeasurableSpace.comap (fun ω : ℕ → ℝ => ω n) inferInstance
   let S : Set ℕ := {0}
@@ -692,8 +677,6 @@ lemma race_arrival_head_tail_independent :
 lemma race_arrival_head_tail_law :
     arrivalLaw.map (fun ω : ℕ → ℝ => (ω 0, fun n : ℕ => ω (n + 1))) =
       expOne.prod arrivalLaw := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
   have hmap := (indepFun_iff_map_prod_eq_prod_map_map
     ((measurable_pi_apply 0).aemeasurable : AEMeasurable (fun ω : ℕ → ℝ => ω 0) arrivalLaw)
     ((by fun_prop : Measurable (fun ω : ℕ → ℝ => fun n : ℕ => ω (n + 1))).aemeasurable : AEMeasurable
@@ -722,8 +705,6 @@ lemma race_arrival_laplace_renewal (a v : ℝ) (ha : 1 < a) (hv : 0 < v) :
     ∀ t : ℝ, 0 ≤ t → F t =
       ∫ s : ℝ in Set.Ioi 0,
         Real.exp (-s) * Real.exp (-(v * (t + s) ^ (-a))) * F (t + s) := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
   let A : ℝ → (ℕ → ℝ) → ℝ := fun t ω =>
     ∑' n : ℕ, (t + arrival ω (n + 1)) ^ (-a)
   let F : ℝ → ℝ := fun t => ∫ ω, Real.exp (-(v * A t ω)) ∂arrivalLaw
@@ -814,7 +795,6 @@ lemma race_shifted_mass_laplace_tendsto_one
         Real.exp (-(v * ∑' n : ℕ, (t + arrival ω (n+1)) ^ (-a)))
           ∂arrivalLaw)
       Filter.atTop (nhds 1) := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   have hm (t : ℝ) : Measurable (fun ω : ℕ → ℝ =>
       Real.exp (-(v * ∑' n : ℕ, (t + arrival ω (n+1)) ^ (-a)))) := by
     apply Real.measurable_exp.comp
@@ -1030,8 +1010,6 @@ lemma race_unit_laplace_eq_arrival_laplace (a v : ℝ) (ha : 1 < a) :
     (∫ z, Real.exp (-(v * R z)) ∂expOne.prod arrivalLaw) =
       ∫ ω, Real.exp (-(v *
         ∑' n : ℕ, arrival ω (n + 1) ^ (-a))) ∂arrivalLaw := by
-  let : IsProbabilityMeasure expOne := isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   let R : ℝ × (ℕ → ℝ) → ℝ := fun z =>
     z.1 ^ (-a) * (1 + max 0 (Vtail a z.1 z.2))
   change (∫ z, Real.exp (-(v * R z)) ∂expOne.prod arrivalLaw) = _
@@ -1071,7 +1049,6 @@ lemma race_shifted_arrival_laplace
         ∑' n : ℕ, (t + arrival ω (n + 1)) ^ (-a))) ∂arrivalLaw) =
         Real.exp (-(∫ u : ℝ in Set.Ioi t,
           1 - Real.exp (-(v * u ^ (-a))))) := by
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   let A : ℝ → (ℕ → ℝ) → ℝ := fun t ω =>
     ∑' n : ℕ, (t + arrival ω (n + 1)) ^ (-a)
   let F : ℝ → ℝ := fun t => ∫ ω, Real.exp (-(v * A t ω)) ∂arrivalLaw
@@ -1193,9 +1170,6 @@ lemma race_unit_log_integrable (a : ℝ) (ha : 1 < a) :
     Integrable (fun z : ℝ × (ℕ → ℝ) =>
       Real.log (z.1 ^ (-a) * (1 + max 0 (Vtail a z.1 z.2))))
       (expOne.prod arrivalLaw) := by
-  let : IsProbabilityMeasure expOne :=
-    isProbabilityMeasure_expMeasure zero_lt_one
-  let : IsProbabilityMeasure arrivalLaw := race_arrival_probability
   let R : ℝ × (ℕ → ℝ) → ℝ := fun z =>
     z.1 ^ (-a) * (1 + max 0 (Vtail a z.1 z.2))
   have hRmeas : Measurable R := race_measurable_unit_mass a
