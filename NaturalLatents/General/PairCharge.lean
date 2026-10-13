@@ -34,26 +34,43 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
+lemma pairCharge_weighted_second_moment {ι : Type*} [Fintype ι]
+    (p F : ι → ℝ) (d : ℝ) (hp : ∀ i, 0 ≤ p i) (hd : 0 ≤ d)
+    (hsum : ∑ i, p i = d) :
+    ((∑ i, p i * F i) / d)^2 ≤ (∑ i, p i * (F i)^2) / d := by
+  by_cases hz : d = 0
+  · have hpi : ∀ i, p i = 0 := by
+      intro i
+      apply le_antisymm
+      · have := Finset.single_le_sum (fun j _ => hp j) (Finset.mem_univ i)
+        simpa [hsum, hz] using this
+      · exact hp i
+    simp [hz, hpi]
+  · have hdp : 0 < d := lt_of_le_of_ne hd (Ne.symm hz)
+    let q : ι → ℝ := fun i => p i / d
+    have hqt : ∑ i, q i = 1 := by
+      simp only [q, ← Finset.sum_div, hsum, div_self hz]
+    have hv := pairCharge_variance_raw q F hqt
+    have hn : 0 ≤ ∑ i, q i * (F i - ∑ j, q j * F j)^2 :=
+      Finset.sum_nonneg fun i _ => mul_nonneg (div_nonneg (hp i) hdp.le) (sq_nonneg _)
+    rw [hv] at hn
+    dsimp [q] at hn
+    simp only [div_mul_eq_mul_div, ← Finset.sum_div] at hn
+    linarith
+
 lemma pairCharge_cond_X_second_moment {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (G : Y → ℝ) (x : X) :
     ((∑ y, P (x,y)*G y)/stoch_to_det.mX P x)^2 ≤
       (∑ y, P (x,y)*(G y)^2)/stoch_to_det.mX P x := by
-  by_cases hz : stoch_to_det.mX P x = 0
-  · simp [hz]
-  · have hm : 0 < stoch_to_det.mX P x :=
-      lt_of_le_of_ne ((stoch_to_det.isPMF_push hP).nonneg x) (Ne.symm hz)
-    let q : Y → ℝ := fun y => P (x,y)/stoch_to_det.mX P x
-    have hqt : ∑ y, q y = 1 := by
-      dsimp [q]
-      rw [← Finset.sum_div,← contact_mX_eq_sum]
-      exact div_self hz
-    have hv := pairCharge_variance_raw q G hqt
-    have hp : 0 ≤ ∑ y, q y*(G y-∑ z, q z*G z)^2 :=
-      Finset.sum_nonneg fun y _ => mul_nonneg (div_nonneg (hP.nonneg (x,y)) hm.le) (sq_nonneg _)
-    rw [hv] at hp
-    dsimp [q] at hp
-    simp only [div_mul_eq_mul_div,← Finset.sum_div] at hp
-    linarith
+  apply pairCharge_weighted_second_moment (fun y => P (x, y)) G _
+    (fun y => hP.nonneg (x, y)) ((stoch_to_det.isPMF_push hP).nonneg x)
+  exact (contact_mX_eq_sum P x).symm
+
+lemma pairCharge_cubic_conditional_algebra {u a m D : ℝ} (hu : u = a - 1)
+    (hD : D = a - 2 * m + 1) (hcs : m^2 ≤ a) :
+    u^2 ≤ 2 * (2 + u) * D := by
+  rw [hD, hu]
+  nlinarith only [hcs, sq_nonneg (a + 1 - 2 * m)]
 
 /-- The conditional root estimate; the proof is an exact square without square roots. -/
 lemma pairCharge_cubic_conditional_X {S : Finset (X × Y)} {w P R : Law X Y}
@@ -82,9 +99,7 @@ lemma pairCharge_cubic_conditional_X {S : Finset (X × Y)} {w P R : Law X Y}
     dsimp [DX,m]
     rw [hid,add_div,sub_div,mul_div_assoc,hgf,ht]
   have hU : U P R x = f P R x-1 := by unfold f;ring
-  change (U P R x)^2 ≤ 2*(2+U P R x)*DX
-  rw [hDX,hU]
-  nlinarith only [hcs,sq_nonneg (f P R x+1-2*m)]
+  exact pairCharge_cubic_conditional_algebra hU hDX hcs
 
 -- Positive conditional `L^3` contraction.
 
@@ -208,22 +223,9 @@ lemma pairCharge_cond_Y_second_moment {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (y : Y) :
     ((∑ x, P (x,y)*F x)/stoch_to_det.mY P y)^2 ≤
       (∑ x, P (x,y)*(F x)^2)/stoch_to_det.mY P y := by
-  by_cases hz : stoch_to_det.mY P y = 0
-  · simp [hz]
-  · have hm : 0 < stoch_to_det.mY P y :=
-      lt_of_le_of_ne ((stoch_to_det.isPMF_push hP).nonneg y) (Ne.symm hz)
-    let q : X → ℝ := fun x => P (x,y)/stoch_to_det.mY P y
-    have hqt : ∑ x, q x = 1 := by
-      dsimp [q]
-      rw [← Finset.sum_div,← contact_mY_eq_sum]
-      exact div_self hz
-    have hv := pairCharge_variance_raw q F hqt
-    have hp : 0 ≤ ∑ x, q x*(F x-∑ z, q z*F z)^2 :=
-      Finset.sum_nonneg fun x _ => mul_nonneg (div_nonneg (hP.nonneg (x,y)) hm.le) (sq_nonneg _)
-    rw [hv] at hp
-    dsimp [q] at hp
-    simp only [div_mul_eq_mul_div,← Finset.sum_div] at hp
-    linarith
+  apply pairCharge_weighted_second_moment (fun x => P (x, y)) F _
+    (fun x => hP.nonneg (x, y)) ((stoch_to_det.isPMF_push hP).nonneg y)
+  exact (contact_mY_eq_sum P y).symm
 
 lemma pairCharge_cubic_conditional_Y {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) {y : Y} (hy : y ∈ YSupport S) :
@@ -251,9 +253,7 @@ lemma pairCharge_cubic_conditional_Y {S : Finset (X × Y)} {w P R : Law X Y}
     dsimp [DY,m]
     rw [hid,add_div,sub_div,mul_div_assoc,hfg,ht]
   have hV : V P R y = g P R y-1 := by unfold g;ring
-  change (V P R y)^2 ≤ 2*(2+V P R y)*DY
-  rw [hDY,hV]
-  nlinarith only [hcs,sq_nonneg (g P R y+1-2*m)]
+  exact pairCharge_cubic_conditional_algebra hV hDY hcs
 
 lemma pairCharge_U_den_pos {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) (x : X) : 0 < 2+U P R x := by
@@ -266,6 +266,24 @@ lemma pairCharge_V_den_pos {S : Finset (X × Y)} {w P R : Law X Y}
   have hg := contact_g_nonneg hpair y
   unfold g at hg
   linarith
+
+omit [DecidableEq X] [DecidableEq Y] in
+lemma pairCharge_average_quartic_bound {P : Law X Y} (hP : stoch_to_det.IsPMF P)
+    (L D : X × Y → ℝ) (J : ℝ)
+    (hpoint : ∀ z, 0 < P z → L z ^ 4 / (2 + L z) ≤ 2 * (L z ^ 2 * D z))
+    (hinner : E P (fun z => L z ^ 2 * D z) = J) :
+    E P (fun z => L z ^ 4 / (2 + L z)) ≤ 2 * J := by
+  calc
+    _ ≤ E P (fun z => 2 * (L z ^ 2 * D z)) := by
+      unfold E
+      apply Finset.sum_le_sum
+      intro z _
+      by_cases hz : P z = 0
+      · simp [hz]
+      · exact mul_le_mul_of_nonneg_left
+          (hpoint z (lt_of_le_of_ne (hP.nonneg z) (Ne.symm hz))) (hP.nonneg z)
+    _ = 2 * E P (fun z => L z ^ 2 * D z) := contact_q_E_scale _ _ _
+    _ = 2 * J := by rw [hinner]
 
 lemma pairCharge_KX_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
@@ -280,20 +298,10 @@ lemma pairCharge_KX_bound {S : Finset (X × Y)} {w P R : Law X Y}
     have hm := mul_le_mul_of_nonneg_left hc (sq_nonneg (U P R z.1))
     apply (div_le_iff₀ (pairCharge_U_den_pos hpair z.1)).2
     nlinarith only [hm]
-  calc
-    _ ≤ E P (fun z => 2*((U P R z.1)^2*DX z.1)) := by
-      unfold E
-      apply Finset.sum_le_sum
-      intro z _
-      by_cases hz : P z = 0
-      · simp [hz]
-      · exact mul_le_mul_of_nonneg_left
-          (hpoint z (lt_of_le_of_ne (hpair.2.1.1.nonneg z) (Ne.symm hz)))
-          (hpair.2.1.1.nonneg z)
-    _ = 2*E P (fun z => (U P R z.1)^2*DX z.1) := contact_q_E_scale _ _ _
-    _ = 2*J P R := by
-      congr 1
-      exact pairCharge_cond_X_inner hpair.2.1.1 (fun x => (U P R x)^2) (fun y => (V P R y)^2)
+  apply pairCharge_average_quartic_bound hpair.2.1.1
+    (fun z => U P R z.1) (fun z => DX z.1) (J P R) hpoint
+  exact pairCharge_cond_X_inner hpair.2.1.1
+    (fun x => (U P R x)^2) (fun y => (V P R y)^2)
 
 lemma pairCharge_KY_bound {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPairs S w P R) :
@@ -308,26 +316,15 @@ lemma pairCharge_KY_bound {S : Finset (X × Y)} {w P R : Law X Y}
     have hm := mul_le_mul_of_nonneg_left hc (sq_nonneg (V P R z.2))
     apply (div_le_iff₀ (pairCharge_V_den_pos hpair z.2)).2
     nlinarith only [hm]
+  apply pairCharge_average_quartic_bound hpair.2.1.1
+    (fun z => V P R z.2) (fun z => DY z.2) (J P R) hpoint
   calc
-    _ ≤ E P (fun z => 2*((V P R z.2)^2*DY z.2)) := by
-      unfold E
-      apply Finset.sum_le_sum
-      intro z _
-      by_cases hz : P z = 0
-      · simp [hz]
-      · exact mul_le_mul_of_nonneg_left
-          (hpoint z (lt_of_le_of_ne (hpair.2.1.1.nonneg z) (Ne.symm hz)))
-          (hpair.2.1.1.nonneg z)
-    _ = 2*E P (fun z => (V P R z.2)^2*DY z.2) := contact_q_E_scale _ _ _
-    _ = 2*J P R := by
+    _ = E P (fun z => DY z.2 * (V P R z.2)^2) := by
       congr 1
-      calc
-        _ = E P (fun z => DY z.2*(V P R z.2)^2) := by
-          congr 1
-          funext z
-          ring
-        _ = J P R := pairCharge_cond_Y_inner hpair.2.1.1
-          (fun x => (U P R x)^2) (fun y => (V P R y)^2)
+      funext z
+      ring
+    _ = J P R := pairCharge_cond_Y_inner hpair.2.1.1
+      (fun x => (U P R x)^2) (fun y => (V P R y)^2)
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_abs_cube_cauchy {P : Law X Y} (hP : stoch_to_det.IsPMF P)
