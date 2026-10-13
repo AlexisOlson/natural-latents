@@ -24,19 +24,19 @@ of DLorell/stoch_to_det at its head `7b41957d`.
 
 | $`C`$ (exact) | $`\approx`$ | Status | Rests on | Credit | Frontier |
 |---|---|---|---|---|---|
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`521115692681\text/75036146600`$ | 6.94486 | `paper proof` | fitted pair charge; 81 interval-certified caps on the race price | the author, unpublished | **yes**, both readings: lowest constant listed |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`500429818681873\text/72047805525880`$ | 6.94580 | `kernel-verified` in an unpublished standalone Lean file against PR #6; no pinned axiom audit | the same fitted pair charge; race prices from fitted tables checked in Lean; no interval input | the author, unpublished | **yes**, whole-route reading; also the lowest `kernel-verified` constant listed |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`18683211392538852259\text/2689172049828207160`$ | 6.94757 | `paper proof` | the same fitted pair charge; race cap by hand; no interval input | the author, unpublished | no: 6.94580 has the same kind of inputs and a smaller constant |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`6586364623667\text/947461643720`$ | 6.95159 | `paper proof` | computer algebra for the pair charge; interval-certified race caps | the author, unpublished | no |
+| $`521115692681\text/75036146600`$ | 6.94486 | `paper proof` | fitted pair charge; 81 interval-certified caps on the race price | the author, unpublished | **yes**, both readings: lowest constant listed |
+| $`500429818681873\text/72047805525880`$ | 6.94580 | `kernel-verified` in an unpublished standalone Lean file against PR #6; no pinned axiom audit | the same fitted pair charge; race prices from fitted tables checked in Lean; no interval input | the author, unpublished | **yes**, whole-route reading; also the lowest `kernel-verified` constant listed |
+| $`18683211392538852259\text/2689172049828207160`$ | 6.94757 | `paper proof` | the same fitted pair charge; race cap by hand; no interval input | the author, unpublished | no: 6.94580 has the same kind of inputs and a smaller constant |
+| $`6586364623667\text/947461643720`$ | 6.95159 | `paper proof` | computer algebra for the pair charge; interval-certified race caps | the author, unpublished | no |
 | $`2789\text/400`$ | 6.9725 | `kernel-verified` in the first version of this repository; also `paper proof` | by hand, long; no fitted certificate and no interval-certified input | the first version of this repository, following PR #6's method | **yes**, both readings: lowest constant listed with neither kind of certificate |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`3259043\text/466400`$ | 6.98766 | pair charge and cap C4b `paper proof`; composite has no status of its own | by hand, long | the author, unpublished | no |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`612329\text/87500`$ and $`153077\text/21875`$ | 6.998046 and 6.997806 | pair charge (on a common support with holes) and cap C4b `paper proof`; composites have no status of their own | not rated | the author, unpublished | no on the whole-route reading; not placed on the charge reading (not rated) |
+| $`3259043\text/466400`$ | 6.98766 | pair charge and cap C4b `paper proof`; composite has no status of its own | by hand, long | the author, unpublished | no |
+| $`612329\text/87500`$ and $`153077\text/21875`$ | 6.998046 and 6.997806 | pair charge (on a common support with holes) and cap C4b `paper proof`; composites have no status of their own | not rated | the author, unpublished | no on the whole-route reading; not placed on the charge reading (not rated) |
 | $`5249623\text/750000`$, stated as $`13999\text/2000`$ | 6.999497 | pair charge C `paper proof` on the [pair-charge page](pair-charge.md); cap C3b `kernel-verified` here and `paper proof` on the [cap page](cap.md); the route `kernel-verified` in this repository, by its verification procedure run by the author, with `pairCharge_C` and `NaturalLatents.T_le_mul_tau` at $`13999\text/2000`$ | a pair-charge certificate with fifteen exact rational coefficients, checked by exact rational arithmetic; cap C3b by hand | this repository, following PR #6's method | no: 6.9725 has no machine input and a smaller constant, so it dominates on the whole-route reading whether or not charge C's certificate counts as a machine input; charge C has no rating, so it is not placed on the charge reading |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`174991\text/25000`$ | 6.99964 | `paper proof` | by hand, long; no interval cover | the author, unpublished | no |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`611449624681\text/86131759120`$ | 7.0990 | `paper proof`; its scalar steps are interval-certified | an 8050-leaf interval cover and 31 certified polynomial inequalities that rule out regions of the parameter space | the author, unpublished | no |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`262455475975567531769293\text/34940450429503539167584`$ | 7.5115 | `paper proof`; whether it counts as by hand is undecided (its correctness is accepted) | by hand, but a 20-monomial identity is left unprinted | the author, unpublished | charge reading only, if ruled by hand |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`263243861856755163277009\text/34940450429503539167584`$ | 7.5341 | `paper proof` | by hand; a short pair charge in seven parts | the author, unpublished | charge reading only, unless 7.5115 is ruled by hand |
-| <!-- PRIVATE-RECORD: first public disclosure; owner to approve --> $`15943993687\text/2058091192`$ | 7.7470 | `paper proof` | by hand; a one-page pair charge | the author, unpublished | no (see below) |
+| $`174991\text/25000`$ | 6.99964 | `paper proof` | by hand, long; no interval cover | the author, unpublished | no |
+| $`611449624681\text/86131759120`$ | 7.0990 | `paper proof`; its scalar steps are interval-certified | an 8050-leaf interval cover and 31 certified polynomial inequalities that rule out regions of the parameter space | the author, unpublished | no |
+| $`262455475975567531769293\text/34940450429503539167584`$ | 7.5115 | `paper proof`; whether it counts as by hand is undecided (its correctness is accepted) | by hand, but a 20-monomial identity is left unprinted | the author, unpublished | charge reading only, if ruled by hand |
+| $`263243861856755163277009\text/34940450429503539167584`$ | 7.5341 | `paper proof` | by hand; a short pair charge in seven parts | the author, unpublished | charge reading only, unless 7.5115 is ruled by hand |
+| $`15943993687\text/2058091192`$ | 7.7470 | `paper proof` | by hand; a one-page pair charge | the author, unpublished | no (see below) |
 | $`47\text/5`$ | 9.4 | `kernel-verified`: PR #6's own verification script, run by the author at head `7b41957d` | fitted certificates: Bernstein pieces of degree 26 to 28, and a closure with degree-7 Bernstein vectors whose coefficients run to about 70 digits | Jeremy Gillen, PR #6 | no |
 
 The row at 6.999497 is this repository's route: charge C with cap C3b at $`a=211\text/45`$,
@@ -68,7 +68,6 @@ support is connected, and `extension_of_connected` passes to every finite law be
 weights $`\rho_k`$ and normalized laws $`\bar p_k`$, $`\sum_k\rho_k\tau(\bar p_k)\le\tau(p)`$ and
 $`T(p)\le\sum_k\rho_kT(\bar p_k)`$ ([extension](extension.md), (E3.F)). Status: `kernel-verified` in this repository.
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve -->
 **Positive laws, then continuity.** On a strictly positive law the support is the whole rectangle, which is connected,
 so the setup applies with contacts positive everywhere. For a general $`p`$ and $`0<\varepsilon<1`$, set
 $`p_\varepsilon=(1-\varepsilon)p+\varepsilon\,u`$ with $`u`$ uniform on $`X\times Y`$ (a law, not the price bound
@@ -81,7 +80,6 @@ each with a score continuous in the law, whatever the support. Let $`\varepsilon
 $`L`$; no continuity of $`\tau`$ is needed. Status: `paper proof`; `kernel-verified` in the author's unpublished
 standalone Lean file against PR #6, not in this repository.
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve -->
 **Every finite law at once.** For any finite $`p`$, whose support $`S`$ may be disconnected or have holes, the
 optimality conditions give one feasible kernel $`w>0`$ on $`S`$ and an attained latent whose components are contacts of
 $`w`$. Feasibility forces each component onto exactly one connected component of $`S`$, positive throughout it and zero
@@ -99,7 +97,6 @@ latent and passing to a limit.
 The race price is a Gamma value, $`j(a)=a\ln\Gamma(1-1\text/a)-\gamma_E`$, derived from a one-sided stable law and
 Frullani's integral on the [race](race.md) page (Lemmas R7 and R8; `race_gamma_price`, `kernel-verified` here).
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve -->
 It is bounded by elementary sums: the [cap page](cap.md) writes $`j(a)`$ as a series in the values
 $`\zeta(k)`$ of the Riemann zeta function and bounds $`\zeta(2)`$, $`\zeta(3)`$ and $`\zeta(4)`$ by rational numbers,
 which gives the cap C3b of step 4 of the [route](overview.md#the-route). Status: `kernel-verified` here
@@ -107,7 +104,6 @@ which gives the cap C3b of step 4 of the [route](overview.md#the-route). Status:
 version of this repository used the cap C3a, the same cap with $`\zeta(2)<79\text/48`$ in place of
 $`533\text/324`$; its written proof is `paper proof`, the author's unpublished work.
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve -->
 The race inequality underneath is universal: for every finite source with strictly positive posterior rows, with no
 attainment or contact hypothesis, the race code $`A_E(Z)`$ has seed-averaged entropy
 $`H(A_E(Z)\mid E)\le a\,I(Z;L)+j(a)\,d`$, with $`d`$ the mismatch of that source (race page, (R25) of Lemma R10;
@@ -122,7 +118,6 @@ out.
 The replica budget $`K\le2M+B`$ is the inequality form of an exact identity $`K=2M+B-C-2N`$, proved on the
 [replica](replica.md) page; there $`C`$ and $`N`$ are nonnegative replica terms, not the constant.
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve -->
 **Large budgets need no pair charge.** For every finite latent whose posterior rows are positive on the support, if
 $`M\ge(3\text/20)\ln2`$ or $`M+B\ge(8\text/15)\ln2`$ (in nats; the thresholds are $`3\text/20`$ and $`8\text/15`$ bits),
 the race alone gives $`h\le(499\text/100)B+(399\text/100)M`$: run the race on each $`X`$-fiber and each $`Y`$-fiber and
@@ -141,7 +136,6 @@ ledger, race or payment. A cap certifying $`j(a)<u`$ at the chosen $`a`$ gives
 C=\max\left\{1+\frac{3u(1+2\beta)}{\gamma},\ \frac{3a-1}{2}+\frac{3u\beta}{\gamma}\right\}.
 ```
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve (rows for charges B, C and D) -->
 | Charge | $`(\beta,\gamma)`$ | $`a`$ | $`u`$ | Cap | $`C`$ | Status |
 |---|---|---|---|---|---|---|
 | charge A (first version of this repository) | $`(1\text/10,3\text/25)`$ | $`93\text/20`$ | $`199\text/1000`$ | C3a | $`2789\text/400\approx6.9725`$ | `kernel-verified` in the first version of this repository |
@@ -159,7 +153,6 @@ below 7 in the same skeleton; only charges A and B are complete checked routes. 
 long. Charge C, the pair charge of this repository's route, is formalized here as `pairCharge_C`
 (`NaturalLatents/General/PairCharge.lean`).
 
-<!-- PRIVATE-RECORD: first public disclosure; owner to approve -->
 **By-hand charges in PR #6's form.** PR #6 states its charge one-sidedly, for distinct contacts $`q,q'`$ of one feasible
 kernel with the same support (holes allowed), with $`BC(q,q')=\sum_z\sqrt{q(z)q'(z)}`$:
 
