@@ -134,10 +134,7 @@ lemma race_scalar_log_ratio_law_of_stable_laplace
   let : IsProbabilityMeasure ν := isProbabilityMeasure_expMeasure zero_lt_one
   let H : Ω × ℝ → ℝ := fun z => Real.log z.2 - Real.log (R z.1)
   let K : ℝ → ℝ := fun t => (Real.log t - Real.log c) / alpha
-  have hH : Measurable H := by
-    dsimp [H]
-    exact (Real.measurable_log.comp measurable_snd).sub
-      (Real.measurable_log.comp (hR.comp measurable_fst))
+  have hH : Measurable H := by dsimp [H]; fun_prop
   have hK : Measurable K := by dsimp [K]; fun_prop
   have hνpos : ∀ᵐ t ∂ν, 0 < t := race_scalar_exp_ae_pos
   have hLapInt (v : ℝ) (hv : 0 < v) :
@@ -216,10 +213,7 @@ lemma race_scalar_log_integrable_of_stable_laplace
   let : IsProbabilityMeasure ν := isProbabilityMeasure_expMeasure zero_lt_one
   let H : Ω × ℝ → ℝ := fun z => Real.log z.2 - Real.log (R z.1)
   let K : ℝ → ℝ := fun t => (Real.log t - Real.log c) / alpha
-  have hH : Measurable H := by
-    dsimp [H]
-    exact (Real.measurable_log.comp measurable_snd).sub
-      (Real.measurable_log.comp (hR.comp measurable_fst))
+  have hH : Measurable H := by dsimp [H]; fun_prop
   have hK : Measurable K := by dsimp [K]; fun_prop
   have hνlog : Integrable Real.log ν := race_scalar_exp_log_integrable_mean.1
   have hKInt : Integrable K ν := (hνlog.sub (integrable_const _)).div_const alpha
@@ -257,10 +251,7 @@ lemma race_scalar_log_mean_of_stable_laplace
   let : IsProbabilityMeasure ν := isProbabilityMeasure_expMeasure zero_lt_one
   let H : Ω × ℝ → ℝ := fun z => Real.log z.2 - Real.log (R z.1)
   let K : ℝ → ℝ := fun t => (Real.log t - Real.log c) / alpha
-  have hH : Measurable H := by
-    dsimp [H]
-    exact (Real.measurable_log.comp measurable_snd).sub
-      (Real.measurable_log.comp (hR.comp measurable_fst))
+  have hH : Measurable H := by dsimp [H]; fun_prop
   have hK : Measurable K := by dsimp [K]; fun_prop
   have hνlog : Integrable Real.log ν := race_scalar_exp_log_integrable_mean.1
   have hνmean : (∫ t, Real.log t ∂ν) = -Real.eulerMascheroniConstant :=
@@ -268,8 +259,6 @@ lemma race_scalar_log_mean_of_stable_laplace
   have hLaw := race_scalar_log_ratio_law_of_stable_laplace
     μ R hR hRpos alpha c halpha hc hLaplace
   dsimp only at hLaw
-  have hHInt : Integrable H (μ.prod ν) :=
-    (hνlog.comp_snd μ).sub (hlogR.comp_fst ν)
   have hHmean : (∫ z, H z ∂μ.prod ν) =
       -Real.eulerMascheroniConstant - ∫ ω, Real.log (R ω) ∂μ := by
     dsimp only [H]
@@ -314,14 +303,9 @@ lemma race_arrival_ae_nonneg :
 
 lemma race_tailSum_nonneg_of_nonneg (a t : ℝ) (ht : 0 ≤ t)
     (ω : ℕ → ℝ) (hω : ∀ n, 0 ≤ ω n) : 0 ≤ tailSum a t ω := by
-  unfold tailSum
-  apply mul_nonneg (Real.rpow_nonneg ht a)
-  apply tsum_nonneg
-  intro n
-  apply Real.rpow_nonneg
-  apply add_nonneg ht
-  unfold arrivalTime
-  exact Finset.sum_nonneg (fun k _ => hω k)
+  unfold tailSum arrivalTime
+  exact mul_nonneg (Real.rpow_nonneg ht _) (tsum_nonneg fun n =>
+    Real.rpow_nonneg (add_nonneg ht (Finset.sum_nonneg fun k _ => hω k)) _)
 
 /-- The logarithmic mean of the unit-prior appended mass is a*gamma+gammaPriceET.
 The only analytic hypothesis needed here is log integrability of that mass.
@@ -385,18 +369,11 @@ lemma race_gamma_price_of_unit_laplace (a : ℝ) (ha : 1 < a) :
     gammaPriceET a = gammaPrice a := by
   let R : ℝ × (ℕ → ℝ) → ℝ :=
     fun z => z.1 ^ (-a) * (1 + max 0 (tailSum a z.1 z.2))
-  change Measurable R →
-    Integrable (fun z => Real.log (R z)) (expOne.prod arrivalLaw) →
-    (∀ v : ℝ, 0 < v →
-      (∫ z, Real.exp (-(v * R z)) ∂expOne.prod arrivalLaw) =
-        Real.exp (-(Real.Gamma (1 - 1/a) * v ^ (1/a)))) →
-    gammaPriceET a = gammaPrice a
+  dsimp only
   intro hMeas hInt hLap
   have ha0 : 0 < a := lt_trans zero_lt_one ha
   have hα : 0 < 1/a := one_div_pos.mpr ha0
-  have harg : 0 < 1 - 1/a := by
-    have hlt : 1/a < 1 := (div_lt_one ha0).2 ha
-    linarith
+  have harg : 0 < 1 - 1/a := sub_pos.mpr ((div_lt_one ha0).2 ha)
   have hG : 0 < Real.Gamma (1 - 1/a) := Real.Gamma_pos_of_pos harg
   have htpos : ∀ᵐ z : ℝ × (ℕ → ℝ) ∂expOne.prod arrivalLaw, 0 < z.1 :=
     Measure.quasiMeasurePreserving_fst.ae race_scalar_exp_ae_pos
@@ -422,25 +399,20 @@ lemma race_gamma_price_of_unit_laplace (a : ℝ) (ha : 1 < a) :
 lemma race_measurable_arrival (n : ℕ) :
     Measurable (fun ω : ℕ → ℝ => arrivalTime ω n) := by
   unfold arrivalTime
-  exact (Finset.range n).measurable_fun_sum
-    (fun k _ => measurable_pi_apply k)
+  fun_prop
 
 lemma race_measurable_tailSum (a : ℝ) :
     Measurable (fun z : ℝ × (ℕ → ℝ) => tailSum a z.1 z.2) := by
   unfold tailSum
-  apply Measurable.mul
-  · exact measurable_fst.pow measurable_const
-  · apply Measurable.tsum
-    intro n
-    exact (measurable_fst.add
-      ((race_measurable_arrival (n+1)).comp measurable_snd)).pow
-        measurable_const
+  have harrival (n : ℕ) : Measurable (fun z : ℝ × (ℕ → ℝ) => arrivalTime z.2 n) :=
+    (race_measurable_arrival n).comp measurable_snd
+  fun_prop
 
 lemma race_measurable_unit_mass (a : ℝ) :
     Measurable (fun z : ℝ × (ℕ → ℝ) =>
       z.1 ^ (-a) * (1 + max 0 (tailSum a z.1 z.2))) := by
-  exact (measurable_fst.pow measurable_const).mul
-    (measurable_const.add (measurable_const.max (race_measurable_tailSum a)))
+  have htail := race_measurable_tailSum a
+  fun_prop
 
 lemma race_exp_rpow_moment (p : ℝ) (hp : -1 < p) :
     Integrable (fun y : ℝ => y ^ p) (expMeasure 1) ∧
@@ -486,9 +458,7 @@ lemma race_integral_laplace_exponent (a v : ℝ) (ha : 1 < a) (hv : 0 < v) :
   obtain ⟨hpow, hpowmean⟩ := race_exp_rpow_moment (-(1 / a)) hp
   let f : ℝ → ℝ := fun y => v ^ (1 / a) * y ^ (-(1 / a))
   have hfi : Integrable f (expMeasure 1) := hpow.const_mul _
-  have hypos : ∀ᵐ y ∂expMeasure (1 : ℝ), 0 < y := by
-    have h := measure_eq_zero_iff_ae_notMem.mp stoch_to_det.expMeasure_one_Iic_zero
-    simpa only [Set.mem_Iic, not_le] using h
+  have hypos : ∀ᵐ y ∂expMeasure (1 : ℝ), 0 < y := race_scalar_exp_ae_pos
   have hfnn : 0 ≤ᵐ[expMeasure (1 : ℝ)] f := by
     filter_upwards [hypos] with y hy
     exact (mul_pos (Real.rpow_pos_of_pos hv _) (Real.rpow_pos_of_pos hy _)).le
@@ -592,9 +562,8 @@ lemma race_arrival_ratio_tendsto :
   have hi : iIndepFun X arrivalLaw := by
     change iIndepFun X (Measure.infinitePi (fun _ : ℕ => expOne))
     exact iIndepFun_infinitePi (X := fun _ : ℕ => fun y : ℝ => y) (by fun_prop)
-  have hindep : Pairwise (fun i j => IndepFun (X i) (X j) arrivalLaw) := by
-    intro i j hij
-    exact hi.indepFun hij
+  have hindep : Pairwise (fun i j => IndepFun (X i) (X j) arrivalLaw) :=
+    fun _ _ hij => hi.indepFun hij
   have hmeanX : (∫ ω, X 0 ω ∂arrivalLaw) = 1 := (hid 0).integral_eq.trans hmean
   have h := ProbabilityTheory.strong_law_ae_real X hint hindep hident
   simpa [arrivalTime, X, hmeanX] using h
@@ -651,11 +620,7 @@ lemma race_arrival_head_tail_independent :
     exact iIndepFun_infinitePi (X := fun _ : ℕ => fun y : ℝ => y) (by fun_prop)
   have hle (n : ℕ) : M n ≤ (inferInstance : MeasurableSpace (ℕ → ℝ)) :=
     measurable_iff_comap_le.mp (measurable_pi_apply n)
-  have hST : Disjoint S T := by
-    apply Set.disjoint_left.2
-    intro n hn ht
-    have hn0 : n = 0 := by simpa [S] using hn
-    exact ht hn0
+  have hST : Disjoint S T := by simp [S, T]
   have hleft : (⨆ n ∈ S, M n) = M 0 := by simp [S]
   have hright : (⨆ n ∈ T, M n) =
       MeasurableSpace.comap (fun ω : ℕ → ℝ => fun n : ℕ => ω (n + 1))
@@ -724,12 +689,8 @@ lemma race_arrival_laplace_renewal (a v : ℝ) (ha : 1 < a) (hv : 0 < v) :
     fun_prop
   have hAnonneg (u : ℝ) (hu : 0 ≤ u) (ω : ℕ → ℝ) (hω : ∀ n, 0 ≤ ω n) :
       0 ≤ A u ω := by
-    apply tsum_nonneg
-    intro n
-    apply Real.rpow_nonneg
-    apply add_nonneg hu
-    unfold arrivalTime
-    exact Finset.sum_nonneg (fun k _ => hω k)
+    exact tsum_nonneg fun n => Real.rpow_nonneg
+      (add_nonneg hu (Finset.sum_nonneg fun k _ => hω k)) _
   have hexp : ∀ᵐ z ∂expOne.prod arrivalLaw, 0 < z.1 :=
     Measure.quasiMeasurePreserving_fst.ae race_scalar_exp_ae_pos
   have hω : ∀ᵐ z ∂expOne.prod arrivalLaw, ∀ n, 0 ≤ z.2 n :=
@@ -773,11 +734,8 @@ lemma race_shifted_mass_tendsto_zero
   have hterm (n : ℕ) :
       Filter.Tendsto (fun t : ℝ => (t + u n) ^ (-a))
         Filter.atTop (nhds 0) := by
-    apply (tendsto_rpow_neg_atTop ha).comp
-    apply Filter.tendsto_atTop.2
-    intro b
-    filter_upwards [Filter.eventually_ge_atTop (b - u n)] with t ht
-    linarith
+    exact (tendsto_rpow_neg_atTop ha).comp
+      (Filter.tendsto_atTop_add_const_right _ (u n) Filter.tendsto_id)
   have hbound : ∀ᶠ t : ℝ in Filter.atTop,
       ∀ n : ℕ, ‖(t + u n) ^ (-a)‖ ≤ (1 + u n) ^ (-a) := by
     filter_upwards [Filter.eventually_ge_atTop (1 : ℝ)] with t ht
@@ -800,13 +758,9 @@ lemma race_shifted_mass_laplace_tendsto_one
       Filter.atTop (nhds 1) := by
   have hm (t : ℝ) : Measurable (fun ω : ℕ → ℝ =>
       Real.exp (-(v * ∑' n : ℕ, (t + arrivalTime ω (n+1)) ^ (-a)))) := by
-    apply Real.measurable_exp.comp
-    apply Measurable.neg
-    apply Measurable.mul measurable_const
-    apply Measurable.tsum
-    intro n
-    exact (measurable_const.add (race_measurable_arrival (n+1))).pow
-      measurable_const
+    have hmass := (race_arrival_mass_measurable a).comp
+      (measurable_const.prodMk measurable_id : Measurable (fun ω : ℕ → ℝ => (t, ω)))
+    fun_prop
   have hu (ω : ℕ → ℝ) (hω : ∀ n : ℕ, 0 ≤ ω n) (n : ℕ) :
       0 ≤ arrivalTime ω (n+1) := by
     unfold arrivalTime
@@ -817,11 +771,8 @@ lemma race_shifted_mass_laplace_tendsto_one
     filter_upwards [Filter.eventually_ge_atTop (0 : ℝ)] with t ht
     filter_upwards [race_arrival_ae_nonneg] with ω hω
     rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-    apply Real.exp_le_one_iff.mpr
-    apply neg_nonpos.mpr
-    apply mul_nonneg hv
-    exact tsum_nonneg (fun n =>
-      Real.rpow_nonneg (add_nonneg ht (hu ω hω n)) (-a))
+    exact Real.exp_le_one_iff.mpr (neg_nonpos.mpr (mul_nonneg hv
+      (tsum_nonneg fun n => Real.rpow_nonneg (add_nonneg ht (hu ω hω n)) (-a))))
   have hlim : ∀ᵐ ω : ℕ → ℝ ∂arrivalLaw,
       Filter.Tendsto
         (fun t : ℝ =>
@@ -900,18 +851,13 @@ lemma race_renewal_unique
       filter_upwards [Ioi_mem_nhds ht] with x hx
       exact hrenew x hx.le
     have hd := ((Real.hasDerivAt_exp t).mul htail).congr_of_eventuallyEq heq
-    have hexp : Real.exp t * Real.exp (-t) = 1 := by
-      rw [← Real.exp_add]
-      simp
     have hvalue : Real.exp t * (∫ u in Set.Ioi t, k u) +
         Real.exp t * (-k t) = q t * F t := by
-      calc
-        Real.exp t * (∫ u in Set.Ioi t, k u) + Real.exp t * (-k t) =
-            F t - (Real.exp t * Real.exp (-t)) * ((1 - q t) * F t) := by
-          rw [← hrenew t ht.le]
-          dsimp [k]
-          ring
-        _ = q t * F t := by rw [hexp]; ring
+      rw [← hrenew t ht.le]
+      dsimp [k]
+      rw [Real.exp_neg]
+      field_simp
+      ring
     exact hvalue ▸ hd
   have hHd (t : ℝ) (ht : 0 < t) : HasDerivAt H (-q t) t :=
     race_hasDerivAt_tail_integral q hqInt hq t ht
@@ -1019,12 +965,7 @@ lemma race_unit_laplace_eq_arrival_laplace (a v : ℝ) (ha : 1 < a) :
   have hA : Measurable (fun z : ℝ × (ℕ → ℝ) =>
       ∑' n : ℕ, (z.1 + arrivalTime z.2 (n + 1)) ^ (-a)) :=
     race_arrival_mass_measurable a
-  have hVm : Measurable (fun z : ℝ × (ℕ → ℝ) => tailSum a z.1 z.2) := by
-    unfold tailSum
-    fun_prop
-  have hRm : Measurable R := by
-    dsimp [R]
-    fun_prop
+  have hRm : Measurable R := race_measurable_unit_mass a
   have hzeroMap : arrivalLaw.map (fun ω : ℕ → ℝ => ω 0) = expOne := by
     change (Measure.infinitePi (fun _ : ℕ => expOne)).map (fun ω => ω 0) = expOne
     exact Measure.infinitePi_map_eval (fun _ : ℕ => expOne) 0
@@ -1059,18 +1000,14 @@ lemma race_shifted_arrival_laplace
   let q : ℝ → ℝ := fun u => 1 - p u
   have ha0 : 0 < a := lt_trans zero_lt_one ha
   have hαlt : 1/a < 1 := (div_lt_one ha0).2 ha
-  have harg : 0 < 1 - 1/a := by linarith
+  have harg : 0 < 1 - 1/a := sub_pos.mpr hαlt
   have hGamma : 0 < Real.Gamma (1 - 1/a) := Real.Gamma_pos_of_pos harg
   have hqmean : (∫ u : ℝ in Set.Ioi 0, q u) =
       Real.Gamma (1 - 1/a) * v ^ (1/a) := by
     simpa only [q, p] using race_integral_laplace_exponent a v ha hv
-  have hqInt : IntegrableOn q (Set.Ioi 0) := by
-    by_contra hn
-    have hzero : (∫ u : ℝ in Set.Ioi 0, q u) = 0 := integral_undef hn
-    have hpos : 0 < Real.Gamma (1 - 1/a) * v ^ (1/a) :=
-      mul_pos hGamma (Real.rpow_pos_of_pos hv _)
-    rw [hzero] at hqmean
-    exact hpos.ne' hqmean.symm
+  have hqInt : IntegrableOn q (Set.Ioi 0) :=
+    Integrable.of_integral_ne_zero (hqmean.trans_ne
+      (mul_pos hGamma (Real.rpow_pos_of_pos hv _)).ne')
   have hpowCont : ContinuousOn (fun u : ℝ => u ^ (-a)) (Set.Ioi 0) :=
     continuousOn_id.rpow_const (fun u hu => Or.inl (ne_of_gt hu))
   have hpCont : ContinuousOn p (Set.Ioi 0) := by
@@ -1084,16 +1021,11 @@ lemma race_shifted_arrival_laplace
     (hGm.stronglyMeasurable.integral_prod_right' (ν := arrivalLaw)).measurable
   have hAnonneg (t : ℝ) (ht : 0 ≤ t) (ω : ℕ → ℝ) (hω : ∀ n, 0 ≤ ω n) :
       0 ≤ A t ω := by
-    apply tsum_nonneg
-    intro n
-    apply Real.rpow_nonneg
-    apply add_nonneg ht
-    unfold arrivalTime
-    exact Finset.sum_nonneg (fun k _ => hω k)
+    exact tsum_nonneg fun n => Real.rpow_nonneg
+      (add_nonneg ht (Finset.sum_nonneg fun k _ => hω k)) _
   have hFbound (t : ℝ) (ht : 0 ≤ t) : 0 ≤ F t ∧ F t ≤ 1 := by
-    have hnonneg : 0 ≤ᵐ[arrivalLaw] (fun ω => Real.exp (-(v * A t ω))) := by
-      filter_upwards [] with ω
-      exact (Real.exp_pos _).le
+    have hnonneg : 0 ≤ᵐ[arrivalLaw] (fun ω => Real.exp (-(v * A t ω))) :=
+      ae_of_all _ fun _ => (Real.exp_pos _).le
     have hle : (fun ω => Real.exp (-(v * A t ω))) ≤ᵐ[arrivalLaw]
         (fun _ => (1 : ℝ)) := by
       filter_upwards [race_arrival_ae_nonneg] with ω hω
@@ -1111,9 +1043,7 @@ lemma race_shifted_arrival_laplace
     refine ⟨(Real.exp_pos _).le, ?_⟩
     exact Real.exp_le_one_iff.2
       (neg_nonpos.2 (mul_nonneg hv.le (Real.rpow_nonneg hu (-a))))
-  have hexpInt : IntegrableOn (fun u : ℝ => Real.exp (-u)) (Set.Ioi 0) := by
-    simpa only [sub_self, Real.rpow_zero, mul_one] using
-      (Real.GammaIntegral_convergent (s := (1 : ℝ)) zero_lt_one)
+  have hexpInt := integrableOn_exp_neg_Ioi (0 : ℝ)
   have hkMeas : Measurable (fun u : ℝ => Real.exp (-u) * (1 - q u) * F u) :=
     ((Real.measurable_exp.comp measurable_id.neg).mul
       (measurable_const.sub hqMeas)).mul hFm
@@ -1126,12 +1056,9 @@ lemma race_shifted_arrival_laplace
     rw [hOneq, Real.norm_eq_abs,
       abs_of_nonneg (mul_nonneg
         (mul_nonneg (Real.exp_nonneg _) hp.1) hF.1)]
-    calc
-      Real.exp (-u) * p u * F u ≤ Real.exp (-u) * p u * 1 :=
-        mul_le_mul_of_nonneg_left hF.2 (mul_nonneg (Real.exp_nonneg _) hp.1)
-      _ = Real.exp (-u) * p u := mul_one _
-      _ ≤ Real.exp (-u) * 1 := mul_le_mul_of_nonneg_left hp.2 (Real.exp_nonneg _)
-      _ = Real.exp (-u) := mul_one _
+    simpa only [mul_one] using
+      mul_le_mul (mul_le_mul_of_nonneg_left hp.2 (Real.exp_nonneg _)) hF.2
+        hF.1 (by positivity)
   have hraw := race_arrival_laplace_renewal a v ha hv
   dsimp only at hraw
   have hrenew : ∀ t : ℝ, 0 ≤ t →
@@ -1185,18 +1112,11 @@ lemma race_unit_log_integrable (a : ℝ) (ha : 1 < a) :
     linarith [le_max_left (0 : ℝ) (tailSum a z.1 z.2)]
   have ha0 : 0 < a := lt_trans zero_lt_one ha
   have hα : 0 < 1/a := one_div_pos.mpr ha0
-  have harg : 0 < 1 - 1/a := by
-    have hlt : 1/a < 1 := (div_lt_one ha0).2 ha
-    linarith
+  have harg : 0 < 1 - 1/a := sub_pos.mpr ((div_lt_one ha0).2 ha)
   have hG : 0 < Real.Gamma (1 - 1/a) := Real.Gamma_pos_of_pos harg
-  have hLap : ∀ v : ℝ, 0 < v →
-      (∫ z, Real.exp (-(v * R z)) ∂expOne.prod arrivalLaw) =
-        Real.exp (-(Real.Gamma (1 - 1/a) * v ^ (1/a))) := by
-    intro v hv
-    exact race_unit_arrival_laplace a v ha hv
   exact race_scalar_log_integrable_of_stable_laplace
     (expOne.prod arrivalLaw) R hRmeas hRpos
-    (1/a) (Real.Gamma (1 - 1/a)) hα hG hLap
+    (1/a) (Real.Gamma (1 - 1/a)) hα hG (fun v hv => race_unit_arrival_laplace a v ha hv)
 
 lemma race_gamma_price (a : ℝ) (ha : 1 < a) : gammaPriceET a = gammaPrice a := by
   exact race_gamma_price_of_unit_laplace a ha
