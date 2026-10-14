@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Seed.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
 -- Local changes: Added or moved local conditional-information and cross-entropy helpers; retained the seed and exponential-clock lemmas required by the race.
 import Mathlib.Probability.Distributions.Exponential
@@ -161,17 +161,13 @@ lemma expMeasure_one_Ioi (x : ℝ) (hx : 0 ≤ x) :
     expMeasure 1 (Set.Ioi x) = ENNReal.ofReal (Real.exp (-x)) := by
   let := isProbabilityMeasure_expMeasure (r := (1 : ℝ)) zero_lt_one
   have hsub : 0 ≤ 1 - Real.exp (-x) := by
-    exact sub_nonneg.mpr (Real.exp_le_one_iff.mpr (by linarith))
+    exact sub_nonneg.mpr (Real.exp_le_one_iff.mpr (neg_nonpos.mpr hx))
   have hreal : (expMeasure 1).real (Set.Iic x) = 1 - Real.exp (-x) := by
     rw [← cdf_eq_real, cdf_expMeasure_eq (r := (1 : ℝ)) zero_lt_one x,
-      ite_eq_left hx]
-    ring
+      ite_eq_left hx, one_mul]
   have hIic : expMeasure 1 (Set.Iic x) =
       ENNReal.ofReal (1 - Real.exp (-x)) := by
-    rw [← ENNReal.toReal_eq_toReal_iff'
-      (measure_ne_top (expMeasure 1) (Set.Iic x)) ENNReal.ofReal_ne_top,
-      ENNReal.toReal_ofReal hsub]
-    simpa [measureReal_def] using hreal
+    rw [← ofReal_measureReal, hreal]
   rw [show Set.Ioi x = (Set.Iic x)ᶜ by ext y; simp, measure_compl measurableSet_Iic
     (measure_ne_top (expMeasure 1) (Set.Iic x)), measure_univ, hIic,
     ← ENNReal.ofReal_one, ← ENNReal.ofReal_sub 1 hsub]
@@ -256,10 +252,7 @@ lemma pi_exp_strictClockWin {κ : Type*} [Fintype κ] [DecidableEq κ]
       (fun _ : κ => expMeasure 1)
   have hmap : Measure.map (g ∘ f) q =
       Measure.pi (fun _ : κ => expMeasure 1) := by
-    calc
-      Measure.map (g ∘ f) q = Measure.map g (Measure.map f q) :=
-        (Measure.map_map g.measurable f.measurable).symm
-      _ = _ := by rw [hfirst, hsecond]
+    rw [← Measure.map_map g.measurable f.measurable, hfirst, hsecond]
   have hset : MeasurableSet {E : κ → ℝ | strictClockWin t a E} := by
     unfold strictClockWin
     measurability
@@ -293,25 +286,20 @@ lemma pi_exp_strictClockWin {κ : Type*} [Fintype κ] [DecidableEq κ]
       have hrel := h i.1 i.2
       change g (f (x, y)) a / t a < g (f (x, y)) i.1 / t i.1 at hrel
       rw [he_a, he_i] at hrel
-      have hcross : y * t i.1 < x i * t a :=
-        (div_lt_div_iff₀ (ht a) (ht i.1)).1 hrel
-      have hdiv : t i.1 * y / t a < x i :=
-        (div_lt_iff₀ (ht a)).2 (by nlinarith)
-      simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using hdiv
+      rw [div_lt_div_iff₀ (ht a) (ht i.1)] at hrel
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (ht a)]
+      simpa only [mul_comm] using hrel
     · intro h b hba
       let i : {i : κ // i ≠ a} := ⟨b, hba⟩
       have hdiv := h i
       change t b / t a * y < x i at hdiv
-      have hdiv' : t b * y / t a < x i := by
-        simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using hdiv
-      have hcross : y * t b < x i * t a := by
-        have := (div_lt_iff₀ (ht a)).1 hdiv'
-        nlinarith
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (ht a)] at hdiv
       change g (f (x, y)) a / t a < g (f (x, y)) b / t b
       have hib := he_i i
       change g (f (x, y)) b = x i at hib
       rw [he_a, hib]
-      exact (div_lt_div_iff₀ (ht a) (ht b)).2 hcross
+      rw [div_lt_div_iff₀ (ht a) (ht b)]
+      simpa only [mul_comm] using hdiv
   simp_rw [hsection, Measure.pi_pi]
   let c : ℝ := ∑ i : {i : κ // i ≠ a}, t i.1 / t a
   have hsplit := Fintype.sum_eq_add_sum_subtype_ne t a
@@ -365,14 +353,11 @@ lemma lexMax_eq_iff {Ω ι : Type*} [Fintype ι] [DecidableEq ι]
     [Nonempty ι] (F : Ω → ι → ℝ) (ω : Ω) (a : ι) :
     lexMax F ω = a ↔ List.argmax (F ω) Finset.univ.toList = some a := by
   unfold lexMax
-  let hsome : (List.argmax (F ω) Finset.univ.toList).isSome := by
-    rw [Option.isSome_iff_ne_none, Ne, List.argmax_eq_none]
-    simpa using (Finset.univ_nonempty : (Finset.univ : Finset ι).Nonempty).ne_empty
   constructor
   · intro h
-    exact (Option.some_get hsome).symm.trans (congrArg some h)
+    exact (Option.some_get _).symm.trans (congrArg some h)
   · intro h
-    exact Option.get_of_eq_some hsome h
+    exact Option.get_of_eq_some _ h
 
 lemma measurable_lexMax {Ω ι : Type*} [MeasurableSpace Ω]
     [Fintype ι] [DecidableEq ι] [Nonempty ι]
@@ -388,43 +373,17 @@ lemma measurable_lexMax {Ω ι : Type*} [MeasurableSpace Ω]
       simp only [Set.mem_ofPred_eq]
       rw [lexMax_eq_iff, List.argmax_eq_some_iff]
       simp
-    rw [hchar]
-    have hleft₀ := MeasurableSet.iInter fun b => measurableSet_le (hF b) (hF a)
-    have heqleft : (⋂ b, {ω | F ω b ≤ F ω a}) = {ω | ∀ b, F ω b ≤ F ω a} := by
-      ext ω
-      simp
-    have hleft : MeasurableSet {ω | ∀ b, F ω b ≤ F ω a} := by
-      rw [← heqleft]
-      exact hleft₀
-    have hright₀ := MeasurableSet.iInter fun b =>
-      (measurableSet_le (hF a) (hF b)).imp
+    rw [hchar, Set.ofPred_and, Set.ofPred_forall, Set.ofPred_forall]
+    exact (MeasurableSet.iInter fun b => measurableSet_le (hF b) (hF a)).inter
+      (MeasurableSet.iInter fun b => (measurableSet_le (hF a) (hF b)).imp
         (MeasurableSet.const (List.idxOf a Finset.univ.toList ≤
-          List.idxOf b Finset.univ.toList))
-    have heqright : (⋂ b, {ω | F ω a ≤ F ω b →
-        List.idxOf a Finset.univ.toList ≤ List.idxOf b Finset.univ.toList}) =
-        {ω | ∀ b, F ω a ≤ F ω b →
-          List.idxOf a Finset.univ.toList ≤ List.idxOf b Finset.univ.toList} := by
-      ext ω
-      simp
-    have hright : MeasurableSet {ω | ∀ b, F ω a ≤ F ω b →
-        List.idxOf a Finset.univ.toList ≤ List.idxOf b Finset.univ.toList} := by
-      rw [← heqright]
-      exact hright₀
-    change MeasurableSet ({ω | ∀ b, F ω b ≤ F ω a} ∩
-      {ω | ∀ b, F ω a ≤ F ω b →
-        List.idxOf a Finset.univ.toList ≤ List.idxOf b Finset.univ.toList})
-    exact hleft.inter hright
-  apply measurable_to_countable
-  intro ω
-  exact hlevel (lexMax F ω)
+          List.idxOf b Finset.univ.toList)))
+  exact measurable_to_countable fun ω => hlevel (lexMax F ω)
 
 lemma lexMax_max {Ω ι : Type*} [Fintype ι] [DecidableEq ι]
     [Nonempty ι] (F : Ω → ι → ℝ) (ω : Ω) (a : ι) :
     F ω a ≤ F ω (lexMax F ω) := by
-  have hmem : lexMax F ω ∈ List.argmax (F ω) Finset.univ.toList := by
-    unfold lexMax
-    exact Option.get_mem _
-  exact List.le_of_mem_argmax (by simp) hmem
+  exact List.le_of_mem_argmax (by simp) (Option.get_mem _)
 
 lemma ae_forall_fintype {Ω κ : Type*} [Finite κ]
     {mΩ : MeasurableSpace Ω} {P : Measure Ω} {R : κ → Ω → Prop}
@@ -464,12 +423,10 @@ lemma MI_equiv_left_local
     [DecidableEq Γ] [DecidableEq Γ'] [DecidableEq Δ]
     {m : A → ℝ} (hm : IsPMF m) (f : A → Γ) (e : Γ ≃ Γ') (g : A → Δ) :
     MI (fun a => e (f a)) g m = MI f g m := by
-  have hf := Hvar_equiv hm f e
   have hfg := Hvar_equiv hm (fun a => (f a, g a))
     (Equiv.prodCongr e (Equiv.refl Δ))
-  change Hvar (fun a => (e (f a), g a)) m = Hvar (fun a => (f a, g a)) m at hfg
-  unfold MI
-  rw [hf, hfg]
+  simp only [Equiv.prodCongr_apply, Prod.map_apply, Equiv.refl_apply] at hfg
+  simp only [MI, Hvar_equiv hm f e, hfg]
 
 lemma condMI_comm_local
     {A Γ Δ K : Type*} [Fintype A] [Fintype Γ] [Fintype Δ] [Fintype K]
@@ -523,12 +480,8 @@ lemma condMI_equiv_cond_local
     (Equiv.prodCongr (Equiv.refl Δ) e)
   have htrip := Hvar_equiv hm (fun a => (f a, g a, h a))
     (Equiv.prodCongr (Equiv.refl Γ) (Equiv.prodCongr (Equiv.refl Δ) e))
-  have hh := Hvar_equiv hm h e
-  change Hvar (fun a => (f a, e (h a))) m = Hvar (fun a => (f a, h a)) m at hfh
-  change Hvar (fun a => (g a, e (h a))) m = Hvar (fun a => (g a, h a)) m at hgh
-  change Hvar (fun a => (f a, g a, e (h a))) m = Hvar (fun a => (f a, g a, h a)) m at htrip
-  unfold condMI
-  rw [hfh, hgh, htrip, hh]
+  simp only [Equiv.prodCongr_apply, Prod.map_apply, Equiv.refl_apply] at hfh hgh htrip
+  simp only [condMI, hfh, hgh, htrip, Hvar_equiv hm h e]
 
 lemma condMI_equiv_left_local
     {A Γ Γ' Δ K : Type*} [Fintype A] [Fintype Γ] [Fintype Γ'] [Fintype Δ]
@@ -539,10 +492,8 @@ lemma condMI_equiv_left_local
     (Equiv.prodCongr e (Equiv.refl K))
   have htrip := Hvar_equiv hm (fun a => (f a, g a, h a))
     (Equiv.prodCongr e (Equiv.refl (Δ × K)))
-  change Hvar (fun a => (e (f a), h a)) m = Hvar (fun a => (f a, h a)) m at hfh
-  change Hvar (fun a => (e (f a), g a, h a)) m = Hvar (fun a => (f a, g a, h a)) m at htrip
-  unfold condMI
-  rw [hfh, htrip]
+  simp only [Equiv.prodCongr_apply, Prod.map_apply, Equiv.refl_apply] at hfh htrip
+  simp only [condMI, hfh, htrip]
 
 /-! #### Calibration of the finite winner law -/
 
@@ -593,10 +544,7 @@ lemma condH_eq_sum_H_fibers
     {m : A → ℝ} (hm : IsPMF m) (f : A → Γ) (h : A → K) :
     condH f h m =
       ∑ k, H (push f (fun x => if h x = k then m x else 0)) := by
-  have hdecomp := Hvar_pair_eq_sum_fibers hm f h
-  unfold condH
-  rw [hdecomp]
-  ring
+  rw [condH, Hvar_pair_eq_sum_fibers hm f h, add_sub_cancel_left]
 
 end Replica
 

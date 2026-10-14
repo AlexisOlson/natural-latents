@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Entropy.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
 -- Local changes: Added or re-proved finite-information helpers, including entropy scaling, pushforward invariance, fiber sums and information nonnegativity.
 import Mathlib.Algebra.Order.Chebyshev
@@ -90,14 +90,7 @@ lemma H_smul {m : α → ℝ} {c : ℝ} (hc : 0 ≤ c) :
     H (fun a => c * m a) = c * H m := by
   rcases hc.eq_or_lt with rfl | hc
   · simp [H, mass]
-  · have hc0 : c ≠ 0 := ne_of_gt hc
-    unfold H
-    rw [show mass (fun a => c * m a) = c * mass m by simp [mass, Finset.mul_sum]]
-    simp_rw [mul_div_mul_left _ _ hc0]
-    rw [Finset.mul_sum]
-    congr 1
-    funext a
-    ring
+  · simp only [H, mass, ← Finset.mul_sum, mul_div_mul_left _ _ hc.ne', mul_assoc]
 
 lemma H_eq_negMulLog_of_isPMF {m : α → ℝ} (hm : IsPMF m) :
     Real.log 2 * H m = ∑ a, Real.negMulLog (m a) := by
@@ -105,16 +98,10 @@ lemma H_eq_negMulLog_of_isPMF {m : α → ℝ} (hm : IsPMF m) :
 
 /-- Entropy of a probability law is nonnegative. -/
 lemma H_nonneg_of_isPMF {m : α → ℝ} (hm : IsPMF m) : 0 ≤ H m := by
-  have hsum : 0 ≤ ∑ a, Real.negMulLog (m a) := by
-    apply Finset.sum_nonneg
-    intro a _
-    apply Real.negMulLog_nonneg (hm.nonneg a)
-    have ha_mass : m a ≤ mass m := apply_le_mass hm.nonneg a
-    simpa [hm.total] using ha_mass
-  have hEq := H_eq_negMulLog_of_isPMF hm
   apply (mul_nonneg_iff_of_pos_left (Real.log_pos one_lt_two)).mp
-  rw [hEq]
-  exact hsum
+  rw [H_eq_negMulLog_of_isPMF hm]
+  exact Finset.sum_nonneg fun a _ =>
+    Real.negMulLog_nonneg (hm.nonneg a) (hm.total ▸ apply_le_mass hm.nonneg a)
 
 /-- Finite Gibbs inequality, with the support condition made explicit to avoid
 Lean's junk value for division and logarithm at zero. -/
@@ -218,9 +205,7 @@ lemma push_push [Fintype γ] [DecidableEq δ] (f : α → γ) (g : γ → δ) (m
 @[simp] lemma push_id [DecidableEq α] (m : α → ℝ) : push id m = m := by
   funext a
   unfold push
-  rw [Finset.sum_eq_single a]
-  · simp
-  · simp
+  rw [Finset.sum_eq_single a] <;> simp
 
 /-- Pushforward is linear under scalar multiplication. -/
 lemma push_smul (f : α → γ) (m : α → ℝ) (c : ℝ) :
@@ -231,32 +216,21 @@ lemma push_smul (f : α → γ) (m : α → ℝ) (c : ℝ) :
 /-- Integrating a function against a pushforward is the corresponding fibrewise sum. -/
 lemma sum_push_mul [Fintype γ] (f : α → γ) (m : α → ℝ) (k : γ → ℝ) :
     ∑ c, push f m c * k c = ∑ a, m a * k (f a) := by
+  simp only [push, Finset.sum_mul]
   calc
-    ∑ c, push f m c * k c
-        = ∑ c, ∑ a ∈ univ.filter (fun a => f a = c), m a * k c := by
-            unfold push
-            apply Finset.sum_congr rfl
-            intro c _
-            rw [Finset.sum_mul]
     _ = ∑ c, ∑ a ∈ univ.filter (fun a => f a = c), m a * k (f a) := by
-          apply Finset.sum_congr rfl
-          intro c _
-          apply Finset.sum_congr rfl
-          intro a ha
-          rw [(Finset.mem_filter.mp ha).2]
+      apply Finset.sum_congr rfl
+      intro c _
+      apply Finset.sum_congr rfl
+      intro a ha
+      rw [(Finset.mem_filter.mp ha).2]
     _ = ∑ a, m a * k (f a) := Finset.sum_fiberwise univ f _
 
 /-- The negative-log summand commutes with pushforward after integration. -/
 lemma sum_negMulLog_push [Fintype γ] (f : α → γ) (m : α → ℝ) :
     ∑ c, Real.negMulLog (push f m c) = ∑ a, m a * (-Real.log (push f m (f a))) := by
-  calc
-    ∑ c, Real.negMulLog (push f m c) =
-        ∑ c, push f m c * (-Real.log (push f m c)) := by
-      apply Finset.sum_congr rfl
-      intro c _
-      rw [Real.negMulLog]
-      ring
-    _ = ∑ a, m a * (-Real.log (push f m (f a))) := sum_push_mul f m _
+  simpa only [Real.negMulLog, neg_mul, mul_neg] using
+    sum_push_mul f m (fun c => -Real.log (push f m c))
 
 end Push
 
@@ -270,45 +244,19 @@ lemma H_prod_eq_snd_add_fibers {r : α × β → ℝ} (hr : IsPMF r) :
     H r = H (push Prod.snd r) + ∑ y, H (fun x => r (x, y)) := by
   let ry : β → ℝ := push Prod.snd r
   have hry : IsPMF ry := isPMF_push hr
-  have hmass_fiber : ∀ y, mass (fun x => r (x, y)) = ry y := by
-    intro y
+  have hmass_fiber (y : β) : mass (fun x => r (x, y)) = ry y := by
     simp [ry, push, mass, Finset.sum_filter, Fintype.sum_prod_type]
-  have hFibEq : ∀ y, Real.log 2 * H (fun x => r (x, y)) =
-      ry y * Real.log (ry y) + ∑ x, Real.negMulLog (r (x, y)) := by
-    intro y
-    have h := H_eq_negMulLog (fun x => hr.nonneg (x, y))
-    rw [hmass_fiber y] at h
-    exact h
   have hprod : ∑ y, ∑ x, Real.negMulLog (r (x, y)) =
       ∑ z, Real.negMulLog (r z) := by
     rw [Fintype.sum_prod_type, Finset.sum_comm]
-  have hsumFib : Real.log 2 * (∑ y, H (fun x => r (x, y))) =
-      (∑ y, ry y * Real.log (ry y)) + ∑ z, Real.negMulLog (r z) := by
-    calc
-      Real.log 2 * (∑ y, H (fun x => r (x, y))) =
-          ∑ y, Real.log 2 * H (fun x => r (x, y)) := Finset.mul_sum _ _ _
-      _ = ∑ y, (ry y * Real.log (ry y) + ∑ x, Real.negMulLog (r (x, y))) := by
-        apply Finset.sum_congr rfl
-        intro y _
-        exact hFibEq y
-      _ = (∑ y, ry y * Real.log (ry y)) +
-          ∑ y, ∑ x, Real.negMulLog (r (x, y)) := Finset.sum_add_distrib
-      _ = (∑ y, ry y * Real.log (ry y)) + ∑ z, Real.negMulLog (r z) := by
-        rw [hprod]
-  have hcancel : (∑ y, Real.negMulLog (ry y)) +
-      ∑ y, ry y * Real.log (ry y) = 0 := by
-    rw [← Finset.sum_add_distrib]
-    apply Finset.sum_eq_zero
-    intro y _
-    rw [Real.negMulLog]
-    ring
-  have hEr := H_eq_negMulLog_of_isPMF hr
-  have hEry := H_eq_negMulLog_of_isPMF hry
-  have hmult : Real.log 2 * H r =
-      Real.log 2 * (H ry + ∑ y, H (fun x => r (x, y))) := by
-    rw [mul_add, hEr, hEry, hsumFib]
-    linarith
-  nlinarith [Real.log_pos one_lt_two]
+  apply mul_left_cancel₀ (Real.log_pos one_lt_two).ne'
+  change Real.log 2 * H r = Real.log 2 * (H ry + ∑ y, H (fun x => r (x, y)))
+  rw [mul_add, H_eq_negMulLog_of_isPMF hr, H_eq_negMulLog_of_isPMF hry,
+    Finset.mul_sum]
+  simp_rw [H_eq_negMulLog (fun x => hr.nonneg (x, _)), hmass_fiber]
+  rw [Finset.sum_add_distrib, hprod]
+  simp only [Real.negMulLog, neg_mul, Finset.sum_neg_distrib]
+  ring
 
 end FiberEntropy
 
@@ -359,14 +307,9 @@ lemma Hvar_comp_le {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (u : γ → �
 lemma Hvar_eq_of_leftInverse {m : α → ℝ} (hm : IsPMF m) (f : α → γ)
     (u : γ → δ) (v : δ → γ) (huv : Function.LeftInverse v u) :
     Hvar (u ∘ f) m = Hvar f m := by
-  apply le_antisymm
-  · exact Hvar_comp_le hm f u
-  · have hback := Hvar_comp_le hm (u ∘ f) v
-    have hfun : v ∘ u ∘ f = f := by
-      funext a
-      exact huv (f a)
-    rw [hfun] at hback
-    exact hback
+  apply le_antisymm (Hvar_comp_le hm f u)
+  have hfun : v ∘ u ∘ f = f := funext fun a => huv (f a)
+  simpa only [hfun] using Hvar_comp_le hm (u ∘ f) v
 
 /-- Re-encoding a random variable by an equivalence preserves its entropy. -/
 lemma Hvar_equiv {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (e : γ ≃ δ) :
@@ -383,26 +326,19 @@ lemma Hvar_pair_eq_sum_fibers {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (h
     Hvar (fun a => (f a, h a)) m = Hvar h m +
       ∑ y, H (push f (fun a => if h a = y then m a else 0)) := by
   let r : γ × δ → ℝ := push (fun a => (f a, h a)) m
-  have hr : IsPMF r := isPMF_push hm
   have hsnd : push Prod.snd r = push h m := by
-    dsimp [r]
-    simpa [Function.comp_def] using
-      (push_push (fun a => (f a, h a)) Prod.snd m)
-  have hfib : ∀ y, (fun x => r (x, y)) =
+    simp [r, push_push, Function.comp_def]
+  have hfib (y : δ) : (fun x => r (x, y)) =
       push f (fun a => if h a = y then m a else 0) := by
-    intro y
     funext x
-    dsimp [r]
-    unfold push
-    simp only [Finset.sum_filter]
+    simp only [r, push, Finset.sum_filter]
     apply Finset.sum_congr rfl
     intro a _
     by_cases hx : f a = x <;> by_cases hy : h a = y <;> simp [hx, hy]
-  have hdecomp := H_prod_eq_snd_add_fibers hr
+  have hdecomp : H r = H (push Prod.snd r) + ∑ y, H (fun x => r (x, y)) :=
+    H_prod_eq_snd_add_fibers (isPMF_push hm)
   rw [hsnd] at hdecomp
-  simp_rw [hfib] at hdecomp
-  unfold Hvar
-  exact hdecomp
+  simpa only [Hvar, hfib] using hdecomp
 
 /-- Mutual information is homogeneous on nonnegative finite measures. -/
 lemma MI_smul {m : α → ℝ} (_hm : IsFinMeas m) (f : α → γ) (g : α → δ)
@@ -417,12 +353,8 @@ lemma product_isPMF_dom {ι κ : Type*} [Fintype ι] [Fintype κ]
     {u : ι → ℝ} {v : κ → ℝ} (hu : IsPMF u) (hv : IsPMF v) :
     IsPMF (fun z : ι × κ => u z.1 * v z.2) := by
   refine ⟨fun z => mul_nonneg (hu.nonneg z.1) (hv.nonneg z.2), ?_⟩
-  have hu_sum : ∑ i, u i = 1 := by simpa [mass] using hu.total
-  have hv_sum : ∑ k, v k = 1 := by simpa [mass] using hv.total
-  rw [mass, Fintype.sum_prod_type]
-  simp_rw [← Finset.mul_sum]
-  rw [hv_sum]
-  simpa using hu_sum
+  simp only [mass, Fintype.sum_prod_type, ← Finset.mul_sum, hv.sum_eq_one,
+    mul_one, hu.sum_eq_one]
 
 /-- Mutual information is nonnegative. -/
 lemma MI_nonneg {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (g : α → δ) :
@@ -482,12 +414,7 @@ lemma MI_nonneg {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (g : α → δ) 
   have hErx := H_eq_negMulLog_of_isPMF hrx
   have hEry := H_eq_negMulLog_of_isPMF hry
   have hMIKL : Real.log 2 * MI f g m = ∑ z, r z * Real.log (r z / s z) := by
-    calc
-      Real.log 2 * MI f g m = Real.log 2 * (H rx + H ry - H r) := by rw [hMIent]
-      _ = Real.log 2 * H rx + Real.log 2 * H ry - Real.log 2 * H r := by ring
-      _ = (∑ x, Real.negMulLog (rx x)) + (∑ y, Real.negMulLog (ry y))
-          - ∑ z, Real.negMulLog (r z) := by rw [hErx, hEry, hEr]
-      _ = ∑ z, r z * Real.log (r z / s z) := hEntropyKL
+    rw [hMIent, mul_sub, mul_add, hErx, hEry, hEr, hEntropyKL]
   apply (mul_nonneg_iff_of_pos_left (Real.log_pos one_lt_two)).mp
   rw [hMIKL]
   exact hKL
@@ -570,9 +497,8 @@ lemma MI_pair_left {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (g : α → �
 /-- Mutual information is symmetric. -/
 lemma MI_comm {m : α → ℝ} (hm : IsPMF m) (f : α → γ) (g : α → δ) :
     MI f g m = MI g f m := by
-  have hpair : Hvar (fun a => (g a, f a)) m = Hvar (fun a => (f a, g a)) m := Hvar_pair_swap hm _ _
   unfold MI
-  rw [hpair]
+  rw [Hvar_pair_swap hm f g]
   ring
 
 end Info
