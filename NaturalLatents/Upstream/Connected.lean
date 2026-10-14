@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Connected.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
 -- Local changes: Added sum_components_tau_le and T_le_sum_components; re-proved reduce_to_connected from these two one-sided inequalities instead of upstream component equalities.
 import NaturalLatents.Upstream.Duality
@@ -107,15 +107,10 @@ theorem exists_componentDecomp {p : α × β → ℝ} (hp : IsPMF p) :
     have hpz : 0 < p z.1 := by
       have hpz_ne : p z.1 ≠ 0 := by simpa [S, support] using z.2
       exact lt_of_le_of_ne (hp.nonneg z.1) (Ne.symm hpz_ne)
-    have hle : p z.1 ≤ push k p (k z.1) := by
-      unfold push
-      exact Finset.single_le_sum (fun w _ => hp.nonneg w) (by simp)
+    have hle : p z.1 ≤ push k p (k z.1) := apply_le_push hp.nonneg k z.1
     have hk : k z.1 = eQ (Quotient.mk'' z : Q) := by
       simp [k, z.2]
-    have hi : eQ (Quotient.mk'' z : Q) = i := by
-      calc
-        eQ (Quotient.mk'' z : Q) = eQ (eQ.symm i) := congrArg eQ hz
-        _ = i := eQ.apply_symm_apply i
+    have hi : eQ (Quotient.mk'' z : Q) = i := by simpa using congrArg eQ hz
     simpa [a, hk, hi] using lt_of_lt_of_le hpz hle
   let q : κ → (α × β → ℝ) := fun i z =>
     if k z = i then (a i)⁻¹ * p z else 0
@@ -128,18 +123,9 @@ theorem exists_componentDecomp {p : α × β → ℝ} (hp : IsPMF p) :
       · exact mul_nonneg (inv_nonneg.mpr (ha_pos i).le) (hp.nonneg z)
       · exact le_rfl
     · unfold mass
-      have hfiber : (∑ z, if k z = i then p z else 0) = push k p i := by
-        simp [push, Finset.sum_filter]
-      simp only [q]
-      calc
-        (∑ z, if k z = i then (a i)⁻¹ * p z else 0) =
-            (a i)⁻¹ * ∑ z, if k z = i then p z else 0 := by
-              rw [Finset.mul_sum]
-              apply Finset.sum_congr rfl
-              intro z _
-              split <;> simp_all
-        _ = (a i)⁻¹ * a i := by rw [hfiber]
-        _ = 1 := inv_mul_cancel₀ (ha_pos i).ne'
+      have htotal : (∑ z, q i z) = (a i)⁻¹ * a i := by
+        simp [q, a, push, Finset.sum_filter, Finset.mul_sum, mul_ite]
+      exact htotal.trans (inv_mul_cancel₀ (ha_pos i).ne')
   have hsupp : ∀ i z, z ∈ support (q i) ↔ z ∈ S ∧ k z = i := by
     intro i z
     have hai : (a i)⁻¹ ≠ 0 := inv_ne_zero (ha_pos i).ne'
@@ -155,10 +141,8 @@ theorem exists_componentDecomp {p : α × β → ℝ} (hp : IsPMF p) :
     simpa [k, zs, zs', hz, hz'] using congrArg eQ hquot
   have hq_conn : ∀ i, IsConnected (support (q i)) := by
     intro i z hz z' hz'
-    have hzS : z ∈ S := (hsupp i z).mp hz |>.1
-    have hz'S : z' ∈ S := (hsupp i z').mp hz' |>.1
-    have hkz : k z = i := (hsupp i z).mp hz |>.2
-    have hkz' : k z' = i := (hsupp i z').mp hz' |>.2
+    obtain ⟨hzS, hkz⟩ := (hsupp i z).mp hz
+    obtain ⟨hz'S, hkz'⟩ := (hsupp i z').mp hz'
     let zs : {z // z ∈ S} := ⟨z, hzS⟩
     let zs' : {z // z ∈ S} := ⟨z', hz'S⟩
     have hquot : (Quotient.mk'' zs : Q) = (Quotient.mk'' zs' : Q) := by
@@ -281,11 +265,8 @@ private lemma H_mixture_disjoint {ι γ : Type*} [Fintype ι] [DecidableEq ι]
       exact mul_nonneg (ha.nonneg w.1) ((hq w.1).nonneg w.2)
     · unfold mass r
       rw [Fintype.sum_prod_type]
-      simp_rw [← Finset.mul_sum]
-      have htotal : ∀ i, ∑ x, q i x = 1 := fun i => by
-        simpa [mass] using (hq i).total
-      simp_rw [htotal, mul_one]
-      simpa [mass] using ha.total
+      simp_rw [← Finset.mul_sum, (hq _).sum_eq_one, mul_one]
+      exact ha.sum_eq_one
   have hsnd : push Prod.snd r = m := by
     funext x
     unfold push
@@ -315,8 +296,7 @@ private lemma H_mixture_disjoint {ι γ : Type*} [Fintype ι] [DecidableEq ι]
     unfold push
     rw [Finset.sum_filter, Fintype.sum_prod_type]
     simp only [rs]
-    have htotal : ∑ x, q i x = 1 := by simpa [mass] using (hq i).total
-    simp [← Finset.mul_sum, htotal]
+    simp [← Finset.mul_sum, (hq i).sum_eq_one]
   have hrs_decomp : H rs = H a + ∑ i, a i * H (q i) := by
     rw [H_prod_eq_snd_add_fibers hrs, hsnd_rs]
     apply congrArg (fun t => H a + t)
@@ -380,24 +360,10 @@ private lemma HY_eq_components {p : α × β → ℝ} (D : ComponentDecomp p) :
 
 private lemma Psi_eq_components {p : α × β → ℝ} (D : ComponentDecomp p) :
     Psi p = ∑ i, D.wt i * Psi (D.part i) := by
-  rw [Psi]
-  rw [H_eq_components D, HX_eq_components D, HY_eq_components D]
-  simp only [Psi]
-  calc
-    2 * (H D.wt + ∑ i, D.wt i * H (D.part i)) -
-          (H D.wt + ∑ i, D.wt i * H (mX (D.part i))) -
-          (H D.wt + ∑ i, D.wt i * H (mY (D.part i))) =
-        2 * (∑ i, D.wt i * H (D.part i)) -
-          (∑ i, D.wt i * H (mX (D.part i))) -
-          (∑ i, D.wt i * H (mY (D.part i))) := by ring
-    _ = ∑ i, (2 * (D.wt i * H (D.part i)) -
-          D.wt i * H (mX (D.part i)) - D.wt i * H (mY (D.part i))) := by
-      rw [Finset.mul_sum, ← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
-    _ = ∑ i, D.wt i *
-          (2 * H (D.part i) - H (mX (D.part i)) - H (mY (D.part i))) := by
-      apply Finset.sum_congr rfl
-      intro i _
-      ring
+  rw [Psi, H_eq_components D, HX_eq_components D, HY_eq_components D]
+  simp only [Psi, mul_sub, Finset.sum_sub_distrib]
+  simp_rw [mul_left_comm (D.wt _) 2, ← Finset.mul_sum]
+  ring
 
 private noncomputable def glueLatent {p : α × β → ℝ} (D : ComponentDecomp p)
     (V : ∀ i, Latent (D.part i)) : Latent p where
@@ -412,11 +378,8 @@ private noncomputable def glueLatent {p : α × β → ℝ} (D : ComponentDecomp
       exact mul_nonneg (D.wt_isPMF.nonneg w.1) ((V w.1).prior_isPMF.nonneg w.2)
     · unfold mass
       rw [Fintype.sum_sigma]
-      simp_rw [← Finset.mul_sum]
-      have ht : ∀ i, ∑ v, (V i).prior v = 1 := fun i => by
-        simpa [mass] using (V i).prior_isPMF.total
-      simp_rw [ht, mul_one]
-      simpa [mass] using D.wt_isPMF.total
+      simp_rw [← Finset.mul_sum, (V _).prior_isPMF.sum_eq_one, mul_one]
+      exact D.wt_isPMF.sum_eq_one
   comp_isPMF := fun w => (V w.1).comp_isPMF w.2
   mixture := by
     intro z
@@ -434,12 +397,7 @@ private lemma glueLatent_score {p : α × β → ℝ} (hp : IsPMF p)
     change (∑ w : Σ i, (V i).ι,
       (D.wt w.1 * (V w.1).prior w.2) * Phi ((V w.1).comp w.2)) = _
     rw [Fintype.sum_sigma]
-    apply Finset.sum_congr rfl
-    intro i _
-    rw [Finset.mul_sum]
-    apply Finset.sum_congr rfl
-    intro v _
-    ring
+    simp_rw [mul_assoc, ← Finset.mul_sum]
   rw [Latent.score_eq hp, hsigma, Psi_eq_components D]
   simp_rw [Latent.score_eq (D.part_isPMF _)]
   simp only [mul_sub, Finset.sum_sub_distrib]
@@ -465,16 +423,9 @@ private lemma glueLatent_isDet {p : α × β → ℝ} (D : ComponentDecomp p)
   intro z w w' hw hw'
   rcases w with ⟨i, v⟩
   rcases w' with ⟨j, v'⟩
-  have hiv : (V i).prior v * (V i).comp v z ≠ 0 := by
-    intro hzero
-    apply hw
-    simp only [glueLatent]
-    rw [mul_assoc, hzero, mul_zero]
-  have hjv : (V j).prior v' * (V j).comp v' z ≠ 0 := by
-    intro hzero
-    apply hw'
-    simp only [glueLatent]
-    rw [mul_assoc, hzero, mul_zero]
+  simp only [glueLatent, mul_assoc] at hw hw'
+  have hiv := (mul_ne_zero_iff.mp hw).2
+  have hjv := (mul_ne_zero_iff.mp hw').2
   have hij : i = j := D.hcol i j z z
     (by simpa [support] using latent_base_ne_zero (V i) hiv)
     (by simpa [support] using latent_base_ne_zero (V j) hjv) rfl
@@ -602,22 +553,8 @@ private lemma fiberLaw_isPMF {p : α × β → ℝ} (D : ComponentDecomp p)
           ((V.comp_isPMF v).nonneg z)
       · exact le_rfl
     · unfold mass
-      have hfiber :
-          (∑ z, if componentIndex D z = i then V.comp v z else 0) =
-            fiberWeight D V v i := by
-        simp [fiberWeight, push, Finset.sum_filter]
-      simp only [fiberLaw, dite_eq_right hrho]
-      calc
-        (∑ z, if componentIndex D z = i then
-            (fiberWeight D V v i)⁻¹ * V.comp v z else 0) =
-            (fiberWeight D V v i)⁻¹ *
-              ∑ z, if componentIndex D z = i then V.comp v z else 0 := by
-          rw [Finset.mul_sum]
-          apply Finset.sum_congr rfl
-          intro z _
-          split <;> simp_all
-        _ = (fiberWeight D V v i)⁻¹ * fiberWeight D V v i := by rw [hfiber]
-        _ = 1 := inv_mul_cancel₀ hrho
+      simp only [fiberLaw, dite_eq_right hrho, ← Finset.sum_filter, ← Finset.mul_sum]
+      exact inv_mul_cancel₀ hrho
 
 private lemma fiberWeight_mul_fiberLaw {p : α × β → ℝ}
     (D : ComponentDecomp p) (V : Latent p) (v : V.ι) (i : D.κ) (z : α × β) :
@@ -628,20 +565,12 @@ private lemma fiberWeight_mul_fiberLaw {p : α × β → ℝ}
   · by_cases hz : componentIndex D z = i
     · simp [fiberLaw, hrho, hz, comp_eq_zero_of_fiberWeight_zero D V v i hrho hz]
     · simp [fiberLaw, hrho, hz]
-  · by_cases hz : componentIndex D z = i
-    · simp only [fiberLaw, dite_eq_right hrho, ite_eq_left hz]
-      rw [← mul_assoc, mul_inv_cancel₀ hrho, one_mul]
-    · simp [fiberLaw, hrho, hz]
+  · by_cases hz : componentIndex D z = i <;> simp [fiberLaw, hrho, hz]
 
 private lemma fiberLaw_mixture {p : α × β → ℝ} (D : ComponentDecomp p)
     (V : Latent p) (v : V.ι) (z : α × β) :
     ∑ i, fiberWeight D V v i * fiberLaw D V v i z = V.comp v z := by
-  simp_rw [fiberWeight_mul_fiberLaw]
-  rw [Finset.sum_eq_single (componentIndex D z)]
-  · simp
-  · intro i _ hi
-    simp [Ne.symm hi]
-  · simp
+  simp [fiberWeight_mul_fiberLaw]
 
 private lemma fiberLaw_index {p : α × β → ℝ} (D : ComponentDecomp p)
     (V : Latent p) (v : V.ι) (i : D.κ) {z : α × β}
@@ -703,24 +632,9 @@ private lemma Phi_mixture_disjoint {ι : Type*} [Fintype ι] [DecidableEq ι]
       exact hrow i j z z' hzi hzj (hzy.trans hz'y.symm)
     · exact hYmix
   rw [Phi, hH, hHX, hHY]
-  simp only [Phi]
-  calc
-    3 * (H a + ∑ i, a i * H (q i)) -
-          2 * (H a + ∑ i, a i * H (mX (q i))) -
-          2 * (H a + ∑ i, a i * H (mY (q i))) =
-        (3 * (∑ i, a i * H (q i)) -
-          2 * (∑ i, a i * H (mX (q i))) -
-          2 * (∑ i, a i * H (mY (q i)))) - H a := by ring
-    _ = (∑ i, (3 * (a i * H (q i)) -
-          2 * (a i * H (mX (q i))) - 2 * (a i * H (mY (q i))))) - H a := by
-      rw [Finset.mul_sum, Finset.mul_sum, Finset.mul_sum,
-        ← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
-    _ = (∑ i, a i *
-          (3 * H (q i) - 2 * H (mX (q i)) - 2 * H (mY (q i)))) - H a := by
-      congr 1
-      apply Finset.sum_congr rfl
-      intro i _
-      ring
+  simp only [Phi, mul_sub, Finset.sum_sub_distrib]
+  simp_rw [mul_left_comm (a _) 3, mul_left_comm (a _) 2, ← Finset.mul_sum]
+  ring
 
 private lemma Phi_fiber_decomp {p : α × β → ℝ} (D : ComponentDecomp p)
     (V : Latent p) {v : V.ι} (hv : V.prior v ≠ 0) :
@@ -763,15 +677,8 @@ private noncomputable def conditionalLatent {p : α × β → ℝ}
         (mul_nonneg (inv_nonneg.mpr (D.wt_isPMF.nonneg i)) (V.prior_isPMF.nonneg v))
         ((fiberWeight_isPMF D V v).nonneg i)
     · unfold mass
-      calc
-        (∑ v, (D.wt i)⁻¹ * V.prior v * fiberWeight D V v i) =
-            (D.wt i)⁻¹ * ∑ v, V.prior v * fiberWeight D V v i := by
-          rw [Finset.mul_sum]
-          apply Finset.sum_congr rfl
-          intro v _
-          ring
-        _ = (D.wt i)⁻¹ * D.wt i := by rw [weighted_fiberWeight D V i]
-        _ = 1 := inv_mul_cancel₀ hwt
+      simp_rw [mul_assoc, ← Finset.mul_sum]
+      rw [weighted_fiberWeight D V i, inv_mul_cancel₀ hwt]
   comp_isPMF := fun v => fiberLaw_isPMF D V v i
   mixture := by
     intro z
@@ -780,10 +687,7 @@ private noncomputable def conditionalLatent {p : α × β → ℝ}
           fiberLaw D V v i z) =
           (D.wt i)⁻¹ * ∑ v, V.prior v *
             (fiberWeight D V v i * fiberLaw D V v i z) := by
-        rw [Finset.mul_sum]
-        apply Finset.sum_congr rfl
-        intro v _
-        ring
+        simp_rw [mul_assoc, ← Finset.mul_sum]
       _ = (D.wt i)⁻¹ * ∑ v, V.prior v *
             (if componentIndex D z = i then V.comp v z else 0) := by
         simp_rw [fiberWeight_mul_fiberLaw]
@@ -827,13 +731,7 @@ private lemma weighted_conditional_score {p : α × β → ℝ}
   rw [Finset.mul_sum]
   apply Finset.sum_congr rfl
   intro v _
-  calc
-    D.wt i * (((D.wt i)⁻¹ * V.prior v * fiberWeight D V v i) *
-        Phi (fiberLaw D V v i)) =
-      (D.wt i * (D.wt i)⁻¹) *
-        (V.prior v * fiberWeight D V v i * Phi (fiberLaw D V v i)) := by ring
-    _ = V.prior v * fiberWeight D V v i * Phi (fiberLaw D V v i) := by
-      rw [mul_inv_cancel₀ hwt, one_mul]
+  simp only [← mul_assoc, mul_inv_cancel₀ hwt, one_mul]
 
 private lemma weighted_restrict_score {p : α × β → ℝ}
     (D : ComponentDecomp p) (V : Latent p) (i : D.κ) :
@@ -860,53 +758,21 @@ private lemma restrict_score_gap {p : α × β → ℝ} (hp : IsPMF p)
     by_cases hv : V.prior v = 0
     · simp [hv]
     · have hphi := Phi_fiber_decomp D V hv
-      calc
-        (∑ i, V.prior v * fiberWeight D V v i * Phi (fiberLaw D V v i)) =
-            V.prior v * ∑ i, fiberWeight D V v i * Phi (fiberLaw D V v i) := by
-          rw [Finset.mul_sum]
-          apply Finset.sum_congr rfl
-          intro i _
-          ring
-        _ = V.prior v * (Phi (V.comp v) + H (fiberWeight D V v)) := by
-          congr 1
-          linarith
-  have hdouble :
-      (∑ i, ∑ v, V.prior v * fiberWeight D V v i * Phi (fiberLaw D V v i)) =
-        ∑ v, V.prior v * (Phi (V.comp v) + H (fiberWeight D V v)) := by
-    rw [Finset.sum_comm]
-    apply Finset.sum_congr rfl
-    intro v _
-    exact hinner v
-  calc
-    (∑ i, D.wt i * (restrictLatent D V i).score) =
-        ∑ i, (D.wt i * Psi (D.part i) -
-          ∑ v, V.prior v * fiberWeight D V v i * Phi (fiberLaw D V v i)) := by
-      apply Finset.sum_congr rfl
-      intro i _
-      exact weighted_restrict_score D V i
-    _ = (∑ i, D.wt i * Psi (D.part i)) -
-        ∑ i, ∑ v, V.prior v * fiberWeight D V v i * Phi (fiberLaw D V v i) := by
-      rw [Finset.sum_sub_distrib]
-    _ = Psi p - ∑ v, V.prior v *
-        (Phi (V.comp v) + H (fiberWeight D V v)) := by
-      rw [← Psi_eq_components D, hdouble]
-    _ = (Psi p - ∑ v, V.prior v * Phi (V.comp v)) -
-        ∑ v, V.prior v * H (fiberWeight D V v) := by
-      simp only [mul_add, Finset.sum_add_distrib]
-      ring
-    _ = V.score - ∑ v, V.prior v * H (fiberWeight D V v) := by
-      rw [Latent.score_eq hp V]
+      simp_rw [mul_assoc, ← Finset.mul_sum]
+      congr 1
+      linarith
+  simp_rw [weighted_restrict_score]
+  rw [Finset.sum_sub_distrib, Finset.sum_comm, ← Psi_eq_components D]
+  simp_rw [hinner, mul_add, Finset.sum_add_distrib]
+  rw [Latent.score_eq hp V]
+  ring
 
 private lemma restrict_score_le {p : α × β → ℝ} (hp : IsPMF p)
     (D : ComponentDecomp p) (V : Latent p) :
     (∑ i, D.wt i * (restrictLatent D V i).score) ≤ V.score := by
   rw [restrict_score_gap hp D V]
-  have hgap : 0 ≤ ∑ v, V.prior v * H (fiberWeight D V v) := by
-    apply Finset.sum_nonneg
-    intro v _
-    exact mul_nonneg (V.prior_isPMF.nonneg v)
-      (H_nonneg_of_isPMF (fiberWeight_isPMF D V v))
-  linarith
+  exact sub_le_self _ (Finset.sum_nonneg fun v _ =>
+    mul_nonneg (V.prior_isPMF.nonneg v) (H_nonneg_of_isPMF (fiberWeight_isPMF D V v)))
 
 /-- The weighted component optima give a lower bound on `tau`. -/
 theorem sum_components_tau_le {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
@@ -927,20 +793,13 @@ theorem sum_components_tau_le {p : α × β → ℝ} (hp : IsPMF p) (D : Compone
 theorem T_le_sum_components {p : α × β → ℝ} (hp : IsPMF p) (D : ComponentDecomp p) :
     T p ≤ ∑ i, D.wt i * T (D.part i) := by
   classical
-  let V : ∀ i, Latent (D.part i) := fun i =>
-    Classical.choose (exists_T_optimal_latent (D.part_isPMF i))
-  have hVdet : ∀ i, (V i).IsDet := fun i =>
-    (Classical.choose_spec (exists_T_optimal_latent (D.part_isPMF i))).1
-  have hVscore : ∀ i, (V i).score = T (D.part i) := fun i =>
-    (Classical.choose_spec (exists_T_optimal_latent (D.part_isPMF i))).2
+  choose V hVdet hVscore using fun i => exists_T_optimal_latent (D.part_isPMF i)
   calc
     T p ≤ (glueLatent D V).score := T_le_score (glueLatent D V)
       (glueLatent_isDet D V hVdet)
     _ = ∑ i, D.wt i * (V i).score := glueLatent_score hp D V
     _ = ∑ i, D.wt i * T (D.part i) := by
-      apply Finset.sum_congr rfl
-      intro i _
-      rw [hVscore i]
+      simp_rw [hVscore]
 
 /-- Reduction consequence used by the table bound.
 
@@ -960,10 +819,7 @@ theorem reduce_to_connected (C : ℝ) (hC : 0 ≤ C)
         (h (D.part i) (D.part_isPMF i) (D.part_connected i))
         (D.wt_isPMF.nonneg i)
     _ = C * ∑ i, D.wt i * tau (D.part i) := by
-      rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro i _
-      ring
+      simp_rw [mul_left_comm (D.wt _) C, ← Finset.mul_sum]
     _ ≤ C * tau q := mul_le_mul_of_nonneg_left (sum_components_tau_le hq D) hC
 
 end stoch_to_det

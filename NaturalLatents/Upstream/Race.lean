@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Race.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the main branch and the shared-race/contact additions of pull request #5 by Satya Benson, as included in pull request #6 by Jeremy Gillen.
 -- Local changes: Added clockReindex_law and reorganised the clock-law and residual-clock helper chain; retained required public clock-race lemmas.
 import NaturalLatents.Upstream.Scalar
@@ -173,8 +173,7 @@ private lemma map_sub_restrict_expMeasure_one {a : ℝ} (ha : 0 ≤ a) :
   intro x
   have hpre : (fun y : ℝ => y - a) ⁻¹' Set.Iic x = Set.Iic (x + a) := by
     ext y
-    simp only [Set.mem_preimage, Set.mem_Iic]
-    constructor <;> intro h <;> linarith
+    simp only [Set.mem_preimage, Set.mem_Iic, sub_le_iff_le_add]
   rw [Measure.map_apply (by fun_prop) measurableSet_Iic, hpre,
     Measure.restrict_apply measurableSet_Iic,
     Measure.smul_apply, smul_eq_mul]
@@ -183,11 +182,7 @@ private lemma map_sub_restrict_expMeasure_one {a : ℝ} (ha : 0 ≤ a) :
     have hxapos : 0 ≤ x + a := ha.trans hxa
     have hIoc : ν (Set.Ioc a (x + a)) =
         ENNReal.ofReal (cdf ν (x + a) - cdf ν a) := by
-      calc
-        ν (Set.Ioc a (x + a)) = (cdf ν).measure (Set.Ioc a (x + a)) := by
-          rw [measure_cdf]
-        _ = ENNReal.ofReal (cdf ν (x + a) - cdf ν a) :=
-          StieltjesFunction.measure_Ioc (cdf ν) a (x + a)
+      simpa only [measure_cdf] using (cdf ν).measure_Ioc a (x + a)
     rw [Set.inter_comm (Set.Iic (x + a)), Set.Ioi_inter_Iic,
       hIoc, ← ofReal_cdf ν x]
     dsimp [ν]
@@ -214,29 +209,18 @@ private lemma map_scaled_excess_restrict_expMeasure_one
     Measure.map (fun x : ℝ => x / t - u)
         ((expMeasure 1).restrict (Set.Ioi (t * u))) =
       ENNReal.ofReal (Real.exp (-(t * u))) • expMeasure t := by
-  have htu : 0 ≤ t * u := mul_nonneg ht.le hu
-  calc
-    Measure.map (fun x : ℝ => x / t - u)
-        ((expMeasure 1).restrict (Set.Ioi (t * u))) =
-        Measure.map ((fun y : ℝ => y / t) ∘ (fun x : ℝ => x - t * u))
-          ((expMeasure 1).restrict (Set.Ioi (t * u))) := by
-      congr 1
-      funext x
-      dsimp only [Function.comp_apply]
-      field_simp [ht.ne']
-    _ = Measure.map (fun y : ℝ => y / t)
-        (Measure.map (fun x : ℝ => x - t * u)
-          ((expMeasure 1).restrict (Set.Ioi (t * u)))) :=
-      (Measure.map_map (measurable_id.div_const t)
-        (measurable_id.sub_const (t * u))).symm
-    _ = Measure.map (fun y : ℝ => y / t)
-        (ENNReal.ofReal (Real.exp (-(t * u))) • expMeasure 1) := by
-      rw [map_sub_restrict_expMeasure_one htu]
-    _ = ENNReal.ofReal (Real.exp (-(t * u))) •
-        Measure.map (fun y : ℝ => y / t) (expMeasure 1) := by
-      exact Measure.map_smul _ (measurable_id.div_const t).aemeasurable
-    _ = ENNReal.ofReal (Real.exp (-(t * u))) • expMeasure t := by
-      rw [map_div_expMeasure_one ht]
+  have hcomp : (fun x : ℝ => x / t - u) =
+      (fun y : ℝ => y / t) ∘ (fun x : ℝ => x - t * u) := by
+    funext x
+    dsimp only [Function.comp_apply]
+    field_simp [ht.ne']
+  rw [hcomp, ← Measure.map_map (g := fun y : ℝ => y / t)
+      (f := fun x : ℝ => x - t * u) (measurable_id.div_const t)
+      (measurable_id.sub_const (t * u)),
+    map_sub_restrict_expMeasure_one (mul_nonneg ht.le hu),
+    Measure.map_smul (f := fun y : ℝ => y / t) _
+      (measurable_id.div_const t).aemeasurable,
+    map_div_expMeasure_one ht]
 
 private noncomputable def weightedLosingExcessLaw
     {κ : Type} [Fintype κ] [DecidableEq κ]
@@ -292,17 +276,8 @@ private lemma map_losing_scaled_excess
     simp_rw [Measure.smul_apply, smul_eq_mul]
     rw [Finset.prod_mul_distrib]
   rw [Measure.restrict_pi_pi, hmap]
-  calc
-    Measure.pi (fun i : {i : κ // i ≠ a} =>
-        Measure.map (fun x : ℝ => x / t i.1 - u)
-          ((expMeasure 1).restrict (Set.Ioi (t i.1 * u)))) =
-        Measure.pi (fun i : {i : κ // i ≠ a} =>
-          d i • expMeasure (t i.1)) := by
-      congr 1
-      funext i
-      exact hcoord i
-    _ = (∏ i : {i : κ // i ≠ a}, d i) •
-        weightedLosingExcessLaw t a := hscaled
+  simp_rw [hcoord]
+  exact hscaled
 
 lemma strictClockWin_measurableSet
     {κ : Type} [Fintype κ]
@@ -359,10 +334,7 @@ private lemma clockReindex_law
       (fun _ : κ => expMeasure 1)
   dsimp only
   unfold clockLaw
-  calc
-    Measure.map (g ∘ f) q = Measure.map g (Measure.map f q) :=
-      (Measure.map_map g.measurable f.measurable).symm
-    _ = _ := by rw [hfirst, hsecond]
+  rw [← Measure.map_map g.measurable f.measurable, hfirst, hsecond]
 
 private lemma map_eval_restrict_strictClockWin
     {κ : Type} [Fintype κ] [DecidableEq κ]
@@ -419,25 +391,15 @@ private lemma map_eval_restrict_strictClockWin
       have hrel := h i.1 i.2
       change g (f (x, y)) a / t a < g (f (x, y)) i.1 / t i.1 at hrel
       rw [he_a, he_i] at hrel
-      have hcross : y * t i.1 < x i * t a :=
-        (div_lt_div_iff₀ (ht a) (ht i.1)).1 hrel
-      have hdiv : t i.1 * y / t a < x i :=
-        (div_lt_iff₀ (ht a)).2 (by nlinarith)
-      simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using hdiv
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (ht a)]
+      simpa only [mul_comm] using (div_lt_div_iff₀ (ht a) (ht i.1)).1 hrel
     · intro h b hba
       let i : {i : κ // i ≠ a} := ⟨b, hba⟩
-      have hdiv := h i
-      change t b / t a * y < x i at hdiv
-      have hdiv' : t b * y / t a < x i := by
-        simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using hdiv
-      have hcross : y * t b < x i * t a := by
-        have := (div_lt_iff₀ (ht a)).1 hdiv'
-        nlinarith
       change g (f (x, y)) a / t a < g (f (x, y)) b / t b
-      have hib := he_i i
-      change g (f (x, y)) b = x i at hib
-      rw [he_a, hib]
-      exact (div_lt_div_iff₀ (ht a) (ht b)).2 hcross
+      rw [he_a, he_i i, div_lt_div_iff₀ (ht a) (ht b)]
+      have hdiv := h i
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (ht a)] at hdiv
+      simpa only [i, mul_comm] using hdiv
   have hsplit := Fintype.sum_eq_add_sum_subtype_ne t a
   have hsubsum : (∑ i : {i : κ // i ≠ a}, t i.1) = 1 - t a := by
     linarith
@@ -589,46 +551,21 @@ private theorem clock_min_excess_restrict_factorization
     · intro h i
       have hrel := h i.1 i.2
       rw [hcoordA, hcoordNe (x, y) i] at hrel
-      have hcross : y * t i.1 < x i * t a :=
-        (div_lt_div_iff₀ (ht a) (ht i.1)).1 hrel
-      have hdiv : t i.1 * y / t a < x i :=
-        (div_lt_iff₀ (ht a)).2 (by nlinarith)
-      simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using hdiv
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (ht a)]
+      simpa only [mul_comm] using (div_lt_div_iff₀ (ht a) (ht i.1)).1 hrel
     · intro h b hba
       let i : {i : κ // i ≠ a} := ⟨b, hba⟩
+      rw [hcoordA, hcoordNe (x, y) i, div_lt_div_iff₀ (ht a) (ht b)]
       have hdiv := h i
-      change t b / t a * y < x i at hdiv
-      have hdiv' : t b * y / t a < x i := by
-        simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using hdiv
-      have hcross : y * t b < x i * t a := by
-        have := (div_lt_iff₀ (ht a)).1 hdiv'
-        nlinarith
-      rw [hcoordA, hcoordNe (x, y) i]
-      exact (div_lt_div_iff₀ (ht a) (ht b)).2 hcross
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (ht a)] at hdiv
+      simpa only [i, mul_comm] using hdiv
   have hJ : Measurable J := by
-    have hy : Measurable
-        (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ => xy.2) := measurable_snd
-    have hlose : Measurable
-        (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ =>
-          fun i => xy.1 i / t i.1 - xy.2 / t a) := by
-      apply Measurable.of_eval
-      intro i
-      have hxi : Measurable
-          (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ => xy.1 i) :=
-        (measurable_pi_apply i).comp measurable_fst
-      exact (hxi.div_const (t i.1)).sub (hy.div_const (t a))
+    dsimp only [J]
     apply Measurable.prodMk
-    · exact hy.div_const (t a)
-    · exact (winnerClockJoin_measurable a).comp (measurable_const.prodMk hlose)
+    · fun_prop
+    · exact (winnerClockJoin_measurable a).comp (by fun_prop)
   have horig : Measurable (fun E : κ → ℝ =>
-      (E a / t a, fun i => E i / t i - E a / t a)) := by
-    have hea : Measurable (fun E : κ → ℝ => E a) := measurable_pi_apply a
-    apply Measurable.prodMk
-    · exact hea.div_const (t a)
-    · apply Measurable.of_eval
-      intro i
-      have hei : Measurable (fun E : κ → ℝ => E i) := measurable_pi_apply i
-      exact (hei.div_const (t i)).sub (hea.div_const (t a))
+      (E a / t a, fun i => E i / t i - E a / t a)) := by fun_prop
   have hJcomp :
       (fun E : κ → ℝ =>
         (E a / t a, fun i => E i / t i - E a / t a)) ∘ (g ∘ f) = J := by
@@ -655,43 +592,27 @@ private theorem clock_min_excess_restrict_factorization
       Measure.map (fun E : κ → ℝ => E a / t a)
           ((clockLaw κ).restrict {E | strictClockWin t a E}) =
         ENNReal.ofReal (t a) • expMeasure 1 := by
-    calc
-      Measure.map (fun E : κ → ℝ => E a / t a)
-          ((clockLaw κ).restrict {E | strictClockWin t a E}) =
-          Measure.map (fun y : ℝ => y / t a)
-            (Measure.map (fun E : κ → ℝ => E a)
-              ((clockLaw κ).restrict {E | strictClockWin t a E})) := by
-        exact (Measure.map_map (measurable_id.div_const (t a))
-          (measurable_pi_apply a)).symm
-      _ = Measure.map (fun y : ℝ => y / t a)
-          (ENNReal.ofReal (t a) • expMeasure (1 / t a)) := by
-        rw [map_eval_restrict_strictClockWin t ht htotal a]
-      _ = ENNReal.ofReal (t a) •
-          Measure.map (fun y : ℝ => y / t a) (expMeasure (1 / t a)) := by
-        exact Measure.map_smul _ (measurable_id.div_const (t a)).aemeasurable
-      _ = ENNReal.ofReal (t a) • expMeasure 1 := by
-        rw [map_div_expMeasure (ht a)]
+    change Measure.map ((fun y : ℝ => y / t a) ∘ (fun E : κ → ℝ => E a)) _ = _
+    rw [← Measure.map_map (g := fun y : ℝ => y / t a)
+        (measurable_id.div_const (t a)) (measurable_pi_apply a),
+      map_eval_restrict_strictClockWin t ht htotal a,
+      Measure.map_smul (f := fun y : ℝ => y / t a) _
+        (measurable_id.div_const (t a)).aemeasurable,
+      map_div_expMeasure (ht a)]
   have hminSplit :
       Measure.map
           (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ => xy.2 / t a)
           (q.restrict P) =
         ENNReal.ofReal (t a) • expMeasure 1 := by
-    calc
-      Measure.map
-          (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ => xy.2 / t a)
-          (q.restrict P) =
-          Measure.map (fun E : κ → ℝ => E a / t a)
-            ((clockLaw κ).restrict {E | strictClockWin t a E}) := by
-        rw [← hmap, Measure.restrict_map
-          (g.measurable.comp f.measurable) hwin,
-          Measure.map_map
-            ((measurable_pi_apply a).div_const (t a))
-            (g.measurable.comp f.measurable)]
-        apply Measure.map_congr
-        filter_upwards [] with xy
-        dsimp only [Function.comp_apply]
-        rw [hcoordA]
-      _ = ENNReal.ofReal (t a) • expMeasure 1 := hminLaw
+    rw [← hminLaw, ← hmap, Measure.restrict_map
+      (g.measurable.comp f.measurable) hwin,
+      Measure.map_map (g := fun E : κ → ℝ => E a / t a)
+        (by fun_prop)
+        (g.measurable.comp f.measurable)]
+    apply Measure.map_congr
+    filter_upwards [] with xy
+    dsimp only [Function.comp_apply]
+    rw [hcoordA]
   rw [hsplit]
   let ρ : Measure ({i : κ // i ≠ a} → ℝ) :=
     weightedLosingExcessLaw t a
@@ -738,15 +659,7 @@ private theorem clock_min_excess_restrict_factorization
       let rpre : Set ({i : κ // i ≠ a} → ℝ) := embed ⁻¹' r
       have hu : 0 ≤ u := div_nonneg hy.le (ht a).le
       have hloseMap : Measurable loseMap := by
-        apply Measurable.of_eval
-        intro i
-        have hxi : Measurable
-            (fun x : {j : κ // j ≠ a} → ℝ => x i) := measurable_pi_apply i
-        exact (hxi.div_const (t i.1)).sub_const u
-      have horth : MeasurableSet orth := by
-        apply MeasurableSet.univ_pi
-        intro i
-        exact measurableSet_Ioi
+        fun_prop
       have hrpre : MeasurableSet rpre := hr.preimage hembed
       have hPsec :
           (fun x : {i : κ // i ≠ a} → ℝ => (x, y)) ⁻¹' P = orth := by
@@ -813,16 +726,8 @@ private theorem clock_min_excess_restrict_factorization
     lintegral_const_mul _ (measurable_measure_prodMk_right hB),
     ← Measure.prod_apply_symm hB]
   have hqB : q B = (ENNReal.ofReal (t a) • expMeasure 1) s := by
-    calc
-      q B = (q.restrict P) (first ⁻¹' s) := by
-        rw [Measure.restrict_apply (hs.preimage hfirstMeas)]
-      _ = Measure.map first (q.restrict P) s := by
-        rw [Measure.map_apply hfirstMeas hs]
-      _ = (ENNReal.ofReal (t a) • expMeasure 1) s := by
-        change Measure.map
-            (fun xy : ({i : κ // i ≠ a} → ℝ) × ℝ => xy.2 / t a)
-            (q.restrict P) s = _
-        rw [hminSplit]
+    rw [← hminSplit, Measure.map_apply hfirstMeas hs,
+      Measure.restrict_apply (hs.preimage hfirstMeas)]
   rw [Measure.prod_prod, hqB]
   ac_rfl
 
@@ -898,14 +803,9 @@ private lemma winnerClockJoin_law
       rw [MeasurableEquiv.coe_piCongrLeft, Equiv.piCongrLeft_apply]
       simp [e, Equiv.optionSubtypeNe_symm_of_ne hi, hfSome]
   change Measure.map (winnerClockJoin a) ((expMeasure 1).prod loseμ) = _
-  calc
-    Measure.map (winnerClockJoin a) ((expMeasure 1).prod loseμ) =
-        Measure.map (winnerClockJoin a) (Measure.map Prod.swap q) := by
-      rw [Measure.prod_swap]
-    _ = Measure.map (winnerClockJoin a ∘ Prod.swap) q :=
-      Measure.map_map (winnerClockJoin_measurable a) measurable_swap
-    _ = Measure.map (g ∘ f) q := by rw [hjoinSwap]
-    _ = clockLaw κ := hmap
+  rw [← hmap, ← hjoinSwap,
+    ← Measure.map_map (winnerClockJoin_measurable a) measurable_swap,
+    Measure.prod_swap]
 
 /-- On the cell where `a` wins, remove the common weighted-race minimum from
 every losing raw clock and retain that minimum in coordinate `a`. -/
@@ -918,18 +818,10 @@ lemma winnerResidualClock_measurable
     {κ : Type} [DecidableEq κ]
     (t : κ → ℝ) (a : κ) :
     Measurable (winnerResidualClock t a) := by
-  have hea : Measurable (fun E : κ → ℝ => E a) := measurable_pi_apply a
-  have hratio : Measurable (fun E : κ → ℝ => E a / t a) :=
-    hea.div measurable_const
   apply Measurable.of_eval
   intro i
-  by_cases hi : i = a
-  · simpa only [winnerResidualClock, hi, dite_true] using hratio
-  · have hei : Measurable (fun E : κ → ℝ => E i) := measurable_pi_apply i
-    have hmul : Measurable (fun E : κ → ℝ => t i * (E a / t a)) := by
-      fun_prop
-    simp only [winnerResidualClock, hi, dite_false]
-    exact hei.sub hmul
+  by_cases hi : i = a <;> simp only [winnerResidualClock, hi, dite_true, dite_false]
+    <;> fun_prop
 
 /-- Fixed-winner exponential memorylessness in full-vector form.  The
 residual vector consists of fresh iid `Exp(1)` clocks, with total mass equal
@@ -961,16 +853,7 @@ theorem winnerResidualClock_restrict_law
   have hout : Measurable out := by
     apply Measurable.of_eval
     intro i
-    by_cases hi : i = a
-    · simpa only [out, hi, ite_true] using
-        (measurable_fst : Measurable
-          (fun sr : ℝ × (κ → ℝ) => sr.1))
-    · have hcoord : Measurable
-          (fun sr : ℝ × (κ → ℝ) => sr.2 i) :=
-        (measurable_pi_apply i).comp measurable_snd
-      have hmul : Measurable (fun sr : ℝ × (κ → ℝ) => t i * sr.2 i) := by
-        fun_prop
-      simpa only [out, hi, ite_false] using hmul
+    by_cases hi : i = a <;> simp only [out, hi, ite_true, ite_false] <;> fun_prop
   have hembed : Measurable embed := (winnerClockJoin_measurable a).comp (measurable_const.prodMk measurable_id)
   have hloseScale : Measurable loseScale := by fun_prop
   have hscale : Measurable scale := measurable_id.prodMap hloseScale
@@ -1004,19 +887,16 @@ theorem winnerResidualClock_restrict_law
     dsimp [A]
     infer_instance
   have hscaleLaw : Measure.map scale (A.prod ρ) = A.prod loseμ := by
-    calc
-      Measure.map scale (A.prod ρ) =
-          (Measure.map id A).prod (Measure.map loseScale ρ) := by
-        exact (Measure.map_prod_map A ρ measurable_id hloseScale).symm
-      _ = A.prod loseμ := by
-        rw [Measure.map_id]
-        congr 1
-        dsimp only [loseScale, ρ, loseμ]
-        exact map_weightedLosingExcess_scale t ht a
+    rw [← Measure.map_prod_map A ρ measurable_id hloseScale, Measure.map_id]
+    congr 1
+    exact map_weightedLosingExcess_scale t ht a
   have hAprod : A.prod loseμ =
       ENNReal.ofReal (t a) • ((expMeasure 1).prod loseμ) := by
     dsimp only [A]
     rw [Measure.prod_smul_left]
+  have hprod : A.prod (Measure.map embed ρ) =
+      Measure.map (Prod.map id embed) (A.prod ρ) := by
+    simpa only [Measure.map_id] using Measure.map_prod_map A ρ measurable_id hembed
   calc
     Measure.map (winnerResidualClock t a)
         ((clockLaw κ).restrict {E | strictClockWin t a E}) =
@@ -1028,33 +908,14 @@ theorem winnerResidualClock_restrict_law
     _ = Measure.map out
         (A.prod (Measure.map embed ρ)) := by
       rw [clock_min_excess_restrict_factorization t ht htotal a]
-    _ = Measure.map assemble (A.prod ρ) := by
-      calc
-        Measure.map out (A.prod (Measure.map embed ρ)) =
-            Measure.map out ((Measure.map id A).prod (Measure.map embed ρ)) := by
-          rw [Measure.map_id]
-        _ = Measure.map out
-            (Measure.map (Prod.map id embed) (A.prod ρ)) := by
-          rw [← Measure.map_prod_map A ρ measurable_id hembed]
-        _ = Measure.map (out ∘ Prod.map id embed) (A.prod ρ) :=
-          Measure.map_map hout (measurable_id.prodMap hembed)
-        _ = Measure.map assemble (A.prod ρ) := by rw [houtEmbed]
-    _ = Measure.map (winnerClockJoin a) (Measure.map scale (A.prod ρ)) := by
-      rw [hassembleScale]
-      exact (Measure.map_map (winnerClockJoin_measurable a) hscale).symm
     _ = Measure.map (winnerClockJoin a) (A.prod loseμ) := by
-      rw [hscaleLaw]
-    _ = Measure.map (winnerClockJoin a)
-        (ENNReal.ofReal (t a) • ((expMeasure 1).prod loseμ)) := by
-      rw [hAprod]
-    _ = ENNReal.ofReal (t a) •
-        Measure.map (winnerClockJoin a) ((expMeasure 1).prod loseμ) := by
-      exact Measure.map_smul _ (winnerClockJoin_measurable a).aemeasurable
+      rw [hprod, Measure.map_map hout (measurable_id.prodMap hembed),
+        houtEmbed, hassembleScale,
+        ← Measure.map_map (winnerClockJoin_measurable a) hscale, hscaleLaw]
     _ = ENNReal.ofReal (t a) • clockLaw κ := by
-      rw [show Measure.map (winnerClockJoin a)
-          ((expMeasure 1).prod loseμ) = clockLaw κ by
-        dsimp only [loseμ]
-        exact winnerClockJoin_law a]
+      rw [hAprod, Measure.map_smul _ (winnerClockJoin_measurable a).aemeasurable]
+      congr 1
+      exact winnerClockJoin_law a
 
 @[simp] lemma winnerResidualClock_apply_winner
     {κ : Type} [DecidableEq κ] (t : κ → ℝ) (a : κ) (E : κ → ℝ) :
@@ -1136,18 +997,9 @@ lemma integral_clock_eq_sum_strictClockWin
       ∑ a, ∫ E, f E
         ∂((clockLaw κ).restrict {E | strictClockWin t a E}) := by
   have hdecomp := clockLaw_eq_sum_restrict_strictClockWin t ht htotal
-  have hsumInt : Integrable f (Measure.sum fun a : κ =>
-      (clockLaw κ).restrict {E | strictClockWin t a E}) := by
-    rw [← hdecomp]
-    exact hf
-  calc
-    (∫ E, f E ∂(clockLaw κ)) =
-        ∫ E, f E ∂(Measure.sum fun a : κ =>
-          (clockLaw κ).restrict {E | strictClockWin t a E}) :=
-      congrArg (fun μ : Measure (κ → ℝ) => ∫ E, f E ∂μ) hdecomp
-    _ = ∑ a, ∫ E, f E
-          ∂((clockLaw κ).restrict {E | strictClockWin t a E}) := by
-      simpa only [tsum_fintype] using integral_sum_measure hsumInt
+  rw [hdecomp] at hf
+  conv_lhs => rw [hdecomp]
+  simpa only [tsum_fintype] using integral_sum_measure hf
 
 /-- Integrating a measurable residual-clock statistic on one strict winner
 cell gives the winner mass times its expectation under fresh iid clocks. -/
@@ -1158,20 +1010,10 @@ lemma integral_comp_winnerResidualClock
     (∫ E, f (winnerResidualClock t a E)
         ∂((clockLaw κ).restrict {E | strictClockWin t a E})) =
       t a * ∫ W, f W ∂(clockLaw κ) := by
-  have hmap := winnerResidualClock_restrict_law t ht htotal a
-  calc
-    (∫ E, f (winnerResidualClock t a E)
-        ∂((clockLaw κ).restrict {E | strictClockWin t a E})) =
-        ∫ W, f W ∂Measure.map (winnerResidualClock t a)
-          ((clockLaw κ).restrict {E | strictClockWin t a E}) :=
-      (integral_map (winnerResidualClock_measurable t a).aemeasurable
-        hf.aestronglyMeasurable).symm
-    _ = ∫ W, f W ∂ENNReal.ofReal (t a) • clockLaw κ := by rw [hmap]
-    _ = (ENNReal.ofReal (t a)).toReal • ∫ W, f W ∂clockLaw κ := by
-      rw [integral_smul_measure]
-    _ = t a * ∫ W, f W ∂clockLaw κ := by
-      rw [ENNReal.toReal_ofReal (ht a).le]
-      rfl
+  rw [← integral_map (winnerResidualClock_measurable t a).aemeasurable
+      hf.aestronglyMeasurable,
+    winnerResidualClock_restrict_law t ht htotal a, integral_smul_measure,
+    ENNReal.toReal_ofReal (ht a).le, smul_eq_mul]
 
 namespace SharedRace
 
