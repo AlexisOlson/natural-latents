@@ -57,6 +57,14 @@ open MeasureTheory ProbabilityTheory
 
 variable {X Y : Type} [Fintype X] [Fintype Y] [DecidableEq X] [DecidableEq Y]
 
+private lemma race_measurable_scaled_mass
+    {Ω : Type*} [MeasurableSpace Ω] (a c : ℝ)
+    (z : Ω → ℝ × (ℕ → ℝ)) (hz : Measurable z) :
+    Measurable (fun w => c * (z w).1 ^ (-a) *
+      (1 + max 0 (tailSum a (z w).1 (z w).2))) := by
+  simp only [mul_assoc]
+  exact measurable_const.mul ((race_measurable_unit_mass a).comp hz)
+
 /- Product log-integrability supplies an integrable gain slice for almost every positive shift. A finite
 positive shift is dominated by one such slice, whose exponential mass is positive, so no further
 gain-section hypothesis is needed. -/
@@ -124,26 +132,22 @@ lemma race_gain_sections_of_unit_log_integrable
     (a : ℝ) (ha : 1 < a) :
     ∀ t : ℝ, 0 ≤ t →
       Integrable (fun ω : ℕ → ℝ => Real.log (1 + tailSum a t ω)) arrivalLaw :=  by
-  have hjoint := race_gain_joint_integrable_of_unit_log a ha
   intro t ht
   obtain rfl | ht := eq_or_lt_of_le ht
   · have ha0 : a ≠ 0 := (lt_trans zero_lt_one ha).ne'
     simp [tailSum, Real.zero_rpow ha0]
   have htail : expOne (Set.Ioi t) ≠ 0 := by
-    have he : expOne (Set.Ioi t) = ENNReal.ofReal (Real.exp (-t)) :=
-      stoch_to_det.expMeasure_one_Ioi t ht.le
-    rw [he]
+    rw [expOne, stoch_to_det.expMeasure_one_Ioi t ht.le]
     exact (ENNReal.ofReal_pos.mpr (Real.exp_pos (-t))).ne'
   have hslices : ∀ᵐ u : ℝ ∂expOne,
       Integrable (fun ω : ℕ → ℝ => Real.log (1 + tailSum a u ω)) arrivalLaw :=
-    hjoint.prod_right_ae
+    (race_gain_joint_integrable_of_unit_log a ha).prod_right_ae
   obtain ⟨u, htu, huInt⟩ :=
     Measure.exists_mem_of_measure_ne_zero_of_ae htail (ae_restrict_of_ae hslices)
   have hu : 0 < u := lt_trans ht htu
-  have hmeas : Measurable (fun ω : ℕ → ℝ => Real.log (1 + tailSum a t ω)) := by
-    have htail := (race_measurable_tailSum a).comp
-      (measurable_const.prodMk measurable_id : Measurable (fun ω : ℕ → ℝ => (t, ω)))
-    fun_prop
+  have hmeas : Measurable (fun ω : ℕ → ℝ => Real.log (1 + tailSum a t ω)) :=
+    Real.measurable_log.comp
+      (measurable_const.add ((race_measurable_tailSum a).comp measurable_prodMk_left))
   apply huInt.mono' hmeas.aestronglyMeasurable
   filter_upwards [race_arrival_ae_nonneg,
     race_arrival_mass_ae_summable a ha] with ω hω hsum
@@ -196,10 +200,8 @@ lemma race_scaled_logGain_integrable_of_unit_log
     (a : ℝ) (ha : 1 < a)
     (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
     Integrable (fun t : ℝ => logGain a (r * t)) expOne := by
-  have hjoint := race_gain_joint_integrable_of_unit_log a ha
-  have hmint : Integrable (logGain a) expOne := by
-    change Integrable (fun t : ℝ => ∫ ω, Real.log (1 + tailSum a t ω) ∂arrivalLaw) expOne
-    exact hjoint.integral_prod_left
+  have hmint : Integrable (logGain a) expOne :=
+    (race_gain_joint_integrable_of_unit_log a ha).integral_prod_left
   have hscaledmeas : Measurable (fun t : ℝ => logGain a (r * t)) :=
     (race_measurable_logGain a).comp (measurable_const.mul measurable_id)
   apply hmint.mono' hscaledmeas.aestronglyMeasurable
@@ -245,18 +247,10 @@ lemma race_frullani_log_one_add (x : ℝ) (hx : 0 ≤ x) :
     exact (race_frullani_gain_kernel_bounds hx hv).2
   have hform (v : ℝ) :
       v⁻¹ • (Real.exp (-(1 * v)) - Real.exp (-((1 + x) * v))) = K v := by
-    have he : Real.exp (-((1 + x) * v)) =
-        Real.exp (-v) * Real.exp (-(v * x)) := by
-      rw [← Real.exp_add]
-      congr 1
-      ring
-    simp only [one_mul, he, smul_eq_mul]
+    rw [show -((1 + x) * v) = -v + -(v * x) by ring, Real.exp_add]
+    simp only [one_mul, smul_eq_mul]
     dsimp [K]
     ring
-  have hFi : IntegrableOn
-      (fun v : ℝ => v⁻¹ • (Real.exp (-(1 * v)) - Real.exp (-((1 + x) * v))))
-      (Set.Ioi 0) := by
-    exact hKi.congr (ae_of_all _ (fun v => (hform v).symm))
   have hL : Filter.Tendsto (fun v : ℝ => Real.exp (-v))
       (nhdsWithin 0 (Set.Ioi 0)) (nhds (1 : ℝ)) := by
     simpa [Function.comp_def] using (Real.continuous_exp.comp continuous_neg).continuousWithinAt.tendsto
@@ -268,14 +262,10 @@ lemma race_frullani_log_one_add (x : ℝ) (hx : 0 ≤ x) :
       (Frullani.integral_Ioi_eq (f := fun v : ℝ => Real.exp (-v))
         (integrableOn_exp_neg_Ioi (0 : ℝ)).locallyIntegrableOn
         (a := (1 : ℝ)) (b := 1 + x) (L := (1 : ℝ)) (R := (0 : ℝ))
-        (by norm_num) (by linarith) hL Real.tendsto_exp_neg_atTop_nhds_zero hFi)
-  have hreal : (∫ v : ℝ in Set.Ioi 0, K v) = Real.log (1 + x) := by
-    calc
-      _ = ∫ v : ℝ in Set.Ioi 0,
-          v⁻¹ • (Real.exp (-(1 * v)) - Real.exp (-((1 + x) * v))) :=
-        setIntegral_congr_fun measurableSet_Ioi (fun v _ => (hform v).symm)
-      _ = _ := hF
-  rw [← ofReal_integral_eq_lintegral_ofReal hKi hKnn, hreal]
+        (by norm_num) (by linarith) hL Real.tendsto_exp_neg_atTop_nhds_zero
+        (hKi.congr (ae_of_all _ (fun v => (hform v).symm))))
+  simp_rw [hform] at hF
+  rw [← ofReal_integral_eq_lintegral_ofReal hKi hKnn, hF]
 
 /-- Expected log gain from its Laplace transform. The identity is stated in
     ENNReal so that Tonelli needs no product integrability hypothesis. -/
@@ -290,10 +280,8 @@ lemma race_expected_log_one_add_laplace
   let ν : Measure ℝ := volume.restrict (Set.Ioi 0)
   let K : ℝ → ℝ → ℝ := fun v x =>
     Real.exp (-v) * v⁻¹ * (1 - Real.exp (-(v * x)))
-  have hlognn : 0 ≤ᵐ[μ] (fun ω => Real.log (1 + V ω)) := by
-    filter_upwards [hVnn] with ω hω
-    change 0 ≤ V ω at hω
-    exact Real.log_nonneg (by linarith)
+  have hlognn : 0 ≤ᵐ[μ] (fun ω => Real.log (1 + V ω)) :=
+    hVnn.mono (fun _ hω => Real.log_nonneg (le_add_of_nonneg_right hω))
   have hKm : Measurable (fun z : Ω × ℝ => ENNReal.ofReal (K z.2 (V z.1))) := by
     have hVc : Measurable (fun z : Ω × ℝ => V z.1) := hVm.comp measurable_fst
     dsimp [K]
@@ -309,9 +297,8 @@ lemma race_expected_log_one_add_laplace
       exact Real.exp_le_one_iff.2 (neg_nonpos.2 (mul_nonneg hv.le hω))
     have hKi : Integrable (fun ω => K v (V ω)) μ :=
       ((integrable_const (1 : ℝ)).sub he).const_mul _
-    have hKnn : 0 ≤ᵐ[μ] (fun ω => K v (V ω)) := by
-      filter_upwards [hVnn] with ω hω
-      exact (race_frullani_gain_kernel_bounds hω hv).1
+    have hKnn : 0 ≤ᵐ[μ] (fun ω => K v (V ω)) :=
+      hVnn.mono (fun _ hω => (race_frullani_gain_kernel_bounds hω hv).1)
     rw [← ofReal_integral_eq_lintegral_ofReal hKi hKnn]
     congr 1
     dsimp [K]
@@ -366,11 +353,9 @@ lemma race_expected_log_gain_scaling_of_laplace
     apply lintegral_congr_ae
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with v hv
     rw [hlap s hs v hv]
-  have hrightnn : 0 ≤ ∫ ω, Real.log (1 + V (r * t) ω) ∂μ := by
-    apply integral_nonneg_of_ae
-    filter_upwards [hVnn (r * t) hrt] with ω hω
-    change 0 ≤ V (r * t) ω at hω
-    exact Real.log_nonneg (by linarith)
+  have hrightnn : 0 ≤ ∫ ω, Real.log (1 + V (r * t) ω) ∂μ :=
+    integral_nonneg_of_ae ((hVnn (r * t) hrt).mono
+      (fun _ hω => Real.log_nonneg (le_add_of_nonneg_right hω)))
   apply (ENNReal.ofReal_le_ofReal_iff hrightnn).1
   rw [ENNReal.ofReal_mul hr0, hid t ht, hid (r * t) hrt]
   rw [← lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
@@ -430,15 +415,13 @@ lemma race_tailSum_laplace_of_shifted_transform (a : ℝ) (ha : 1 < a) :
 lemma race_gain_scaling_of_shifted_transform (a : ℝ) (ha : 1 < a)
     (t r : ℝ) (ht : 0 ≤ t) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
     r * logGain a t ≤ logGain a (r * t) := by
-  have hVm (s : ℝ) (_hs : 0 ≤ s) : Measurable (tailSum a s) := by
-    exact (race_measurable_tailSum a).comp measurable_prodMk_left
-  have hVnn (s : ℝ) (hs : 0 ≤ s) : 0 ≤ᵐ[arrivalLaw] tailSum a s := by
-    filter_upwards [race_arrival_ae_nonneg] with ω hω
-    exact race_tailSum_nonneg_of_nonneg a s hs ω hω
   exact race_expected_log_gain_scaling_of_laplace arrivalLaw
     (fun s ω => tailSum a s ω)
     (fun v => ∫ u : ℝ in Set.Ioi 0, 1 - Real.exp (-(v * (1 + u) ^ (-a))))
-    hVm hVnn (race_gain_sections_of_unit_log_integrable a ha)
+    (fun _ _ => (race_measurable_tailSum a).comp measurable_prodMk_left)
+    (fun s hs => race_arrival_ae_nonneg.mono
+      (fun ω hω => race_tailSum_nonneg_of_nonneg a s hs ω hω))
+    (race_gain_sections_of_unit_log_integrable a ha)
     (race_tailSum_laplace_of_shifted_transform a ha)
     t r ht hr0 hr1
 
@@ -486,8 +469,7 @@ lemma race_selected_coordinate_average
     have hs : MeasurableSet {w : (κ → ℝ) × (κ → Ξ) | W w.1 = i} :=
       (measurableSet_singleton i).preimage (hW.comp measurable_fst)
     apply ((hcoordInt i).indicator hs).congr
-    filter_upwards [] with w
-    by_cases hw : W w.1 = i <;> simp [Set.indicator, hw]
+    exact ae_of_all _ (fun w => by simp only [Set.indicator_apply, Set.mem_ofPred_eq])
   have hselectedInt : Integrable selected ρ := by
     have hsum := integrable_finsetSum (Finset.univ : Finset κ) (fun i _ => htermInt i)
     apply hsum.congr
@@ -579,11 +561,8 @@ lemma race_selected_appended_log_mean
   let f : κ → ℝ × (ℕ → ℝ) → ℝ := fun i tD =>
     Real.log ((π i)^a * tD.1^(-a) * (1 + max 0 (tailSum a tD.1 tD.2)))
   have hmeas (i : κ) : Measurable (f i) := by
-    have hscaled : Measurable (fun z : ℝ × (ℕ → ℝ) =>
-        (π i)^a * (z.1 ^ (-a) * (1 + max 0 (tailSum a z.1 z.2)))) :=
-      measurable_const.mul (race_measurable_unit_mass a)
-    simpa only [f, mul_assoc, Function.comp_def] using
-      (Real.measurable_log.comp hscaled)
+    exact Real.measurable_log.comp
+      (race_measurable_scaled_mass a ((π i)^a) id measurable_id)
   have hint (i : κ) : Integrable (f i) (expOne.prod arrivalLaw) := by
     have hunitlog := race_unit_log_integrable a ha
     apply ((integrable_const (a * Real.log (π i))).add hunitlog).congr
@@ -667,12 +646,7 @@ lemma race_superposition_pi_laplace
   have hpoint (ω : κ → Ω) :
       Real.exp (-(v * ∑ i, (π i)^a * R (ω i))) =
         ∏ i, Real.exp (-((v * (π i)^a) * R (ω i))) := by
-    rw [← Real.exp_sum]
-    congr 1
-    rw [Finset.mul_sum, ← Finset.sum_neg_distrib]
-    apply Finset.sum_congr rfl
-    intro i _
-    ring
+    simp only [← Real.exp_sum, Finset.mul_sum, Finset.sum_neg_distrib, mul_assoc]
   have hfactor (i : κ) : (∫ ω, Real.exp (-((v * (π i)^a) * R ω)) ∂μ) =
       Real.exp (-(G * (v^(1/a) * π i))) := by
     rw [hLaplace _ (mul_pos hv (Real.rpow_pos_of_pos (hπpos i) a)), hscale]
@@ -748,12 +722,8 @@ lemma race_clock_appended_logloss_of_unit_laplace
   let : IsProbabilityMeasure ν := by dsimp [ν]; infer_instance
   let Z : (κ → ℝ) × (κ → ℕ → ℝ) → ℝ := fun w => ∑ i, S w i
   have hSmeas (i : κ) : Measurable (fun w => S w i) := by
-    have hpair : Measurable (fun w : (κ → ℝ) × (κ → ℕ → ℝ) => (w.1 i, w.2 i)) := by
-      fun_prop
-    have hscaled : Measurable (fun w : (κ → ℝ) × (κ → ℕ → ℝ) =>
-        (π i)^a * R (w.1 i, w.2 i)) :=
-      measurable_const.mul (hRmeas.comp hpair)
-    simpa only [S, R, mul_assoc] using hscaled
+    exact race_measurable_scaled_mass a ((π i)^a)
+      (fun w : (κ → ℝ) × (κ → ℕ → ℝ) => (w.1 i, w.2 i)) (by fun_prop)
   have hZmeas : Measurable Z := by
     change Measurable (fun w => ∑ i, S w i)
     exact Finset.measurable_sum (Finset.univ : Finset κ) (fun i _ => hSmeas i)
@@ -793,12 +763,6 @@ lemma race_clock_appended_logloss_of_unit_laplace
     field_simp [ha0.ne']
   have hselected := race_selected_appended_log_mean a ha π r hπpos hr hrpos
   dsimp only at hselected
-  have hselectedInt : Integrable (fun w =>
-      Real.log (S w (stoch_to_det.SharedRace.clockArgmin r w.1))) ρ := hselected.1
-  have hselectedMean : (∫ w, Real.log (S w
-      (stoch_to_det.SharedRace.clockArgmin r w.1)) ∂ρ) =
-      -a * (∑ i, r i * Real.log (r i / π i)) + a * Real.eulerMascheroniConstant +
-        ∑ i, r i * (∫ t, logGain a (r i * t) ∂expOne) := hselected.2
   have hLossEq : (fun w => Real.log (1 / Q w
       (stoch_to_det.SharedRace.clockArgmin r w.1))) =ᵐ[ρ]
       fun w => Real.log (∑ i, S w i) -
@@ -807,9 +771,9 @@ lemma race_clock_appended_logloss_of_unit_laplace
     dsimp only [Q]
     rw [one_div, Real.log_inv, Real.log_div (hS _).ne' hsum.ne']
     ring
-  refine ⟨(hnormInt.sub hselectedInt).congr hLossEq.symm, ?_⟩
-  rw [integral_congr_ae hLossEq, integral_sub hnormInt hselectedInt,
-    hnormMean, hselectedMean,
+  refine ⟨(hnormInt.sub hselected.1).congr hLossEq.symm, ?_⟩
+  rw [integral_congr_ae hLossEq, integral_sub hnormInt hselected.1,
+    hnormMean, hselected.2,
     race_gamma_price_of_unit_laplace a ha hRmeas hunitlog hunitLap]
   unfold gammaPrice
   ring
@@ -840,8 +804,6 @@ lemma race_appended_logloss_of_unit_laplace
   let : IsProbabilityMeasure ν := by dsimp [ν]; infer_instance
   let ρc := (stoch_to_det.clockLaw κ).prod ν
   let ρs := (stoch_to_det.seedLaw κ).prod ν
-  let R : ℝ × (ℕ → ℝ) → ℝ :=
-    fun z => z.1 ^ (-a) * (1 + max 0 (tailSum a z.1 z.2))
   let Sc : (κ → ℝ) × (κ → ℕ → ℝ) → κ → ℝ := fun w i =>
     (π i)^a * (w.1 i)^(-a) * (1 + max 0 (tailSum a (w.1 i) (w.2 i)))
   let Ss : (κ → ℝ) × (κ → ℕ → ℝ) → κ → ℝ := fun w i =>
@@ -856,10 +818,6 @@ lemma race_appended_logloss_of_unit_laplace
   have hc := race_clock_appended_logloss_of_unit_laplace
     a ha π r hπ hπpos hr hrpos
   dsimp only at hc
-  have hcInt : Integrable Lc ρc := hc.1
-  have hcMean : (∫ w, Lc w ∂ρc) =
-      a * (∑ i, r i * Real.log (r i / π i)) + gammaPriceET a -
-        ∑ i, r i * (∫ t, logGain a (r i * t) ∂expOne) := hc.2
   let G : (κ → ℝ) → (κ → ℝ) := fun E i => -Real.log (E i)
   let T : (κ → ℝ) × (κ → ℕ → ℝ) → (κ → ℝ) × (κ → ℕ → ℝ) :=
     Prod.map G id
@@ -871,14 +829,9 @@ lemma race_appended_logloss_of_unit_laplace
   have hpId : MeasurePreserving (id : (κ → ℕ → ℝ) → (κ → ℕ → ℝ)) ν ν :=
     ⟨measurable_id, by simp⟩
   have hpT : MeasurePreserving T ρc ρs := hpG.prod hpId
-  have hRmeas : Measurable R := race_measurable_unit_mass a
   have hSsmeas (i : κ) : Measurable (fun w => Ss w i) := by
-    have hpair : Measurable (fun w : (κ → ℝ) × (κ → ℕ → ℝ) =>
-        (Real.exp (-w.1 i), w.2 i)) := by fun_prop
-    have hscaled : Measurable (fun w : (κ → ℝ) × (κ → ℕ → ℝ) =>
-        (π i)^a * R (Real.exp (-w.1 i), w.2 i)) :=
-      measurable_const.mul (hRmeas.comp hpair)
-    simpa only [Ss, R, mul_assoc] using hscaled
+    exact race_measurable_scaled_mass a ((π i)^a)
+      (fun w : (κ → ℝ) × (κ → ℕ → ℝ) => (Real.exp (-w.1 i), w.2 i)) (by fun_prop)
   have hSumMeas : Measurable (fun w => ∑ k, Ss w k) :=
     Finset.measurable_sum _ (fun i _ => hSsmeas i)
   have hQsmeas (i : κ) : Measurable (fun w => Qs w i) :=
@@ -903,24 +856,14 @@ lemma race_appended_logloss_of_unit_laplace
       (stoch_to_det.SharedRace.ae_clockLaw_pos (κ := κ))
   have hLossEq : Ls ∘ T =ᵐ[ρc] Lc := by
     filter_upwards [hclockpos] with w hw
-    have hmass (i : κ) : Ss (T w) i = Sc w i := by
-      dsimp only [Ss, Sc, T, Prod.map, G, id_eq]
-      simp only [neg_neg, Real.exp_log (hw i)]
-    have hQ (i : κ) : Qs (T w) i = Qc w i := by
-      dsimp only [Qs, Qc]
-      simp_rw [hmass]
-    have hwin : stoch_to_det.SharedRace.weightedLexWinner r (T w).1 =
-        stoch_to_det.SharedRace.clockArgmin r w.1 :=
-      by
-        change stoch_to_det.SharedRace.weightedLexWinner r
-          (fun i => -Real.log (w.1 i)) = stoch_to_det.SharedRace.clockArgmin r w.1
-        exact stoch_to_det.SharedRace.weightedLexWinner_clock_eq_argmin r w.1 hrpos hw
-    change Real.log (1 / Qs (T w)
-      (stoch_to_det.SharedRace.weightedLexWinner r (T w).1)) = _
-    rw [hwin, hQ]
+    -- Recover the positive clocks and their exact winner under the seed map.
+    have hexp (i : κ) : Real.exp (-(-Real.log (w.1 i))) = w.1 i := by
+      rw [neg_neg, Real.exp_log (hw i)]
+    dsimp only [Function.comp_def, Ls, Lc, Qs, Qc, Ss, Sc, T, Prod.map, G, id_eq]
+    simp_rw [hexp, stoch_to_det.SharedRace.weightedLexWinner_clock_eq_argmin r w.1 hrpos hw]
   have hsInt : Integrable Ls ρs :=
     (hpT.integrable_comp hLsmeas.aestronglyMeasurable).mp
-      (hcInt.congr hLossEq.symm)
+      (hc.1.congr hLossEq.symm)
   refine ⟨hsInt, ?_⟩
   change (∫ w, Ls w ∂ρs) = _
   calc
@@ -929,21 +872,19 @@ lemma race_appended_logloss_of_unit_laplace
       exact integral_map_of_stronglyMeasurable (μ := ρc)
         hpT.measurable hLsmeas.stronglyMeasurable
     _ = ∫ w, Lc w ∂ρc := integral_congr_ae hLossEq
-    _ = _ := hcMean
+    _ = _ := hc.2
 
 lemma race_gain_average (a : ℝ) (ha : 1 < a) (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r ≤ 1) :
     r * gammaPrice a ≤ ∫ t, logGain a (r * t) ∂expOne := by
-  have hscale := race_scaled_logGain_integrable_of_unit_log a ha r hr0 hr1
-  have hint : Integrable (logGain a) expOne := by
-    simpa using race_scaled_logGain_integrable_of_unit_log a ha 1 (by norm_num) (by norm_num)
-  have hpos : ∀ᵐ t ∂expOne, 0 ≤ t := race_scalar_exp_ae_pos.mono (fun _ ht => ht.le)
-  have hle : (∫ t, r * logGain a t ∂expOne) ≤ ∫ t, logGain a (r * t) ∂expOne := by
-    apply integral_mono_ae (hint.const_mul r) hscale
-    filter_upwards [hpos] with t ht
-    exact race_gain_scaling_of_shifted_transform a ha t r ht hr0 hr1
-  rw [integral_const_mul] at hle
-  change r * gammaPriceET a ≤ _ at hle
-  rwa [race_gamma_price a ha] at hle
+  have hint : Integrable (logGain a) expOne :=
+    (race_gain_joint_integrable_of_unit_log a ha).integral_prod_left
+  rw [← race_gamma_price a ha]
+  change r * (∫ t, logGain a t ∂expOne) ≤ _
+  rw [← integral_const_mul]
+  apply integral_mono_ae (hint.const_mul r)
+    (race_scaled_logGain_integrable_of_unit_log a ha r hr0 hr1)
+  filter_upwards [race_scalar_exp_ae_pos] with t ht
+  exact race_gain_scaling_of_shifted_transform a ha t r ht.le hr0 hr1
 
 lemma race_reference_loss_bound {κ : Type} [Fintype κ] [DecidableEq κ] [Nonempty κ]
     (a : ℝ) (ha : 1 < a) (π : κ → ℝ)
