@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Envelope.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
 -- Local changes: Added the envelope compactness and barycenter helper chain; adapted the optimum-attainment proofs to it.
 import NaturalLatents.Upstream.Functionals
@@ -48,31 +48,15 @@ private lemma Latent.push_fst_joint (V : Latent p) :
   funext v
   have hcomp : ∀ u, ∑ z, V.comp u z = 1 := fun u => by
     simpa [mass] using (V.comp_isPMF u).total
-  unfold push
-  rw [Finset.sum_filter, Fintype.sum_prod_type]
-  simp only [Latent.joint]
-  calc
-    (∑ x, ∑ y, if x = v then V.prior x * V.comp x y else 0) =
-        ∑ x, if x = v then V.prior x * (∑ y, V.comp x y) else 0 := by
-          apply Finset.sum_congr rfl
-          intro x _
-          by_cases hx : x = v
-          · simp [hx, Finset.mul_sum]
-          · simp [hx]
-    _ = V.prior v := by simp [hcomp]
+  simp [push, Finset.sum_filter, Fintype.sum_prod_type, Latent.joint,
+    ← Finset.mul_sum, hcomp]
 
 private lemma Latent.Hvar_lift {γ : Type*} [Fintype γ] [DecidableEq γ]
     (V : Latent p) (f : α × β → γ) :
     Hvar (fun w : V.ι × (α × β) => f w.2) V.joint = Hvar f p := by
   unfold Hvar
-  congr 1
-  calc
-    push (fun w : V.ι × (α × β) => f w.2) V.joint =
-        push f (push (fun w : V.ι × (α × β) => w.2) V.joint) := by
-          symm
-          simpa [Function.comp_def] using
-            (push_push (fun w : V.ι × (α × β) => w.2) f V.joint)
-    _ = push f p := by rw [V.push_snd_joint]
+  have hpush := push_push (fun w : V.ι × (α × β) => w.2) f V.joint
+  simpa [Function.comp_def, V.push_snd_joint] using congrArg H hpush.symm
 
 omit [DecidableEq α] [DecidableEq β] in
 private lemma Latent.Hvar_prior (V : Latent p) :
@@ -110,24 +94,9 @@ private lemma Latent.Hvar_lift_pair_prior {γ : Type*} [Fintype γ] [DecidableEq
     rw [Finset.mul_sum, Finset.sum_filter]
     apply Finset.sum_congr rfl
     intro z _
-    by_cases hz : f z = c
-    · simp only [hz, ite_true]
-      have hvsum :
-          (∑ x, if x = v then V.prior x * V.comp x z else 0) =
-            (if v = v then V.prior v * V.comp v z else 0) := by
-        apply Finset.sum_eq_single v
-        · intro u _ huv
-          simp [huv]
-        · simp
-      simp
-    · simp [hz]
+    by_cases hz : f z = c <;> simp [hz]
   rw [hfiber]
-  by_cases hv : V.prior v = 0
-  · simp [hv, Hvar, H, mass]
-  · have hvpos : 0 < V.prior v :=
-      lt_of_le_of_ne (V.prior_isPMF.nonneg v) (Ne.symm hv)
-    simpa [Hvar] using
-      (H_smul hvpos.le)
+  simpa [Hvar] using H_smul (V.prior_isPMF.nonneg v)
 
 private lemma Latent.MI_prior_lift {γ : Type*} [Fintype γ] [DecidableEq γ]
     (V : Latent p) (f : α × β → γ) :
@@ -151,17 +120,8 @@ private lemma Latent.sum_prior_mul_Phi (V : Latent p) :
       3 * (∑ v, V.prior v * H (V.comp v))
         - 2 * (∑ v, V.prior v * H (mX (V.comp v)))
         - 2 * (∑ v, V.prior v * H (mY (V.comp v))) := by
-  calc
-    _ = ∑ v, (3 * (V.prior v * H (V.comp v))
-        - 2 * (V.prior v * H (mX (V.comp v)))
-        - 2 * (V.prior v * H (mY (V.comp v)))) := by
-          apply Finset.sum_congr rfl
-          intro v _
-          unfold Phi
-          ring
-    _ = _ := by
-      rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib]
-      simp only [← Finset.mul_sum]
+  simp_rw [Phi, mul_sub, mul_left_comm (V.prior _)]
+  simp only [Finset.sum_sub_distrib, ← Finset.mul_sum]
 
 /-- Decomposition identity.
 `S_p(V) = Ψ(p) − ∑ᵥ λᵥ Φ(qᵥ)`. -/
@@ -173,10 +133,7 @@ theorem Latent.score_eq (hp : IsPMF p) (V : Latent p) :
     simpa [Hvar] using V.Hvar_lift (fun z : α × β => z.2)
   have hXY :
       Hvar (fun w : V.ι × (α × β) => (w.2.1, w.2.2)) V.joint = H p := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => w.2) V.joint := by rfl
-      _ = Hvar (fun z : α × β => z) p := V.Hvar_lift (fun z => z)
-      _ = H p := Hvar_id hp
+    exact (V.Hvar_lift (fun z => z)).trans (Hvar_id hp)
   have hV : Hvar (fun w : V.ι × (α × β) => w.1) V.joint = H V.prior :=
     V.Hvar_prior
   have hXV :
@@ -190,84 +147,37 @@ theorem Latent.score_eq (hp : IsPMF p) (V : Latent p) :
   have hVY :
       Hvar (fun w : V.ι × (α × β) => (w.1, w.2.2)) V.joint =
         H V.prior + ∑ v, V.prior v * H (mY (V.comp v)) := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => (w.2.2, w.1)) V.joint := by
-        simpa using Hvar_equiv V.joint_isPMF
-          (fun w : V.ι × (α × β) => (w.2.2, w.1))
-          (Equiv.prodComm β V.ι)
-      _ = _ := hYV
+    exact (Hvar_pair_swap V.joint_isPMF (fun w => w.2.2) (fun w => w.1)).trans hYV
   have hVX :
       Hvar (fun w : V.ι × (α × β) => (w.1, w.2.1)) V.joint =
         H V.prior + ∑ v, V.prior v * H (mX (V.comp v)) := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => (w.2.1, w.1)) V.joint := by
-        simpa using Hvar_equiv V.joint_isPMF
-          (fun w : V.ι × (α × β) => (w.2.1, w.1))
-          (Equiv.prodComm α V.ι)
-      _ = _ := hXV
+    exact (Hvar_pair_swap V.joint_isPMF (fun w => w.2.1) (fun w => w.1)).trans hXV
   have hZV :
       Hvar (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1)) V.joint =
         H V.prior + ∑ v, V.prior v * H (V.comp v) := by
-    calc
-      _ = H V.prior + ∑ v, V.prior v * Hvar (fun z : α × β => z) (V.comp v) :=
-        V.Hvar_lift_pair_prior (fun z => z)
-      _ = H V.prior + ∑ v, V.prior v * H (V.comp v) := by
-        congr 1
-        apply Finset.sum_congr rfl
-        intro v _
-        rw [Hvar_id (V.comp_isPMF v)]
+    simpa only [Hvar_id (V.comp_isPMF _)] using
+      V.Hvar_lift_pair_prior (fun z => z)
   have hXYV :
       Hvar (fun w : V.ι × (α × β) => (w.2.1, w.2.2, w.1)) V.joint =
         H V.prior + ∑ v, V.prior v * H (V.comp v) := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1)) V.joint := by
-        simpa using Hvar_equiv V.joint_isPMF
-          (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1))
-          (Equiv.prodAssoc α β V.ι)
-      _ = _ := hZV
+    exact (Hvar_equiv V.joint_isPMF
+      (fun w : V.ι × (α × β) => (w.2, w.1)) (Equiv.prodAssoc α β V.ι)).trans hZV
   have hVXY :
       Hvar (fun w : V.ι × (α × β) => (w.1, w.2.1, w.2.2)) V.joint =
         H V.prior + ∑ v, V.prior v * H (V.comp v) := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1)) V.joint := by
-        simpa using Hvar_equiv V.joint_isPMF
-          (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1))
-          (Equiv.prodComm (α × β) V.ι)
-      _ = _ := hZV
+    exact (Hvar_pair_swap V.joint_isPMF (fun w => w.2) (fun w => w.1)).trans hZV
   let eVYX : (α × β) × V.ι ≃ V.ι × (β × α) :=
     (Equiv.prodComm (α × β) V.ι).trans
       (Equiv.prodCongr (Equiv.refl V.ι) (Equiv.prodComm α β))
   have hVYX :
       Hvar (fun w : V.ι × (α × β) => (w.1, w.2.2, w.2.1)) V.joint =
         H V.prior + ∑ v, V.prior v * H (V.comp v) := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1)) V.joint := by
-        have he :
-            (fun w : V.ι × (α × β) => eVYX ((w.2.1, w.2.2), w.1)) =
-              fun w => (w.1, w.2.2, w.2.1) := by
-          funext w
-          rfl
-        have heq := Hvar_equiv V.joint_isPMF
-          (fun w : V.ι × (α × β) => ((w.2.1, w.2.2), w.1)) eVYX
-        rw [he] at heq
-        exact heq
-      _ = _ := hZV
+    exact (Hvar_equiv V.joint_isPMF
+      (fun w : V.ι × (α × β) => (w.2, w.1)) eVYX).trans hZV
   have hYX :
       Hvar (fun w : V.ι × (α × β) => (w.2.2, w.2.1)) V.joint = H p := by
-    calc
-      _ = Hvar (fun w : V.ι × (α × β) => (w.2.1, w.2.2)) V.joint := by
-        have hswap :
-            (fun w : V.ι × (α × β) =>
-                (Equiv.prodComm α β) (w.2.1, w.2.2)) =
-              fun w => (w.2.2, w.2.1) := by
-          funext w
-          rfl
-        have heq := Hvar_equiv V.joint_isPMF
-          (fun w : V.ι × (α × β) => (w.2.1, w.2.2))
-          (Equiv.prodComm α β)
-        rw [hswap] at heq
-        exact heq
-      _ = H p := hXY
+    exact (Hvar_pair_swap V.joint_isPMF
+      (fun w => w.2.1) (fun w => w.2.2)).trans hXY
   have hPhiSum := V.sum_prior_mul_Phi
   unfold Latent.score condMI
   rw [hXV, hYV, hXYV, hV, hVY, hXY, hVXY, hY, hVX, hYX, hVYX, hX]
@@ -285,16 +195,8 @@ theorem Latent.score_sub_Ixy (hp : IsPMF p) (V : Latent p) :
   have hMIZ :
       MI (fun w : V.ι × (α × β) => w.1) (fun w => w.2) V.joint =
         H p - ∑ v, V.prior v * H (V.comp v) := by
-    calc
-      _ = Hvar (fun z : α × β => z) p
-          - ∑ v, V.prior v * Hvar (fun z : α × β => z) (V.comp v) :=
-        V.MI_prior_lift (fun z => z)
-      _ = H p - ∑ v, V.prior v * H (V.comp v) := by
-        rw [Hvar_id hp]
-        congr 1
-        apply Finset.sum_congr rfl
-        intro v _
-        rw [Hvar_id (V.comp_isPMF v)]
+    simpa only [Hvar_id hp, Hvar_id (V.comp_isPMF _)] using
+      V.MI_prior_lift (fun z => z)
   have hMIX :
       MI (fun w : V.ι × (α × β) => w.1) (fun w => w.2.1) V.joint =
         H (mX p) - ∑ v, V.prior v * H (mX (V.comp v)) := by
@@ -358,13 +260,10 @@ private lemma conditionedComp_isPMF {γ : Type} [Fintype γ] [DecidableEq γ]
     IsPMF (conditionedComp (p := p) f c) := by
   classical
   by_cases hc : push f p c = 0
-  · have hcomp : conditionedComp (p := p) f c = p := by
-      funext z
-      simp [conditionedComp, hc]
-    rw [hcomp]
-    exact hp
+  · convert hp using 1
+    funext z
+    simp [conditionedComp, hc]
   · have hprior_nonneg : 0 ≤ push f p c := (isPMF_push hp).nonneg c
-    have hprior_pos : 0 < push f p c := lt_of_le_of_ne hprior_nonneg (Ne.symm hc)
     constructor
     · intro z
       simp only [conditionedComp, hc, ite_false]
@@ -394,13 +293,8 @@ private lemma push_mul_conditionedComp {γ : Type} [Fintype γ] [DecidableEq γ]
     by_cases hc : push f p (f z) = 0
     · have hz : p z = 0 := le_antisymm (by simpa [hc] using hz_le) (hp.nonneg z)
       simp [conditionedComp, hc, hz]
-    · rw [show conditionedComp (p := p) f (f z) z =
-          (push f p (f z))⁻¹ * p z by simp [conditionedComp, hc]]
-      rw [ite_eq_left rfl]
-      field_simp [hc]
-  · by_cases hc : push f p c = 0
-    · simp [conditionedComp, hfc, hc]
-    · simp [conditionedComp, hfc, hc]
+    · simp [conditionedComp, hc]
+  · by_cases hc : push f p c = 0 <;> simp [conditionedComp, hfc, hc]
 
 private noncomputable def functionLatent {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (f : α × β → γ) : Latent p where
@@ -468,22 +362,12 @@ theorem Latent.ofFunction_joint_eq_push
   change push f p c * conditionedComp (p := p) f c z =
     push (fun z : α × β => (f z, z)) p (c, z)
   rw [push_mul_conditionedComp hp f c z]
-  unfold push
-  rw [Finset.sum_filter]
-  have hsum :
-      (∑ x, if (f x, x) = (c, z) then p x else 0) =
-        (if (f z, z) = (c, z) then p z else 0) := by
-    apply Finset.sum_eq_single z
-    · intro x _ hx
-      by_cases hpair : (f x, x) = (c, z)
-      · exact (hx (congrArg Prod.snd hpair)).elim
-      · simp [hpair]
-    · simp
-  calc
-    (if f z = c then p z else 0) =
-        (if (f z, z) = (c, z) then p z else 0) := by simp
-    _ = ∑ x, if (f x, x) = (c, z) then p x else 0 := hsum.symm
-    _ = ∑ a, if (fun z => (f z, z)) a = (c, z) then p a else 0 := by rfl
+  simp only [push, Finset.sum_filter, Prod.mk.injEq]
+  rw [Finset.sum_eq_single z]
+  · simp
+  · intro x _ hx
+    simp [hx]
+  · simp
 
 /-- The score of a function-induced latent is exactly the deterministic
 LessWrong expression computed under `p`. -/
@@ -491,21 +375,11 @@ theorem Latent.ofFunction_score_eq_detScore
     {γ : Type} [Fintype γ] [DecidableEq γ]
     (hp : IsPMF p) (Γ : α × β → γ) :
     (Latent.ofFunction hp Γ).score = detScore p Γ := by
-  change
-    condMI (fun w : γ × (α × β) => w.2.1)
-        (fun w => w.2.2) (fun w => w.1) (functionLatent hp Γ).joint
-      + condMI (fun w : γ × (α × β) => w.1)
-          (fun w => w.2.1) (fun w => w.2.2) (functionLatent hp Γ).joint
-      + condMI (fun w : γ × (α × β) => w.1)
-          (fun w => w.2.2) (fun w => w.2.1) (functionLatent hp Γ).joint =
-      detScore p Γ
-  rw [show (functionLatent hp Γ).joint =
-      push (fun z : α × β => (Γ z, z)) p by
-        simpa [Latent.ofFunction] using Latent.ofFunction_joint_eq_push hp Γ]
-  rw [condMI_push_source, condMI_push_source, condMI_push_source]
-  change condMI Prod.fst Prod.snd Γ p
-      + condMI Γ Prod.fst Prod.snd p
-      + condMI Γ Prod.snd Prod.fst p = detScore p Γ
+  have hjoint := Latent.ofFunction_joint_eq_push hp Γ
+  dsimp only [Latent.ofFunction, functionLatent] at hjoint
+  dsimp only [Latent.score, Latent.ofFunction, functionLatent]
+  rw [hjoint]
+  simp only [condMI_push_source, Function.comp_def]
   rw [condMI_code_X_given_Y hp Γ, condMI_code_Y_given_X hp Γ]
   unfold detScore
   ring
@@ -711,10 +585,7 @@ private lemma Latent.functionLatent_detCode_score_eq (hp : IsPMF p) (V : Latent 
       (∑ c, W.prior c * Phi (W.comp c)) =
         ∑ v, V.prior v * Phi (V.comp v) := by
     calc
-      _ = ∑ c, push V.detLabel V.prior c * Phi (W.comp c) := by
-        apply Finset.sum_congr rfl
-        intro c _
-        rw [hprior]
+      _ = ∑ c, push V.detLabel V.prior c * Phi (W.comp c) := by rw [hprior]; rfl
       _ = ∑ v, V.prior v * Phi (W.comp (V.detLabel v)) :=
         sum_push_mul V.detLabel V.prior (fun c => Phi (W.comp c))
       _ = _ := by
@@ -760,14 +631,9 @@ lemma continuous_push_map {γ δ : Type*} [Fintype γ] [Fintype δ]
 lemma continuous_continuousPhi :
     Continuous (continuousPhi : (α × β → ℝ) → ℝ) := by
   unfold continuousPhi
-  have hq : Continuous (fun q : α × β → ℝ => continuousEntropy q) :=
-    continuous_continuousEntropy
-  have hqX : Continuous (fun q : α × β → ℝ => continuousEntropy (push Prod.fst q)) :=
-    continuous_continuousEntropy.comp (continuous_push_map Prod.fst)
-  have hqY : Continuous (fun q : α × β → ℝ => continuousEntropy (push Prod.snd q)) :=
-    continuous_continuousEntropy.comp (continuous_push_map Prod.snd)
-  exact ((continuous_const.mul hq).sub (continuous_const.mul hqX)).sub
-    (continuous_const.mul hqY)
+  exact ((continuous_continuousEntropy.const_mul 3).sub
+    ((continuous_continuousEntropy.comp (continuous_push_map Prod.fst)).const_mul 2)).sub
+    ((continuous_continuousEntropy.comp (continuous_push_map Prod.snd)).const_mul 2)
 
 lemma Phi_eq_continuousPhi {q : α × β → ℝ} (hq : IsPMF q) :
     Phi q = continuousPhi q := by
@@ -801,19 +667,12 @@ noncomputable def phiGraphOn (Q : Set (α × β → ℝ)) : Set ((α × β → �
 
 lemma isCompact_phiGraphOn {Q : Set (α × β → ℝ)} (hQ : IsCompact Q)
     (hpmf : ∀ q ∈ Q, IsPMF q) : IsCompact (phiGraphOn Q) := by
-  let graphMap : (α × β → ℝ) → (α × β → ℝ) × ℝ :=
-    fun q => (q, continuousPhi q)
-  have hgraphMap : Continuous graphMap :=
-    continuous_id.prodMk continuous_continuousPhi
-  have heq : phiGraphOn Q = graphMap '' Q := by
-    ext x
-    constructor
-    · rintro ⟨q, hq, rfl⟩
-      exact ⟨q, hq, by simp [graphMap, Phi_eq_continuousPhi (hpmf q hq)]⟩
-    · rintro ⟨q, hq, rfl⟩
-      exact ⟨q, hq, by simp [graphMap, Phi_eq_continuousPhi (hpmf q hq)]⟩
+  have heq : phiGraphOn Q = (fun q => (q, continuousPhi q)) '' Q := by
+    apply Set.image_congr
+    intro q hq
+    rw [Phi_eq_continuousPhi (hpmf q hq)]
   rw [heq]
-  exact hQ.image hgraphMap
+  exact hQ.image (continuous_id.prodMk continuous_continuousPhi)
 
 lemma isCompact_phiGraph : IsCompact (phiGraph : Set ((α × β → ℝ) × ℝ)) :=
   isCompact_phiGraphOn isCompact_pmfSet (fun _ hq => hq)
@@ -829,33 +688,16 @@ noncomputable def supportedPhiGraph (S : Finset (α × β)) :
 
 lemma isCompact_supportedPmfSet (S : Finset (α × β)) :
     IsCompact (supportedPmfSet S : Set (α × β → ℝ)) := by
-  let Z : Set (α × β → ℝ) := {q | Supported S q}
-  have hZ :
-      Z = ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
-        {q : α × β → ℝ | q z = 0} := by
-    ext q
-    simp only [Z, Set.mem_ofPred_eq, Set.mem_iInter, Finset.mem_filter,
-      Finset.mem_univ, true_and]
-    constructor
-    · intro h z hz
-      exact h z hz
-    · intro h z hz
-      exact h z hz
-  have hZclosed : IsClosed Z := by
-    rw [hZ]
+  have hclosed : IsClosed {q : α × β → ℝ | Supported S q} := by
+    have heq : {q : α × β → ℝ | Supported S q} =
+        ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
+          {q : α × β → ℝ | q z = 0} := by
+      ext q
+      simp [Supported]
+    rw [heq]
     exact isClosed_biInter fun z _ =>
       isClosed_eq (continuous_apply z) continuous_const
-  have heq :
-      supportedPmfSet S =
-        probabilityWeights (α × β) ∩ Z := by
-    ext q
-    constructor
-    · rintro ⟨hq, hqS⟩
-      exact ⟨⟨hq.nonneg, by simpa [mass] using hq.total⟩, hqS⟩
-    · rintro ⟨⟨hq, htotal⟩, hqS⟩
-      exact ⟨⟨hq, by simpa [mass] using htotal⟩, hqS⟩
-  rw [heq]
-  exact (isCompact_probabilityWeights (α × β)).inter_right hZclosed
+  exact isCompact_pmfSet.inter_right hclosed
 
 lemma isCompact_supportedPhiGraph (S : Finset (α × β)) :
     IsCompact (supportedPhiGraph S) :=
@@ -935,16 +777,6 @@ private lemma convexHull_subset_envelopeBarycenter_image
     fun j => ∑ i : t, if e i = j then w i.1 else 0
   let points : Fin (envelopeSize (α := α) (β := β)) → (α × β → ℝ) × ℝ :=
     fun j => if h : ∃ i : t, e i = j then (Classical.choose h).1 else x₀
-  have hinner_weight (i : t) :
-      (∑ j, if e i = j then w i.1 else 0) = w i.1 := by
-    have hsingle :
-        (∑ j, if e i = j then w i.1 else 0) =
-          (if e i = e i then w i.1 else 0) := by
-      apply Finset.sum_eq_single (e i)
-      · intro j _ hji
-        simp [Ne.symm hji]
-      · simp
-    simp
   have hweights_nonneg : ∀ j, 0 ≤ weights j := by
     intro j
     dsimp [weights]
@@ -954,66 +786,28 @@ private lemma convexHull_subset_envelopeBarycenter_image
     · exact hw_nonneg i.1 i.2
     · exact le_rfl
   have hweights_sum : ∑ j, weights j = 1 := by
-    calc
-      (∑ j, weights j) = ∑ j, ∑ i : t, if e i = j then w i.1 else 0 := rfl
-      _ = ∑ i : t, ∑ j, if e i = j then w i.1 else 0 := by
-        rw [Finset.sum_comm]
-      _ = ∑ i : t, w i.1 := by
-        apply Finset.sum_congr rfl
-        intro i _
-        exact hinner_weight i
-      _ = ∑ y ∈ t, w y := by
-        simp only [univ_eq_attach]
-        rw [Finset.sum_attach]
-      _ = 1 := hw_sum
+    simpa [weights, Finset.sum_comm, Finset.sum_attach] using hw_sum
   have hpoints (j : Fin (envelopeSize (α := α) (β := β))) : points j ∈ G := by
     by_cases hj : ∃ i : t, e i = j
     · rw [show points j = (Classical.choose hj).1 by simp [points, hj]]
       exact htGraph (Classical.choose hj).2
     · rw [show points j = x₀ by simp [points, hj]]
       exact hx₀
+  have hpoints_e (i : t) : points (e i) = i.1 := by
+    have hi : ∃ k : t, e k = e i := ⟨i, rfl⟩
+    simp only [points, dite_eq_left hi]
+    exact congrArg Subtype.val (e.injective (Classical.choose_spec hi))
   have hterm (j : Fin (envelopeSize (α := α) (β := β))) :
       weights j • points j =
         ∑ i : t, if e i = j then w i.1 • i.1 else 0 := by
-    by_cases hj : ∃ i : t, e i = j
-    · let i₀ : t := Classical.choose hj
-      have hi₀ : e i₀ = j := Classical.choose_spec hj
-      have hweight : weights j = w i₀.1 := by
-        dsimp [weights]
-        have hsingle :
-            (∑ i : t, if e i = j then w i.1 else 0) =
-              (if e i₀ = j then w i₀.1 else 0) := by
-          apply Finset.sum_eq_single i₀
-          · intro i _ hii₀
-            have hei : e i ≠ j := by
-              intro hei
-              exact hii₀ (e.injective (hei.trans hi₀.symm))
-            simp [hei]
-          · simp
-        simpa [hi₀] using hsingle
-      have hpoint : points j = i₀.1 := by
-        dsimp [points, i₀]
-        rw [dite_eq_left hj]
-      rw [hweight, hpoint]
-      symm
-      have hsingle :
-          (∑ i : t, if e i = j then w i.1 • i.1 else 0) =
-            (if e i₀ = j then w i₀.1 • i₀.1 else 0) := by
-        apply Finset.sum_eq_single i₀
-        · intro i _ hii₀
-          have hei : e i ≠ j := by
-            intro hei
-            exact hii₀ (e.injective (hei.trans hi₀.symm))
-          simp [hei]
-        · simp
-      simpa [hi₀] using hsingle
-    · have hnot (i : t) : e i ≠ j := fun hi => hj ⟨i, hi⟩
-      have hweight : weights j = 0 := by
-        dsimp [weights]
-        exact Finset.sum_eq_zero fun i _ => by simp [hnot i]
-      rw [hweight, zero_smul]
-      symm
-      exact Finset.sum_eq_zero fun i _ => by simp [hnot i]
+    dsimp [weights]
+    rw [Finset.sum_smul]
+    apply Finset.sum_congr rfl
+    intro i _
+    by_cases hi : e i = j
+    · subst j
+      simp [hpoints_e]
+    · simp [hi]
   have hbary : envelopeBarycenter (weights, points) = x := by
     calc
       envelopeBarycenter (weights, points) = ∑ j, weights j • points j := rfl
@@ -1023,17 +817,7 @@ private lemma convexHull_subset_envelopeBarycenter_image
         exact hterm j
       _ = ∑ i : t, ∑ j, if e i = j then w i.1 • i.1 else 0 := by
         rw [Finset.sum_comm]
-      _ = ∑ i : t, w i.1 • i.1 := by
-        apply Finset.sum_congr rfl
-        intro i _
-        have hsingle :
-            (∑ j, if e i = j then w i.1 • i.1 else 0) =
-              (if e i = e i then w i.1 • i.1 else 0) := by
-          apply Finset.sum_eq_single (e i)
-          · intro j _ hji
-            simp [Ne.symm hji]
-          · simp
-        simp
+      _ = ∑ i : t, w i.1 • i.1 := by simp
       _ = ∑ y ∈ t, w y • y := by
         simp only [univ_eq_attach]
         simpa using (Finset.sum_attach t (fun y => w y • y))
@@ -1090,19 +874,12 @@ lemma exists_latent_of_mem_convexHull_phiGraph (_hp : IsPMF p) {r : ℝ}
     exact ⟨q, hq, hqz⟩
   choose q hq hqz using hz'
   have hcenter' : ∑ i, w i • (q i, Phi (q i)) = (p, r) := by
-    calc
-      _ = ∑ i, w i • z i := by
-        apply Finset.sum_congr rfl
-        intro i _
-        rw [hqz i]
-      _ = (p, r) := hcenter
-  have hfirst : ∑ i, w i • q i = p := by
-    have hfst := congrArg Prod.fst hcenter'
-    simpa only [Prod.fst_sum, Prod.smul_fst] using hfst
+    simpa only [hqz] using hcenter
   have hmixture : ∀ a, ∑ i, w i * q i a = p a := by
     intro a
-    have ha := congrFun hfirst a
-    simpa [Finset.sum_apply, Pi.smul_apply, smul_eq_mul] using ha
+    have hfirst := congrArg Prod.fst hcenter'
+    simpa [Prod.fst_sum, Prod.smul_fst, Finset.sum_apply, Pi.smul_apply,
+      smul_eq_mul] using congrFun hfirst a
   have hpayoff : ∑ i, w i * Phi (q i) = r := by
     have hr := congrArg Prod.snd hcenter'
     simpa only [Prod.snd_sum, Prod.smul_snd, smul_eq_mul] using hr
@@ -1193,10 +970,6 @@ theorem exists_T_optimal_code (hp : IsPMF p) :
     ∃ Γ : α × β → Fin (Fintype.card (α × β)),
       (Latent.ofFunction hp Γ).score = T p := by
   obtain ⟨V, hVdet, hVscore⟩ := exists_T_optimal_latent hp
-  refine ⟨V.detCode, ?_⟩
-  calc
-    (Latent.ofFunction hp V.detCode).score = V.score := by
-      exact V.functionLatent_detCode_score_eq hp hVdet
-    _ = T p := hVscore
+  exact ⟨V.detCode, (V.functionLatent_detCode_score_eq hp hVdet).trans hVscore⟩
 
 end stoch_to_det

@@ -1,5 +1,5 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Duality.lean at 7b41957da9500716102cba323b3a48af0f23751c;
--- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
+-- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.LocallyConvex.Separation
@@ -58,14 +58,8 @@ def IsContact (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → �
 private lemma sum_mul_lg_self_eq_neg_H {γ : Type*} [Fintype γ]
     {m : γ → ℝ} (hm : IsPMF m) :
     (∑ a, m a * lg (m a)) = -H m := by
-  rw [H, hm.total, ← Finset.sum_neg_distrib]
-  apply Finset.sum_congr rfl
-  intro a _
-  by_cases ha : m a = 0
-  · simp [ha]
-  · rw [lg_eq_log_div, lg_eq_log_div, Real.log_div one_ne_zero ha]
-    simp
-    ring
+  simp [H, hm.total, one_div, lg_eq_log_div,
+    mul_neg, Finset.sum_neg_distrib]
 
 private lemma unnormalized_gibbs_nonneg_lg {γ : Type*} [Fintype γ]
     {p m : γ → ℝ} (hp : IsPMF p) (hm : IsFinMeas m)
@@ -75,19 +69,13 @@ private lemma unnormalized_gibbs_nonneg_lg {γ : Type*} [Fintype γ]
     intro a
     by_cases hpa : p a = 0
     · simp [hpa, hm a]
-    · have hppos : 0 < p a := lt_of_le_of_ne (hp.nonneg a) (Ne.symm hpa)
-      have hma : m a ≠ 0 := hsupp a hpa
-      have hmpos : 0 < m a := lt_of_le_of_ne (hm a) (Ne.symm hma)
-      have hlog := Real.log_le_sub_one_of_pos (div_pos hmpos hppos)
-      have hmul := mul_le_mul_of_nonneg_left hlog (hp.nonneg a)
-      have hident : p a * (m a / p a - 1) = m a - p a := by
-        field_simp [hpa]
-      have hswap : p a * Real.log (m a / p a) =
-          -(p a * Real.log (p a / m a)) := by
-        rw [Real.log_div hma hpa, Real.log_div hpa hma]
-        ring
-      rw [hswap, hident] at hmul
-      linarith
+    · have hma := hsupp a hpa
+      have hlog := mul_le_mul_of_nonneg_left
+        (Real.self_sub_one_le_mul_log (div_nonneg (hp.nonneg a) (hm a))) (hm a)
+      calc
+        p a - m a = m a * (p a / m a - 1) := by field_simp
+        _ ≤ m a * ((p a / m a) * Real.log (p a / m a)) := hlog
+        _ = p a * Real.log (p a / m a) := by field_simp
   have hp_sum : ∑ a, p a = 1 := by simpa [mass] using hp.total
   have hnats : 0 ≤ ∑ a, p a * Real.log (p a / m a) := by
     calc
@@ -110,19 +98,13 @@ private lemma unnormalized_gibbs_eq_zero_iff {γ : Type*} [Fintype γ]
     intro a
     by_cases hpa : p a = 0
     · simp [hpa, hm a]
-    · have hppos : 0 < p a := lt_of_le_of_ne (hp.nonneg a) (Ne.symm hpa)
-      have hma : m a ≠ 0 := hsupp a hpa
-      have hmpos : 0 < m a := lt_of_le_of_ne (hm a) (Ne.symm hma)
-      have hlog := Real.log_le_sub_one_of_pos (div_pos hmpos hppos)
-      have hmul := mul_le_mul_of_nonneg_left hlog (hp.nonneg a)
-      have hident : p a * (m a / p a - 1) = m a - p a := by
-        field_simp [hpa]
-      have hswap : p a * Real.log (m a / p a) =
-          -(p a * Real.log (p a / m a)) := by
-        rw [Real.log_div hma hpa, Real.log_div hpa hma]
-        ring
-      rw [hswap, hident] at hmul
-      linarith
+    · have hma := hsupp a hpa
+      have hlog := mul_le_mul_of_nonneg_left
+        (Real.self_sub_one_le_mul_log (div_nonneg (hp.nonneg a) (hm a))) (hm a)
+      calc
+        p a - m a = m a * (p a / m a - 1) := by field_simp
+        _ ≤ m a * ((p a / m a) * Real.log (p a / m a)) := hlog
+        _ = p a * Real.log (p a / m a) := by field_simp
   constructor
   · intro hzero
     have hconvert :
@@ -169,11 +151,7 @@ private lemma unnormalized_gibbs_eq_zero_iff {γ : Type*} [Fintype γ]
       have hmpos : 0 < m a := lt_of_le_of_ne (hm a) (Ne.symm hma)
       by_contra hne
       have hratio : m a / p a ≠ 1 := by
-        intro hratio
-        apply hne
-        calc
-          p a = (m a / p a) * p a := by rw [hratio, one_mul]
-          _ = m a := by field_simp [hpa]
+        simpa [div_eq_one_iff_eq hpa, eq_comm] using hne
       have hstrict := Real.log_lt_sub_one_of_pos (div_pos hmpos hppos) hratio
       have hmul := mul_lt_mul_of_pos_left hstrict hppos
       have hident : p a * (m a / p a - 1) = m a - p a := by
@@ -185,11 +163,7 @@ private lemma unnormalized_gibbs_eq_zero_iff {γ : Type*} [Fintype γ]
       rw [hswap, hident] at hmul
       linarith [hslack_zero a]
   · rintro rfl
-    apply Finset.sum_eq_zero
-    intro a _
-    by_cases hpa : p a = 0
-    · simp [hpa]
-    · rw [div_self hpa, lg_one, mul_zero]
+    simp [lg_eq_log_div]
 
 private lemma mass_refMeas_eq_Lambda (S : Finset (α × β)) (w : α × β → ℝ)
     (q : α × β → ℝ) :
@@ -259,27 +233,14 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
         (∑ z ∈ S, q z * lg (q z)) - (∑ z ∈ S, q z * lg (w z))
           - ((2 : ℝ) / 3) * (∑ z ∈ S, q z * lg (mX q z.1))
           - ((2 : ℝ) / 3) * (∑ z ∈ S, q z * lg (mY q z.2)) := by
-    calc
-      (∑ z ∈ S, q z * lg (q z / refMeas S w q z)) =
-          ∑ z ∈ S, (q z * lg (q z) - q z * lg (w z)
-            - ((2 : ℝ) / 3) * (q z * lg (mX q z.1))
-            - ((2 : ℝ) / 3) * (q z * lg (mY q z.2))) := by
-              apply Finset.sum_congr rfl
-              intro z hzS
-              exact hterm z hzS
-      _ = _ := by
-        rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib,
-          ← Finset.mul_sum, ← Finset.mul_sum]
+    simp_rw [Finset.sum_congr rfl hterm]
+    rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib,
+      ← Finset.mul_sum, ← Finset.mul_sum]
   have hkernel :
       (∑ z ∈ S, (-3 * lg (w z)) * q z) =
         -3 * (∑ z ∈ S, q z * lg (w z)) := by
-    calc
-      (∑ z ∈ S, (-3 * lg (w z)) * q z) =
-          ∑ z ∈ S, -3 * (q z * lg (w z)) := by
-            apply Finset.sum_congr rfl
-            intro z _
-            ring
-      _ = -3 * (∑ z ∈ S, q z * lg (w z)) := by rw [Finset.mul_sum]
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun z _ => by ring
   rw [Gdef, hsumlog, hsumq, hsumX, hsumY, hkernel]
   unfold Phi
   ring
@@ -376,15 +337,9 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
         exact pow_nonneg (ha x) _
       · unfold mass
         dsimp [t]
-        calc
-          (∑ x, a x ^ (3 : ℕ)) = ∑ x, R x ^ (3 : ℕ) / C := by
-            apply Finset.sum_congr rfl
-            intro x _
-            dsimp [a]
-            rw [div_pow, hDcube]
-          _ = (∑ x, R x ^ (3 : ℕ)) / C := by rw [Finset.sum_div]
-          _ = C / C := rfl
-          _ = 1 := div_self hCzero
+        simp only [a, div_pow, hDcube]
+        rw [← Finset.sum_div]
+        exact div_self hCzero
     have hpow32 (x : γ) :
         (a x ^ (3 : ℕ)) ^ ((2 : ℝ) / 3) = a x ^ (2 : ℕ) := by
       rw [← Real.rpow_natCast, ← Real.rpow_mul (ha x)]
@@ -418,14 +373,7 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
         (a := a x) (b := u x ^ ((2 : ℝ) / 3))
         (p := (3 : ℝ)) (q := (3 : ℝ) / 2)
         (ha x) (Real.rpow_nonneg (hu.nonneg x) _) hpq
-      calc
-        a x * u x ^ ((2 : ℝ) / 3) ≤
-            a x ^ (3 : ℝ) / 3
-              + (u x ^ ((2 : ℝ) / 3)) ^ ((3 : ℝ) / 2) / ((3 : ℝ) / 2) := hy
-        _ = a x ^ (3 : ℕ) / 3 + u x / ((3 : ℝ) / 2) := by
-          exact congrArg₂ (· + ·)
-            (congrArg (fun s : ℝ => s / 3) (Real.rpow_natCast (a x) 3))
-            (congrArg (fun s : ℝ => s / ((3 : ℝ) / 2)) (hupow x))
+      simpa only [Real.rpow_ofNat, hupow] using hy
     have hsumRhs :
         (∑ x, (a x ^ (3 : ℕ) / 3 + u x / ((3 : ℝ) / 2))) = 1 := by
       rw [Finset.sum_add_distrib, ← Finset.sum_div, ← Finset.sum_div]
@@ -436,19 +384,11 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
       rw [hta, huu]
       norm_num
     have hsumLe : (∑ x, a x * u x ^ ((2 : ℝ) / 3)) ≤ 1 := by
-      calc
-        (∑ x, a x * u x ^ ((2 : ℝ) / 3)) ≤
-            ∑ x, (a x ^ (3 : ℕ) / 3 + u x / ((3 : ℝ) / 2)) :=
-          Finset.sum_le_sum fun x _ => hYoung x
-        _ = 1 := hsumRhs
+      exact (Finset.sum_le_sum fun x _ => hYoung x).trans_eq hsumRhs
     have hFuRewrite :
         (∑ x, R x * u x ^ ((2 : ℝ) / 3)) =
           D * ∑ x, a x * u x ^ ((2 : ℝ) / 3) := by
-      rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro x _
-      rw [hR_eq x]
-      ring
+      simp_rw [hR_eq, mul_assoc, Finset.mul_sum]
     have hFuLe : (∑ x, R x * u x ^ ((2 : ℝ) / 3)) ≤ D := by
       rw [hFuRewrite]
       simpa using mul_le_mul_of_nonneg_left hsumLe hDpos.le
@@ -477,14 +417,7 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
           a x * u x ^ ((2 : ℝ) / 3) =
             a x ^ (3 : ℝ) / 3
               + (u x ^ ((2 : ℝ) / 3)) ^ ((3 : ℝ) / 2) / ((3 : ℝ) / 2) := by
-        calc
-          a x * u x ^ ((2 : ℝ) / 3) =
-              a x ^ (3 : ℕ) / 3 + u x / ((3 : ℝ) / 2) := hYoungEq x
-          _ = a x ^ (3 : ℝ) / 3
-              + (u x ^ ((2 : ℝ) / 3)) ^ ((3 : ℝ) / 2) / ((3 : ℝ) / 2) := by
-            exact congrArg₂ (· + ·)
-              (congrArg (fun s : ℝ => s / 3) (Real.rpow_natCast (a x) 3).symm)
-              (congrArg (fun s : ℝ => s / ((3 : ℝ) / 2)) (hupow x).symm)
+        simpa only [Real.rpow_ofNat, hupow] using hYoungEq x
       have hpowers := (Real.young_inequality_eq_iff_of_nonneg
         (a := a x) (b := u x ^ ((2 : ℝ) / 3))
         (p := (3 : ℝ)) (q := (3 : ℝ) / 2)
@@ -654,65 +587,19 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
       simp [mass, m, M, Lambda]
     have hmX (x : α) :
         mX m x = R x * u₀ x ^ ((2 : ℝ) / 3) := by
-      let T := (Finset.univ.filter fun z : α × β => z.1 = x)
-      let U := (S.filter fun z : α × β => z.1 = x)
-      have hUT : U ⊆ T := by
-        intro z hz
-        exact Finset.mem_filter.mpr
-          ⟨Finset.mem_univ z, (Finset.mem_filter.mp hz).2⟩
-      calc
-        mX m x = ∑ z ∈ T, m z := rfl
-        _ = ∑ z ∈ U, m z := by
-          symm
-          apply Finset.sum_subset hUT
-          intro z hzT hzU
-          have hzS : z ∉ S := by
-            intro hzS
-            exact hzU (Finset.mem_filter.mpr
-              ⟨hzS, (Finset.mem_filter.mp hzT).2⟩)
-          simp [m, hzS]
-        _ = ∑ z ∈ U,
-            w z * u₀ z.1 ^ ((2 : ℝ) / 3) * v₀ z.2 ^ ((2 : ℝ) / 3) := by
-          apply Finset.sum_congr rfl
-          intro z hz
-          simp [m, (Finset.mem_filter.mp hz).1]
-        _ = R x * u₀ x ^ ((2 : ℝ) / 3) := by
-          dsimp [R, U]
-          rw [Finset.sum_mul]
-          apply Finset.sum_congr rfl
-          intro z hz
-          rw [(Finset.mem_filter.mp hz).2]
-          ring
+      simp only [mX, push, m, R, Finset.sum_mul, Finset.sum_filter]
+      rw [← Finset.sum_ite_mem_eq S]
+      apply Finset.sum_congr rfl
+      intro z _
+      by_cases hz : z ∈ S <;> by_cases hx : z.1 = x <;> simp [hz, hx]
+      ring
     have hmY (y : β) :
         mY m y = Q y * v₀ y ^ ((2 : ℝ) / 3) := by
-      let T := (Finset.univ.filter fun z : α × β => z.2 = y)
-      let U := (S.filter fun z : α × β => z.2 = y)
-      have hUT : U ⊆ T := by
-        intro z hz
-        exact Finset.mem_filter.mpr
-          ⟨Finset.mem_univ z, (Finset.mem_filter.mp hz).2⟩
-      calc
-        mY m y = ∑ z ∈ T, m z := rfl
-        _ = ∑ z ∈ U, m z := by
-          symm
-          apply Finset.sum_subset hUT
-          intro z hzT hzU
-          have hzS : z ∉ S := by
-            intro hzS
-            exact hzU (Finset.mem_filter.mpr
-              ⟨hzS, (Finset.mem_filter.mp hzT).2⟩)
-          simp [m, hzS]
-        _ = ∑ z ∈ U,
-            w z * u₀ z.1 ^ ((2 : ℝ) / 3) * v₀ z.2 ^ ((2 : ℝ) / 3) := by
-          apply Finset.sum_congr rfl
-          intro z hz
-          simp [m, (Finset.mem_filter.mp hz).1]
-        _ = Q y * v₀ y ^ ((2 : ℝ) / 3) := by
-          dsimp [Q, U]
-          rw [Finset.sum_mul]
-          apply Finset.sum_congr rfl
-          intro z hz
-          rw [(Finset.mem_filter.mp hz).2]
+      simp only [mY, push, m, Q, Finset.sum_mul, Finset.sum_filter]
+      rw [← Finset.sum_ite_mem_eq S]
+      apply Finset.sum_congr rfl
+      intro z _
+      by_cases hz : z ∈ S <;> by_cases hy : z.2 = y <;> simp [hz, hy]
     let q : α × β → ℝ := fun z => M⁻¹ * m z
     have hq : IsPMF q := by
       constructor
@@ -742,9 +629,7 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
       field_simp [hMpos.ne']
     have href : refMeas S w q = m := by
       funext z
-      by_cases hzS : z ∈ S
-      · simp [refMeas, m, hzS, hqX, hqY]
-      · simp [refMeas, m, hzS]
+      simp only [refMeas, hqX, hqY, m]
     have hsumqS : (∑ z ∈ S, q z) = 1 := by
       calc
         (∑ z ∈ S, q z) = ∑ z, q z := by
@@ -774,10 +659,8 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
     have hlginv : 0 ≤ lg M⁻¹ := by linarith
     rw [lg_eq_log_div] at hlginv
     have hloginv : 0 ≤ Real.log M⁻¹ := by
-      rcases div_nonneg_iff.mp hlginv with h | h
-      · exact h.1
-      · exfalso
-        linarith [Real.log_pos one_lt_two]
+      have := (le_div_iff₀ (Real.log_pos one_lt_two)).mp hlginv
+      simpa using this
     have hinv : 1 ≤ M⁻¹ :=
       (Real.log_nonneg_iff (inv_pos.mpr hMpos)).mp hloginv
     have hMle : M ≤ 1 := by
@@ -833,37 +716,22 @@ private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} 
     rw [hqS z hzS, zero_mul]
   constructor
   · intro hG
-    have hsumS :
-        (∑ z ∈ S, q z * lg (q z / refMeas S w q z)) = 0 := by
-      rw [Gdef] at hG
-      linarith
     have hsumAll :
         (∑ z, q z * lg (q z / refMeas S w q z)) = 0 := by
-      rw [← hsum]
-      exact hsumS
+      rw [Gdef, hsum] at hG
+      linarith
     have href : q = refMeas S w q :=
       (unnormalized_gibbs_eq_zero_iff hq hm hmass hsupp).mp hsumAll
     refine ⟨hq, hqS, ?_⟩
     intro z hzS
-    calc
-      q z = refMeas S w q z := congrFun href z
-      _ = w z * mX q z.1 ^ ((2 : ℝ) / 3) * mY q z.2 ^ ((2 : ℝ) / 3) := by
-        rw [refMeas, ite_eq_left hzS]
+    simpa only [refMeas, ite_eq_left hzS] using congrFun href z
   · rintro ⟨_, hqS', hcontact⟩
     have href : refMeas S w q = q := by
       funext z
       by_cases hzS : z ∈ S
       · rw [refMeas, ite_eq_left hzS, ← hcontact z hzS]
       · rw [refMeas, ite_eq_right hzS, hqS' z hzS]
-    have hsumZero :
-        (∑ z ∈ S, q z * lg (q z / refMeas S w q z)) = 0 := by
-      rw [href]
-      apply Finset.sum_eq_zero
-      intro z _
-      by_cases hz : q z = 0
-      · simp [hz]
-      · rw [div_self hz, lg_one, mul_zero]
-    rw [Gdef, hsumZero, mul_zero]
+    simp [Gdef, href, lg_eq_log_div]
 
 /-! ## Attainment and an affine minorant -/
 
@@ -1077,6 +945,12 @@ private lemma exists_approx_valid_certificate
   let b : ℝ := f (0, 1)
   let c : α × β → ℝ := fun z => T + (A - f (dualDirac z, 0)) / b
   have hb' : 0 < b := hb
+  have hsum (q : α × β → ℝ) (hq : IsPMF q) : (∑ z, c z * q z) =
+      T + (A - ∑ z, q z * f (dualDirac z, 0)) / b := by
+    simp only [c, add_mul, div_mul_eq_mul_div, sub_mul,
+      Finset.sum_add_distrib, ← Finset.sum_div, Finset.sum_sub_distrib,
+      ← Finset.mul_sum, hq.sum_eq_one, mul_one]
+    simp only [mul_comm (f (dualDirac _, 0)) (q _)]
   refine ⟨c, ?_, ?_⟩
   · intro q hq hqS
     have hgraph : (q, Phi q) ∈ K := by
@@ -1091,59 +965,10 @@ private lemma exists_approx_valid_certificate
       rw [add_comm T, ← sub_lt_iff_lt_add, lt_div_iff₀ hb']
       dsimp [A, T, b] at hsep ⊢
       linarith
-    have hqtotal : ∑ z, q z = 1 := by simpa [mass] using hq.total
-    have hsum : (∑ z, c z * q z) =
-        T + (A - ∑ z, q z * f (dualDirac z, 0)) / b := by
-      calc
-        (∑ z, c z * q z) =
-            ∑ z, (T * q z +
-              (A * q z - f (dualDirac z, 0) * q z) / b) := by
-                apply Finset.sum_congr rfl
-                intro z _
-                dsimp [c]
-                field_simp [ne_of_gt hb']
-        _ = T * (∑ z, q z) +
-            ((A * (∑ z, q z) -
-              ∑ z, f (dualDirac z, 0) * q z) / b) := by
-                rw [Finset.sum_add_distrib, ← Finset.sum_div,
-                  Finset.sum_sub_distrib, ← Finset.mul_sum,
-                  ← Finset.mul_sum]
-        _ = T + (A - ∑ z, q z * f (dualDirac z, 0)) / b := by
-              have hcross :
-                  (∑ z, f (dualDirac z, 0) * q z) =
-                    ∑ z, q z * f (dualDirac z, 0) := by
-                apply Finset.sum_congr rfl
-                intro z _
-                ring
-              rw [hqtotal, hcross]
-              simp
-    rw [← sum_eq_sum_of_supported hqS c, hsum]
+    rw [← sum_eq_sum_of_supported hqS c, hsum q hq]
     exact hphi.le
-  · have hptotal : ∑ z, p z = 1 := by simpa [mass] using hp.total
-    rw [← sum_eq_sum_of_supported hpS c]
-    calc
-      (∑ z, c z * p z) =
-          ∑ z, (T * p z +
-            (A * p z - f (dualDirac z, 0) * p z) / b) := by
-              apply Finset.sum_congr rfl
-              intro z _
-              dsimp [c]
-              field_simp [ne_of_gt hb']
-      _ = T * (∑ z, p z) +
-          ((A * (∑ z, p z) -
-            ∑ z, f (dualDirac z, 0) * p z) / b) := by
-              rw [Finset.sum_add_distrib, ← Finset.sum_div,
-                Finset.sum_sub_distrib, ← Finset.mul_sum,
-                ← Finset.mul_sum]
-      _ = T := by
-            have hA : A = ∑ z, f (dualDirac z, 0) * p z := by
-              dsimp [A]
-              apply Finset.sum_congr rfl
-              intro z _
-              ring
-            rw [hptotal, mul_one, hA]
-            ring
-      _ = concaveEnvelopePhi p + ε := rfl
+  · rw [← sum_eq_sum_of_supported hpS c, hsum p hp]
+    simp [A, T]
 
 private def restrictTo (S : Finset (α × β)) (c : α × β → ℝ) :
     α × β → ℝ := fun z => if z ∈ S then c z else 0
@@ -1188,13 +1013,7 @@ private lemma isClosed_supported_set (S : Finset (α × β)) :
       ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
         {c : α × β → ℝ | c z = 0} := by
     ext c
-    simp only [Set.mem_ofPred_eq, Set.mem_iInter, Finset.mem_filter,
-      Finset.mem_univ, true_and]
-    constructor
-    · intro h z hz
-      exact h z hz
-    · intro h z hz
-      exact h z hz
+    simp [Supported]
   rw [heq]
   exact isClosed_biInter fun z _ =>
     isClosed_eq (continuous_apply z) continuous_const
@@ -1370,11 +1189,9 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
   have hcertsum :
       (∑ z ∈ support p, c z * p z) =
         -3 * ∑ z ∈ support p, p z * lg (w z) := by
-    rw [Finset.mul_sum]
-    apply Finset.sum_congr rfl
-    intro z _
     dsimp [c]
-    ring
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun z _ => by ring
   have hcompGap :
       (∑ v, L.prior v * Gdef (support p) w (L.comp v)) =
         ∑ v, L.prior v *
@@ -1387,21 +1204,12 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
   have hkernel :
       (∑ v, L.prior v * (∑ z ∈ support p, c z * L.comp v z)) =
         ∑ z ∈ support p, c z * p z := by
-    calc
-      (∑ v, L.prior v * (∑ z ∈ support p, c z * L.comp v z)) =
-          ∑ v, ∑ z ∈ support p, c z * (L.prior v * L.comp v z) := by
-            apply Finset.sum_congr rfl
-            intro v _
-            rw [Finset.mul_sum]
-            apply Finset.sum_congr rfl
-            intro z _
-            ring
-      _ = ∑ z ∈ support p, ∑ v, c z * (L.prior v * L.comp v z) := by
-        rw [Finset.sum_comm]
-      _ = ∑ z ∈ support p, c z * p z := by
-        apply Finset.sum_congr rfl
-        intro z _
-        rw [← Finset.mul_sum, L.mixture]
+    simp_rw [Finset.mul_sum]
+    rw [Finset.sum_comm]
+    apply Finset.sum_congr rfl
+    intro z _
+    rw [← L.mixture z, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun v _ => by ring
   have hsumGap :
       (∑ v, L.prior v * Gdef (support p) w (L.comp v)) =
         (∑ z ∈ support p, c z * p z) -
@@ -1540,11 +1348,9 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
             (Real.rpow_nonneg (hu.nonneg a.1) _))
           (Finset.mem_filter.mpr ⟨hz'S, rfl⟩)
       have hQpos : 0 < Q z'.2 := hterm.trans_le hterm_le
-      have hvz' : 0 < v z'.2 := by
-        have hvne : v z'.2 ≠ 0 := by
-          intro hvzero
-          exact hQpos.ne' ((hQzero z'.2).2 hvzero)
-        exact lt_of_le_of_ne (hv.nonneg z'.2) (Ne.symm hvne)
+      have hvz' : 0 < v z'.2 :=
+        lt_of_le_of_ne (hv.nonneg z'.2)
+          (Ne.symm (mt (hQzero z'.2).mpr hQpos.ne'))
       rw [hq.2.2 z' hz'S]
       exact mul_pos (mul_pos (hw.1 z' hz'S)
         (Real.rpow_pos_of_pos huz' _)) (Real.rpow_pos_of_pos hvz' _)
@@ -1560,11 +1366,9 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
             (Real.rpow_nonneg (hv.nonneg a.2) _))
           (Finset.mem_filter.mpr ⟨hz'S, rfl⟩)
       have hRpos : 0 < R z'.1 := hterm.trans_le hterm_le
-      have huz' : 0 < u z'.1 := by
-        have hune : u z'.1 ≠ 0 := by
-          intro huzero
-          exact hRpos.ne' ((hRzero z'.1).2 huzero)
-        exact lt_of_le_of_ne (hu.nonneg z'.1) (Ne.symm hune)
+      have huz' : 0 < u z'.1 :=
+        lt_of_le_of_ne (hu.nonneg z'.1)
+          (Ne.symm (mt (hRzero z'.1).mpr hRpos.ne'))
       rw [hq.2.2 z' hz'S]
       exact mul_pos (mul_pos (hw.1 z' hz'S)
         (Real.rpow_pos_of_pos huz' _)) (Real.rpow_pos_of_pos hvz' _)
@@ -1632,18 +1436,11 @@ theorem contact_hypercontractive {S : Finset (α × β)} {w : α × β → ℝ} 
     have hleft :
         (∑ z ∈ S, q z * f z.1 * g z.2) = 0 := by
       apply Finset.sum_eq_zero
-      intro z _
-      by_cases hz : q z = 0
-      · simp [hz]
-      · have hzpos : 0 < q z :=
-          lt_of_le_of_ne (hq.1.nonneg z) (Ne.symm hz)
-        have hxle : q z ≤ mX q z.1 := by
-          change q z ≤ push Prod.fst q z.1
-          unfold push
-          exact Finset.single_le_sum (fun a _ ↦ hq.1.nonneg a) (by simp)
-        have hfpow : f z.1 ^ ((3 : ℝ) / 2) = 0 :=
-          (mul_eq_zero.mp (hAterm z.1)).resolve_left (hzpos.trans_le hxle).ne'
-        have hfzero : f z.1 = 0 :=
+      intro z hzS
+      rw [hq.2.2 z hzS]
+      rcases mul_eq_zero.mp (hAterm z.1) with hx | hfpow
+      · simp [hx]
+      · have hfzero : f z.1 = 0 :=
           (Real.rpow_eq_zero (hf z.1) (by norm_num)).mp hfpow
         simp [hfzero]
     rw [hleft, hAz]
@@ -1659,18 +1456,11 @@ theorem contact_hypercontractive {S : Finset (α × β)} {w : α × β → ℝ} 
       have hleft :
           (∑ z ∈ S, q z * f z.1 * g z.2) = 0 := by
         apply Finset.sum_eq_zero
-        intro z _
-        by_cases hz : q z = 0
-        · simp [hz]
-        · have hzpos : 0 < q z :=
-            lt_of_le_of_ne (hq.1.nonneg z) (Ne.symm hz)
-          have hyle : q z ≤ mY q z.2 := by
-            change q z ≤ push Prod.snd q z.2
-            unfold push
-            exact Finset.single_le_sum (fun a _ ↦ hq.1.nonneg a) (by simp)
-          have hgpow : g z.2 ^ ((3 : ℝ) / 2) = 0 :=
-            (mul_eq_zero.mp (hBterm z.2)).resolve_left (hzpos.trans_le hyle).ne'
-          have hgzero : g z.2 = 0 :=
+        intro z hzS
+        rw [hq.2.2 z hzS]
+        rcases mul_eq_zero.mp (hBterm z.2) with hy | hgpow
+        · simp [hy]
+        · have hgzero : g z.2 = 0 :=
             (Real.rpow_eq_zero (hg z.2) (by norm_num)).mp hgpow
           simp [hgzero]
       rw [hleft, hBz]
