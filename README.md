@@ -48,7 +48,8 @@ proofs:
 
 [NaturalLatents/Main.lean](NaturalLatents/Main.lean) proves `NaturalLatents.table : TableClaim` and
 `NaturalLatents.score : ScoreClaim`, both with $`c = 13999/2000`$; `NaturalLatents.T_le_mul_tau` states
-`T p ≤ (13999 / 2000) * tau p` directly.
+`T p ≤ (13999 / 2000) * tau p` directly. `score_of_table` and `table_of_score` prove the two claims equivalent, with
+the same constant.
 
 ## The idea of the proof
 

@@ -159,9 +159,11 @@ $`T_\star=T` or $`\tau_\star=\tau`.
 `deterministicTable` agree with the definitions of `TableInformationProof.lean` and `TableBoundProof.lean`
 definitionally, by unfolding. The kernel checks this when it checks `table`; no separate lemma states it.
 
-*The two claims.* The repository proves the direction from the table claim to the score claim (`score_of_table`); the
-further remarks in the docstrings of `Statement.lean` (attainment, relabelling, equivalence) are informal comments that
-the proof does not use.
+*The two claims.* The repository proves both directions between the two claims, with the same constant:
+`score_of_table` from the table claim to the score claim, and `table_of_score` back, through an optimal code (Lemma
+T6.2) and the lower bound $`0` on every admissible $`\mathrm{SE}(q)`. So the equivalence remarked in the docstring of
+`ScoreClaim` holds in Lean. The docstrings' further remarks (attainment, relabelling) are informal comments that the
+proof does not use.
 
 *Remark (equality of the optima; not formalized).* In fact $`T_\star(p)=T(p)` and $`\tau_\star(p)=\tau(p)` for every
 finite law $`p`, with $`T` and $`\tau` in bits. First, all four optima are finite and lie below each of their members. Every admissible
