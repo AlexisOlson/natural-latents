@@ -26,6 +26,11 @@ assert_no_sorry NaturalLatents.score
 #guard_msgs (whitespace := lax) in
 #print axioms NaturalLatents.score
 
+assert_no_sorry NaturalLatents.table_of_score
+/-- info: 'NaturalLatents.table_of_score' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms NaturalLatents.table_of_score
+
 -- Exact optimum bound.
 example (A B : Type) [Fintype A] [Fintype B] [DecidableEq A] [DecidableEq B]
     (p : A × B → ℝ) (hp : NaturalLatents.Probability p) :

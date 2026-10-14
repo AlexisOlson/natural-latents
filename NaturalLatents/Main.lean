@@ -145,6 +145,55 @@ theorem score_of_table (h : TableClaim) : ScoreClaim := by
   obtain ⟨g, hg⟩ := hc A B p hp
   exact T_le_mul_tau_of_code hp c hc0 g hg
 
+open stoch_to_det TableInformationProof TableBoundProof in
+private theorem stochasticError_nonneg {A B : Type} [Fintype A] [Fintype B]
+    [DecidableEq A] [DecidableEq B] (k : ℕ) (q : A × B × Fin k → ℝ)
+    (hq : Probability q) : 0 ≤ StochasticError q := by
+  have hq' : IsPMF q := ⟨hq.1, hq.2⟩
+  let e : A × B × Fin k → Fin k × (A × B) :=
+    fun abc => (abc.2.2, (abc.1, abc.2.1))
+  have hr : IsPMF (push e q) := isPMF_push hq'
+  let L := SourceCoarsening.ofJoint (isPMF_push hr) (push e q) hr rfl
+  have hnonneg := L.score_nonneg
+  change 0 ≤ latentError q
+  rw [latentError_eq_core hq']
+  simpa only [L, SourceCoarsening.ofJoint_score, condMI_push_source,
+    Function.comp_def, e] using hnonneg
+
+/-- The optimum form implies the table form, using attainment of the deterministic optimum. -/
+theorem table_of_score (h : ScoreClaim) : TableClaim := by
+  obtain ⟨c, hc0, hc7, hc⟩ := h
+  refine ⟨c, hc0, hc7, ?_⟩
+  intro A B _ _ _ _ p hp
+  have hp' : stoch_to_det.IsPMF p := ⟨hp.1, hp.2⟩
+  obtain ⟨g, hg⟩ := stoch_to_det.exists_T_optimal_code hp'
+  have hdet (f : A × B → Fin (Fintype.card (A × B))) :
+      (stoch_to_det.Latent.ofFunction hp' f).score =
+        DeterministicError (deterministicTable p f) := by
+    rw [stoch_to_det.Latent.ofFunction_score_eq_detScore hp' f]
+    exact (TableBoundProof.deterministicTable_entropy_error hp' f).symm
+  have hopt : DeterministicError (deterministicTable p g) = T p := by
+    let : Nonempty (A × B → Fin (Fintype.card (A × B))) := ⟨g⟩
+    apply le_antisymm
+    · rw [← hdet g, hg]
+      unfold NaturalLatents.T
+      refine le_ciInf fun f => ?_
+      exact (stoch_to_det.T_le_score _
+        (stoch_to_det.functionLatent_isDet hp' f)).trans_eq (hdet f)
+    · exact ciInf_le (Set.finite_range _).bddBelow g
+  refine ⟨g, ?_⟩
+  intro k q hq hm
+  have hb : BddBelow {s : ℝ | ∃ (k : ℕ) (q : A × B × Fin k → ℝ),
+      Probability q ∧ (∀ x y, ∑ v, q (x, y, v) = p (x, y)) ∧ StochasticError q = s} := by
+    refine ⟨0, ?_⟩
+    rintro s ⟨k, q, hq, _, rfl⟩
+    exact stochasticError_nonneg k q hq
+  calc
+    DeterministicError (deterministicTable p g) = T p := hopt
+    _ ≤ c * tau p := hc A B p hp
+    _ ≤ c * StochasticError q :=
+      mul_le_mul_of_nonneg_left (csInf_le hb ⟨k, q, hq, hm, rfl⟩) hc0
+
 /-- The exact optimum bound in the frozen statement's vocabulary. -/
 theorem T_le_mul_tau (A B : Type) [Fintype A] [Fintype B]
     [DecidableEq A] [DecidableEq B] (p : A × B → ℝ) (hp : Probability p) :
