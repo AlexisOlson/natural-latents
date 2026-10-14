@@ -62,32 +62,25 @@ lemma pairCharge_residual_information {P : Law X Y} (hP : stoch_to_det.IsPMF P)
   change 0 < residual ∧ gap^2/(4*residual) ≤ stoch_to_det.Knat P
   have hQ := pairCharge_product_isPMF hP
   have hBP : expect P B = 0 := by
-    dsimp [B]
-    rw [contact_q_expect_scale,hCP]
-    ring
+    simp only [B, contact_q_expect_scale, hCP, mul_zero]
   have hBQ : expect Q B = 0 := by
-    dsimp [B]
-    rw [contact_q_expect_scale,hCQ]
-    ring
+    simp only [Q, B, contact_q_expect_scale, hCQ, mul_zero]
   have he : (∑ z, (P z-Q z)*F z) = gap := by
     dsimp [gap, Q, expect]
     simp only [sub_mul,Finset.sum_sub_distrib]
   have hB : (∑ z, (P z-Q z)*B z) = 0 := by
     simp only [sub_mul,Finset.sum_sub_distrib]
     change expect P B-expect Q B = 0
-    rw [hBP,hBQ]
-    ring
+    simp only [hBP, hBQ, sub_self]
   have hcov (M : Law X Y) (hM : stoch_to_det.IsPMF M)
       (hMB : expect M B = 0) :
       expect M (fun z => (F z-expect M F)*(B z-expect M B)) = -lam*expect M (fun z => F z*C z) := by
     rw [pairCharge_expect_covariance_raw hM,hMB,mul_zero,sub_zero]
-    have hid (z : X × Y) : F z*B z = -lam*(F z*C z) := by dsimp [B];ring
-    simp only [hid,contact_q_expect_scale]
+    simp only [B, mul_left_comm (F _) (-lam), contact_q_expect_scale]
   have hvar (M : Law X Y) (hMB : expect M B = 0) :
       expect M (fun z => (B z-expect M B)^2) = lam^2*expect M (fun z => (C z)^2) := by
     rw [hMB]
-    have hid (z : X × Y) : (B z-0)^2 = lam^2*(C z)^2 := by dsimp [B];ring
-    simp only [hid,contact_q_expect_scale]
+    simp only [B, sub_zero, mul_pow, neg_sq, contact_q_expect_scale]
   have hpay (τ : ℝ) : τ*gap ≤ stoch_to_det.Knat P+τ^2*residual := by
     have hp := pairCharge_entropy_linear_field_affine P Q F B hP.nonneg hQ.nonneg
       (stoch_to_det.joint_absCont_product hP) hP.total hQ.total hB τ
@@ -101,15 +94,9 @@ lemma pairCharge_residual_information {P : Law X Y} (hP : stoch_to_det.IsPMF P)
       expect Q (fun z => (B z-expect Q B)^2)/30+
       expect P (fun z => (B z-expect P B)^2)/20) at hp
     rw [hcov Q hQ hBQ,hcov P hP hBP,hvar Q hBQ,hvar P hBP] at hp
-    have hid :
-        expect Q (fun z => (F z-expect Q F)^2)/3+
-        expect P (fun z => (F z-expect P F)^2)/6+gap^2/12+
-        (-lam*expect Q (fun z => F z*C z))/6+(-lam*expect P (fun z => F z*C z))/6+
-        (lam^2*expect Q (fun z => (C z)^2))/30+(lam^2*expect P (fun z => (C z)^2))/20 = residual := by
-      dsimp [residual,D,N,W]
-      ring
-    rw [hid] at hp
-    exact hp
+    convert hp using 1
+    dsimp [residual, D, N, W]
+    ring
   have hr : 0 < residual := pairCharge_payment_positive (stoch_to_det.Knat P) gap residual hpay hg
   refine ⟨hr,?_⟩
   apply (div_le_iff₀ (show 0 < 4*residual by positivity)).2
@@ -124,18 +111,8 @@ lemma pairCharge_average_KL_separate (Ip Im Vp Vm gp gm y : ℝ)
     (hgp : y/4 ≤ gp) (hgm : y/4 ≤ gm)
     (hIp : gp^2/(4*Vp) ≤ Ip) (hIm : gm^2/(4*Vm) ≤ Im) :
     y^2/(64*((Vp+Vm)/2)) ≤ (Ip+Im)/2 := by
-  have hpSq : (y/4)^2 ≤ gp^2 := by
-    have h := mul_nonneg (show 0 ≤ gp-y/4 by linarith)
-      (show 0 ≤ gp+y/4 by linarith)
-    nlinarith only [h]
-  have hmSq : (y/4)^2 ≤ gm^2 := by
-    have h := mul_nonneg (show 0 ≤ gm-y/4 by linarith)
-      (show 0 ≤ gm+y/4 by linarith)
-    nlinarith only [h]
-  have hip : (y/4)^2/(4*Vp) ≤ Ip :=
-    le_trans (div_le_div_of_nonneg_right hpSq (by positivity)) hIp
-  have him : (y/4)^2/(4*Vm) ≤ Im :=
-    le_trans (div_le_div_of_nonneg_right hmSq (by positivity)) hIm
+  have hip : (y/4)^2/(4*Vp) ≤ Ip := le_trans (by gcongr) hIp
+  have him : (y/4)^2/(4*Vm) ≤ Im := le_trans (by gcongr) hIm
   exact pairCharge_average_KL Ip Im Vp Vm (y/4) y hVp hVm hy le_rfl hip him
 
 private lemma pairCharge_statistic_correction_split (P R Q : Law X Y) :
@@ -165,18 +142,12 @@ lemma pairCharge_statistic_correction_average {S : Finset (X × Y)} {w P R : Law
   have harev := (pairCharge_mean_losses_reverse hpair).1
   have hbrev := (pairCharge_mean_losses_reverse hpair).2
   have hJrev := pairCharge_quarticMoment_reverse hpair
-  have hDXscale : ∀ x ∈ xSupport S,
-      rootRatioX P R x * pairCharge_rawDefectX R P x = pairCharge_rawDefectX P R x := by
-    intro x hx
-    exact pairCharge_cond_defect_X_reverse hpair hx
-  have hDYscale : ∀ y ∈ ySupport S,
-      rootRatioY P R y * pairCharge_rawDefectY R P y = pairCharge_rawDefectY P R y := by
-    intro y hy
-    exact pairCharge_cond_defect_Y_reverse hpair hy
   have hlamX := pairCharge_secantX_defect_square_reverse hpair
-    (pairCharge_rawDefectX P R) (pairCharge_rawDefectX R P) hDXscale
+    (pairCharge_rawDefectX P R) (pairCharge_rawDefectX R P)
+    (fun _ hx => pairCharge_cond_defect_X_reverse hpair hx)
   have hlamY := pairCharge_secantY_defect_square_reverse hpair
-    (pairCharge_rawDefectY P R) (pairCharge_rawDefectY R P) hDYscale
+    (pairCharge_rawDefectY P R) (pairCharge_rawDefectY R P)
+    (fun _ hy => pairCharge_cond_defect_Y_reverse hpair hy)
   have hQP := pairCharge_secantStatistic_correction_product hpair (pairCharge_rawDefectX P R) (pairCharge_rawDefectY P R)
     (fun _ => rfl) (fun _ => rfl)
   have hPP := pairCharge_secantStatistic_correction_joint hpair (pairCharge_rawDefectX P R) (pairCharge_rawDefectY P R)
@@ -194,28 +165,13 @@ lemma pairCharge_statistic_correction_average {S : Finset (X × Y)} {w P R : Law
   rw [huvR, hlamX, hlamY] at hRR
   have hLP := pairCharge_linear_correction hpair
   have hLR := pairCharge_linear_correction hrev
-  have hsplit :
-      ((expect (marginalProduct P) (fun z => pairCharge_statistic P R z * pairCharge_correction P R z) +
-          expect P (fun z => pairCharge_statistic P R z * pairCharge_correction P R z)) +
-        (expect (marginalProduct R) (fun z => pairCharge_statistic R P z * pairCharge_correction R P z) +
-          expect R (fun z => pairCharge_statistic R P z * pairCharge_correction R P z))) / 2 =
-      ((expect (marginalProduct P) (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2 / separation P R * pairCharge_correction P R z) +
-          expect P (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2 / separation P R * pairCharge_correction P R z)) +
-        (expect (marginalProduct R) (fun z => stoch_to_det.contactSecantX R P z.1 * stoch_to_det.contactSecantY R P z.2 / separation R P * pairCharge_correction R P z) +
-          expect R (fun z => stoch_to_det.contactSecantX R P z.1 * stoch_to_det.contactSecantY R P z.2 / separation R P * pairCharge_correction R P z)) +
-        (1/5 : ℝ) * ((expect (marginalProduct P) (fun z =>
-            (stoch_to_det.contactSecantX P R z.1 + stoch_to_det.contactSecantY P R z.2 + separation P R) * pairCharge_correction P R z) +
-          expect P (fun z => (stoch_to_det.contactSecantX P R z.1 + stoch_to_det.contactSecantY P R z.2 + separation P R) * pairCharge_correction P R z)) +
-          (expect (marginalProduct R) (fun z =>
-            (stoch_to_det.contactSecantX R P z.1 + stoch_to_det.contactSecantY R P z.2 + separation R P) * pairCharge_correction R P z) +
-          expect R (fun z => (stoch_to_det.contactSecantX R P z.1 + stoch_to_det.contactSecantY R P z.2 + separation R P) * pairCharge_correction R P z)))) / 2 := by
-    simp only [pairCharge_statistic_correction_split]
-    ring
-  rw [hsplit, hQP, hPP, hQR, hRR, hLP, hLR, hsrev, harev, hbrev, hJrev]
+  simp only [pairCharge_statistic_correction_split]
+  rw [hQP, hPP, hQR, hRR, hsrev, harev, hbrev, hJrev]
+  rw [hsrev, harev, hbrev, hJrev] at hLR
   unfold quarticRatio
+  linear_combination (norm := skip) hLP / 10 + hLR / 10
   field_simp [(contact_moments hpair).separation_pos.ne']
-  have hs : separation P R = defectX P R + defectY P R := rfl
-  rw [hs]
+  rw [show separation P R = defectX P R + defectY P R from rfl]
   ring
 
 

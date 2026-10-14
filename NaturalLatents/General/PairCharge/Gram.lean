@@ -34,71 +34,46 @@ lemma pairCharge_cond_X_mul {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     stoch_to_det.mX P x * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x) =
       ∑ y, P (x,y) * G y := by
   by_cases hx : stoch_to_det.mX P x = 0
-  · have hrow : ∀ y, P (x,y) = 0 := by
-      intro y
-      apply le_antisymm
-      · have hle : P (x,y) ≤ stoch_to_det.mX P x := by
-          rw [stoch_to_det.mX_eq_sum]
-          exact Finset.single_le_sum (fun y _ => hP.nonneg (x,y)) (Finset.mem_univ y)
-        simpa [hx] using hle
-      · exact hP.nonneg _
-    simp [hx, hrow]
-  · field_simp
+  · have hzero (y : Y) : P (x,y) = 0 :=
+      (Finset.sum_eq_zero_iff_of_nonneg (fun y _ => hP.nonneg (x,y))).mp
+        ((stoch_to_det.mX_eq_sum P x).symm.trans hx) y (Finset.mem_univ _)
+    simp [hx, hzero]
+  · exact mul_div_cancel₀ _ hx
 
 lemma pairCharge_cond_Y_mul {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (y : Y) :
     stoch_to_det.mY P y * ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) =
       ∑ x, P (x,y) * F x := by
   by_cases hy : stoch_to_det.mY P y = 0
-  · have hcol : ∀ x, P (x,y) = 0 := by
-      intro x
-      apply le_antisymm
-      · have hle : P (x,y) ≤ stoch_to_det.mY P y := by
-          rw [stoch_to_det.mY_eq_sum]
-          exact Finset.single_le_sum (fun x _ => hP.nonneg (x,y)) (Finset.mem_univ x)
-        simpa [hy] using hle
-      · exact hP.nonneg _
-    simp [hy, hcol]
-  · field_simp
+  · have hzero (x : X) : P (x,y) = 0 :=
+      (Finset.sum_eq_zero_iff_of_nonneg (fun x _ => hP.nonneg (x,y))).mp
+        ((stoch_to_det.mY_eq_sum P y).symm.trans hy) x (Finset.mem_univ _)
+    simp [hy, hzero]
+  · exact mul_div_cancel₀ _ hy
 
 lemma pairCharge_cond_X_inner {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (G : Y → ℝ) :
     expect P (fun z => F z.1 * ((∑ y, P (z.1,y) * G y) / stoch_to_det.mX P z.1)) =
       expect P (fun z => F z.1 * G z.2) := by
   rw [contact_expect_fst P (fun x => F x * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x))]
-  calc
-    _ = ∑ x, (stoch_to_det.mX P x *
-        ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x)) * F x := by
-      apply Finset.sum_congr rfl
-      intro x _
-      ring
-    _ = ∑ x, (∑ y, P (x,y) * G y) * F x := by
-      simp_rw [pairCharge_cond_X_mul hP]
-    _ = ∑ x, ∑ y, P (x,y) * (F x * G y) := by
-      simp_rw [Finset.sum_mul]
-      apply Finset.sum_congr rfl
-      intro x _
-      apply Finset.sum_congr rfl
-      intro y _
-      ring
-    _ = _ := by unfold expect; rw [Fintype.sum_prod_type]
+  simp_rw [mul_left_comm (stoch_to_det.mX P _) (F _), pairCharge_cond_X_mul hP,
+    Finset.mul_sum]
+  unfold expect
+  rw [Fintype.sum_prod_type]
+  congr 1
+  funext x
+  congr 1
+  funext y
+  ring
 
 lemma pairCharge_cond_Y_inner {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X → ℝ) (G : Y → ℝ) :
     expect P (fun z => ((∑ x, P (x,z.2) * F x) / stoch_to_det.mY P z.2) * G z.2) =
       expect P (fun z => F z.1 * G z.2) := by
   rw [contact_expect_snd P (fun y => ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) * G y)]
-  calc
-    _ = ∑ y, (stoch_to_det.mY P y *
-        ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y)) * G y := by
-      apply Finset.sum_congr rfl
-      intro y _
-      ring
-    _ = ∑ y, (∑ x, P (x,y) * F x) * G y := by
-      simp_rw [pairCharge_cond_Y_mul hP]
-    _ = ∑ y, ∑ x, P (x,y) * (F x * G y) := by
-      simp only [Finset.sum_mul, mul_assoc]
-    _ = _ := by unfold expect; rw [Fintype.sum_prod_type, Finset.sum_comm]
+  simp_rw [← mul_assoc, pairCharge_cond_Y_mul hP, Finset.sum_mul, mul_assoc]
+  unfold expect
+  rw [Fintype.sum_prod_type, Finset.sum_comm]
 
 lemma pairCharge_cond_X_mean {P : Law X Y} (hP : stoch_to_det.IsPMF P) (G : Y → ℝ) :
     expect P (fun z => (∑ y, P (z.1,y) * G y) / stoch_to_det.mX P z.1) =
@@ -115,22 +90,16 @@ lemma pairCharge_cond_X_linear (P : Law X Y) (G H : Y → ℝ) (a b : ℝ) (x : 
     (∑ y, P (x,y) * (a * G y + b * H y)) / stoch_to_det.mX P x =
       a * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x) +
       b * ((∑ y, P (x,y) * H y) / stoch_to_det.mX P x) := by
-  have hi (y : Y) : P (x,y) * (a * G y + b * H y) =
-      a * (P (x,y) * G y) + b * (P (x,y) * H y) := by ring
-  simp_rw [hi]
-  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
-  ring
+  simp only [mul_add, Finset.sum_add_distrib, mul_left_comm (P _) a,
+    mul_left_comm (P _) b, ← Finset.mul_sum, add_div, mul_div_assoc]
 
 omit [DecidableEq X] in
 lemma pairCharge_cond_Y_linear (P : Law X Y) (F H : X → ℝ) (a b : ℝ) (y : Y) :
     (∑ x, P (x,y) * (a * F x + b * H x)) / stoch_to_det.mY P y =
       a * ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) +
       b * ((∑ x, P (x,y) * H x) / stoch_to_det.mY P y) := by
-  have hi (x : X) : P (x,y) * (a * F x + b * H x) =
-      a * (P (x,y) * F x) + b * (P (x,y) * H x) := by ring
-  simp_rw [hi]
-  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
-  ring
+  simp only [mul_add, Finset.sum_add_distrib, mul_left_comm (P _) a,
+    mul_left_comm (P _) b, ← Finset.mul_sum, add_div, mul_div_assoc]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_expect_lincomb_prod (P : Law X Y) (F G H K : X × Y → ℝ) (a b : ℝ) :
@@ -154,56 +123,41 @@ lemma pairCharge_expect_lincomb_sq (P : Law X Y) (F H : X × Y → ℝ) (a b : �
       2 * a * b * expect P (fun z => F z * H z) +
       b^2 * expect P (fun z => (H z)^2) := by
   have h := pairCharge_expect_lincomb_prod P F F H H a b
-  simp only [← pow_two] at h
+  simp only [← pow_two, mul_comm (H _) (F _)] at h
   rw [h]
-  have e : expect P (fun z => H z * F z) = expect P (fun z => F z * H z) := by
-    congr 1
-    funext z
-    ring
-  rw [e]
   ring
 
 lemma pairCharge_cond_X_affine {P : Law X Y} (G : Y → ℝ) (a b : ℝ)
     {x : X} (hx : stoch_to_det.mX P x ≠ 0) :
     (∑ y, P (x,y) * (a * G y + b)) / stoch_to_det.mX P x =
       a * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x) + b := by
-  have h := pairCharge_cond_X_linear P G (fun _ => 1) a b x
-  simp only [mul_one] at h
-  rw [← stoch_to_det.mX_eq_sum, div_self hx] at h
-  simpa only [mul_one] using h
+  simpa only [mul_one, ← stoch_to_det.mX_eq_sum, div_self hx, mul_one] using
+    pairCharge_cond_X_linear P G (fun _ => 1) a b x
 
 lemma pairCharge_cond_Y_affine {P : Law X Y} (F : X → ℝ) (a b : ℝ)
     {y : Y} (hy : stoch_to_det.mY P y ≠ 0) :
     (∑ x, P (x,y) * (a * F x + b)) / stoch_to_det.mY P y =
       a * ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) + b := by
-  have h := pairCharge_cond_Y_linear P F (fun _ => 1) a b y
-  simp only [mul_one] at h
-  rw [← stoch_to_det.mY_eq_sum, div_self hy] at h
-  simpa only [mul_one] using h
+  simpa only [mul_one, ← stoch_to_det.mY_eq_sum, div_self hy, mul_one] using
+    pairCharge_cond_Y_linear P F (fun _ => 1) a b y
 
 lemma pairCharge_cond_X_sq_add_one {P : Law X Y} (G : Y → ℝ)
     {x : X} (hx : stoch_to_det.mX P x ≠ 0) :
     (∑ y, P (x,y) * (G y + 1)^2) / stoch_to_det.mX P x =
       (∑ y, P (x,y) * (G y)^2) / stoch_to_det.mX P x +
         2 * ((∑ y, P (x,y) * G y) / stoch_to_det.mX P x) + 1 := by
-  have ha := pairCharge_cond_X_affine (P := P) (fun y => ((G y)^2 + 2 * G y)) 1 1 hx
-  have hl := pairCharge_cond_X_linear P (fun y => (G y)^2) G 1 2 x
-  simp only [one_mul] at ha hl
-  rw [hl] at ha
-  convert ha using 1
-  all_goals ring
+  simp only [add_sq, mul_one, one_pow, mul_add, Finset.sum_add_distrib,
+    mul_left_comm (P _) 2, ← Finset.mul_sum, add_div, mul_div_assoc,
+    ← stoch_to_det.mX_eq_sum, div_self hx]
 
 lemma pairCharge_cond_Y_sq_add_one {P : Law X Y} (F : X → ℝ)
     {y : Y} (hy : stoch_to_det.mY P y ≠ 0) :
     (∑ x, P (x,y) * (F x + 1)^2) / stoch_to_det.mY P y =
       (∑ x, P (x,y) * (F x)^2) / stoch_to_det.mY P y +
         2 * ((∑ x, P (x,y) * F x) / stoch_to_det.mY P y) + 1 := by
-  have ha := pairCharge_cond_Y_affine (P := P) (fun x => ((F x)^2 + 2 * F x)) 1 1 hy
-  have hl := pairCharge_cond_Y_linear P (fun x => (F x)^2) F 1 2 y
-  simp only [one_mul] at ha hl
-  rw [hl] at ha
-  convert ha using 1
-  all_goals ring
+  simp only [add_sq, mul_one, one_pow, mul_add, Finset.sum_add_distrib,
+    mul_left_comm (P _) 2, ← Finset.mul_sum, add_div, mul_div_assoc,
+    ← stoch_to_det.mY_eq_sum, div_self hy]
 
 lemma pairCharge_contact_defect_X {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) {x : X} (hx : x ∈ xSupport S) :
@@ -287,27 +241,9 @@ lemma pairCharge_gram_bilinear {P : Law X Y} (hP : stoch_to_det.IsPMF P)
       2 * ((∑ y, P (z.1,y) * G y) / stoch_to_det.mX P z.1)) * H z.1) +
     expect P (fun z => (G z.2 -
       2 * ((∑ x, P (x,z.2) * F x) / stoch_to_det.mY P z.2)) * K z.2) := by
-  have hX : expect P (fun z => (F z.1 -
-      2 * ((∑ y, P (z.1,y) * G y) / stoch_to_det.mX P z.1)) * H z.1) =
-      expect P (fun z => F z.1 * H z.1) - 2 * expect P (fun z => H z.1 * G z.2) := by
-    calc
-      _ = expect P (fun z => F z.1 * H z.1 -
-          2 * (H z.1 * ((∑ y, P (z.1,y) * G y) / stoch_to_det.mX P z.1))) := by
-        congr 1
-        funext z
-        ring
-      _ = _ := by rw [contact_q_expect_sub, contact_q_expect_scale, pairCharge_cond_X_inner hP]
-  have hY : expect P (fun z => (G z.2 -
-      2 * ((∑ x, P (x,z.2) * F x) / stoch_to_det.mY P z.2)) * K z.2) =
-      expect P (fun z => G z.2 * K z.2) - 2 * expect P (fun z => F z.1 * K z.2) := by
-    calc
-      _ = expect P (fun z => G z.2 * K z.2 -
-          2 * (((∑ x, P (x,z.2) * F x) / stoch_to_det.mY P z.2) * K z.2)) := by
-        congr 1
-        funext z
-        ring
-      _ = _ := by rw [contact_q_expect_sub, contact_q_expect_scale, pairCharge_cond_Y_inner hP]
-  rw [hX, hY]
+  simp_rw [sub_mul, mul_assoc, contact_q_expect_sub, contact_q_expect_scale,
+    mul_comm ((∑ y, P (_,y) * G y) / stoch_to_det.mX P _) (H _)]
+  rw [pairCharge_cond_X_inner hP, pairCharge_cond_Y_inner hP]
   ring
 
 lemma pairCharge_contact_defects_centered {S : Finset (X × Y)} {w P R : Law X Y}
@@ -325,9 +261,7 @@ lemma pairCharge_contact_defects_centered {S : Finset (X × Y)} {w P R : Law X Y
 omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_expect_mul_comm (P : Law X Y) (F G : X × Y → ℝ) :
     expect P (fun z => F z * G z) = expect P (fun z => G z * F z) := by
-  congr 1
-  funext z
-  ring
+  simp only [mul_comm]
 
 lemma pairCharge_cond_X_congr_support {S : Finset (X × Y)} {w P : Law X Y}
     (hP : stoch_to_det.IsContact S w P) (G H : Y → ℝ)

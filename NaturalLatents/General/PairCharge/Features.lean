@@ -130,36 +130,34 @@ lemma pairCharge_secantX_defect_square_reverse {S : Finset (X × Y)} {w P R : La
     (hDX : ∀ x ∈ xSupport S, rootRatioX P R x * DXp x = DX x) :
     expect R (fun z => stoch_to_det.contactSecantX R P z.1 * (DXp z.1)^2) =
       -expect P (fun z => stoch_to_det.contactSecantX P R z.1 * (DX z.1)^2) := by
-  rw [pairCharge_expect_reverse_fst hpair (fun x => stoch_to_det.contactSecantX R P x * (DXp x)^2)]
+  rw [pairCharge_expect_reverse_fst hpair (fun x => stoch_to_det.contactSecantX R P x * (DXp x)^2),
+    ← neg_one_mul, ← contact_q_expect_scale]
+  apply pairCharge_expect_congr_positive hpair.2.1.1
+  intro z hz
+  have hx : z.1 ∈ xSupport S :=
+    Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
   calc
-    _ = expect P (fun z => -1 * (stoch_to_det.contactSecantX P R z.1 * (DX z.1)^2)) := by
-      apply pairCharge_expect_congr_positive hpair.2.1.1
-      intro z hz
-      have hzS := pairCharge_mem_S_of_pos hpair.2.1 hz
-      have hx : z.1 ∈ xSupport S := Finset.mem_image.mpr ⟨z, hzS, rfl⟩
-      calc
-        (rootRatioX P R z.1)^3 * (stoch_to_det.contactSecantX R P z.1 * (DXp z.1)^2) =
-          (rootRatioX P R z.1 * stoch_to_det.contactSecantX R P z.1) * (rootRatioX P R z.1 * DXp z.1)^2 := by ring
-        _ = _ := by rw [pairCharge_secantX_reverse_scaled hpair hx, hDX _ hx]; ring
-    _ = _ := by rw [contact_q_expect_scale]; ring
+    (rootRatioX P R z.1)^3 * (stoch_to_det.contactSecantX R P z.1 * (DXp z.1)^2) =
+      (rootRatioX P R z.1 * stoch_to_det.contactSecantX R P z.1) *
+        (rootRatioX P R z.1 * DXp z.1)^2 := by ring
+    _ = _ := by rw [pairCharge_secantX_reverse_scaled hpair hx, hDX _ hx]; ring
 
 lemma pairCharge_secantY_defect_square_reverse {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) (DY DYp : Y → ℝ)
     (hDY : ∀ y ∈ ySupport S, rootRatioY P R y * DYp y = DY y) :
     expect R (fun z => stoch_to_det.contactSecantY R P z.2 * (DYp z.2)^2) =
       -expect P (fun z => stoch_to_det.contactSecantY P R z.2 * (DY z.2)^2) := by
-  rw [pairCharge_expect_reverse_snd hpair (fun y => stoch_to_det.contactSecantY R P y * (DYp y)^2)]
+  rw [pairCharge_expect_reverse_snd hpair (fun y => stoch_to_det.contactSecantY R P y * (DYp y)^2),
+    ← neg_one_mul, ← contact_q_expect_scale]
+  apply pairCharge_expect_congr_positive hpair.2.1.1
+  intro z hz
+  have hy : z.2 ∈ ySupport S :=
+    Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
   calc
-    _ = expect P (fun z => -1 * (stoch_to_det.contactSecantY P R z.2 * (DY z.2)^2)) := by
-      apply pairCharge_expect_congr_positive hpair.2.1.1
-      intro z hz
-      have hzS := pairCharge_mem_S_of_pos hpair.2.1 hz
-      have hy : z.2 ∈ ySupport S := Finset.mem_image.mpr ⟨z, hzS, rfl⟩
-      calc
-        (rootRatioY P R z.2)^3 * (stoch_to_det.contactSecantY R P z.2 * (DYp z.2)^2) =
-          (rootRatioY P R z.2 * stoch_to_det.contactSecantY R P z.2) * (rootRatioY P R z.2 * DYp z.2)^2 := by ring
-        _ = _ := by rw [pairCharge_secantY_reverse_scaled hpair hy, hDY _ hy]; ring
-    _ = _ := by rw [contact_q_expect_scale]; ring
+    (rootRatioY P R z.2)^3 * (stoch_to_det.contactSecantY R P z.2 * (DYp z.2)^2) =
+      (rootRatioY P R z.2 * stoch_to_det.contactSecantY R P z.2) *
+        (rootRatioY P R z.2 * DYp z.2)^2 := by ring
+    _ = _ := by rw [pairCharge_secantY_reverse_scaled hpair hy, hDY _ hy]; ring
 
 lemma pairCharge_secantX_conditional_identity {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) {x : X} (hx : x ∈ xSupport S) :
@@ -187,27 +185,21 @@ lemma pairCharge_row_field {S : Finset (X × Y)} {w P R : Law X Y}
     (hDX : ∀ x, DX x = pairCharge_rawDefectX P R x) :
     expect P (fun z => F z.1 * stoch_to_det.contactSecantY P R z.2) =
       (expect P (fun z => F z.1 * stoch_to_det.contactSecantX P R z.1) - expect P (fun z => F z.1 * DX z.1)) / 2 := by
-  have htower := pairCharge_cond_X_inner hpair.2.1.1 F (stoch_to_det.contactSecantY P R)
-  have hpoint : ∀ z, 0 < P z →
-      (∑ y, P (z.1,y) * stoch_to_det.contactSecantY P R y) / stoch_to_det.mX P z.1 =
-        (stoch_to_det.contactSecantX P R z.1 - DX z.1) / 2 := by
-    intro z hz
-    have hx : z.1 ∈ xSupport S :=
-      Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
-    have hu := pairCharge_secantX_conditional_identity hpair hx
-    have hd := hDX z.1
-    dsimp [pairCharge_rawDefectX] at hd
-    rw [← hd] at hu
-    linarith only [hu]
-  have hcongr : expect P (fun z => F z.1 *
-      ((∑ y, P (z.1,y) * stoch_to_det.contactSecantY P R y) / stoch_to_det.mX P z.1)) =
-      expect P (fun z => (F z.1 * stoch_to_det.contactSecantX P R z.1 - F z.1 * DX z.1) / 2) := by
-    apply pairCharge_expect_congr_positive hpair.2.1.1
-    intro z hz
-    rw [hpoint z hz]
-    ring
-  rw [hcongr, pairCharge_expect_div, contact_q_expect_sub] at htower
-  exact htower.symm
+  rw [← pairCharge_cond_X_inner hpair.2.1.1 F (stoch_to_det.contactSecantY P R)]
+  calc
+    _ = expect P (fun z => (F z.1 * stoch_to_det.contactSecantX P R z.1 - F z.1 * DX z.1) / 2) := by
+      apply pairCharge_expect_congr_positive hpair.2.1.1
+      intro z hz
+      have hx : z.1 ∈ xSupport S :=
+        Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
+      have hu := pairCharge_secantX_conditional_identity hpair hx
+      change stoch_to_det.contactSecantX P R z.1 =
+        2 * ((∑ y, P (z.1,y) * stoch_to_det.contactSecantY P R y) / stoch_to_det.mX P z.1) + pairCharge_rawDefectX P R z.1 at hu
+      rw [← hDX z.1] at hu
+      rw [show (∑ y, P (z.1,y) * stoch_to_det.contactSecantY P R y) / stoch_to_det.mX P z.1 =
+        (stoch_to_det.contactSecantX P R z.1 - DX z.1) / 2 by linarith only [hu]]
+      ring
+    _ = _ := by rw [pairCharge_expect_div, contact_q_expect_sub]
 
 /-- A column-field conditioning identity, shared by the raw UV and defect specializations. -/
 lemma pairCharge_column_field {S : Finset (X × Y)} {w P R : Law X Y}
@@ -215,27 +207,21 @@ lemma pairCharge_column_field {S : Finset (X × Y)} {w P R : Law X Y}
     (hDY : ∀ y, DY y = pairCharge_rawDefectY P R y) :
     expect P (fun z => stoch_to_det.contactSecantX P R z.1 * G z.2) =
       (expect P (fun z => stoch_to_det.contactSecantY P R z.2 * G z.2) - expect P (fun z => DY z.2 * G z.2)) / 2 := by
-  have htower := pairCharge_cond_Y_inner hpair.2.1.1 (stoch_to_det.contactSecantX P R) G
-  have hpoint : ∀ z, 0 < P z →
-      (∑ x, P (x,z.2) * stoch_to_det.contactSecantX P R x) / stoch_to_det.mY P z.2 =
-        (stoch_to_det.contactSecantY P R z.2 - DY z.2) / 2 := by
-    intro z hz
-    have hy : z.2 ∈ ySupport S :=
-      Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
-    have hv := pairCharge_secantY_conditional_identity hpair hy
-    have hd := hDY z.2
-    dsimp [pairCharge_rawDefectY] at hd
-    rw [← hd] at hv
-    linarith only [hv]
-  have hcongr : expect P (fun z =>
-      ((∑ x, P (x,z.2) * stoch_to_det.contactSecantX P R x) / stoch_to_det.mY P z.2) * G z.2) =
-      expect P (fun z => (stoch_to_det.contactSecantY P R z.2 * G z.2 - DY z.2 * G z.2) / 2) := by
-    apply pairCharge_expect_congr_positive hpair.2.1.1
-    intro z hz
-    rw [hpoint z hz]
-    ring
-  rw [hcongr, pairCharge_expect_div, contact_q_expect_sub] at htower
-  exact htower.symm
+  rw [← pairCharge_cond_Y_inner hpair.2.1.1 (stoch_to_det.contactSecantX P R) G]
+  calc
+    _ = expect P (fun z => (stoch_to_det.contactSecantY P R z.2 * G z.2 - DY z.2 * G z.2) / 2) := by
+      apply pairCharge_expect_congr_positive hpair.2.1.1
+      intro z hz
+      have hy : z.2 ∈ ySupport S :=
+        Finset.mem_image.mpr ⟨z, pairCharge_mem_S_of_pos hpair.2.1 hz, rfl⟩
+      have hu := pairCharge_secantY_conditional_identity hpair hy
+      change stoch_to_det.contactSecantY P R z.2 =
+        2 * ((∑ x, P (x,z.2) * stoch_to_det.contactSecantX P R x) / stoch_to_det.mY P z.2) + pairCharge_rawDefectY P R z.2 at hu
+      rw [← hDY z.2] at hu
+      rw [show (∑ x, P (x,z.2) * stoch_to_det.contactSecantX P R x) / stoch_to_det.mY P z.2 =
+        (stoch_to_det.contactSecantY P R z.2 - DY z.2) / 2 by linarith only [hu]]
+      ring
+    _ = _ := by rw [pairCharge_expect_div, contact_q_expect_sub]
 
 /-- Conditioning UV against an arbitrary row field. -/
 lemma pairCharge_secantProduct_row_field {S : Finset (X × Y)} {w P R : Law X Y}
@@ -263,18 +249,15 @@ lemma pairCharge_defect_X_moments {S : Finset (X × Y)} {w P R : Law X Y}
     expect P (fun z => DX z.1) = 2 * defectY P R - defectX P R ∧
     expect P (fun z => stoch_to_det.contactSecantX P R z.1 * DX z.1) = (3 * (defectX P R - defectY P R) - quarticMoment P R) / 2 ∧
     expect P (fun z => (stoch_to_det.contactSecantX P R z.1)^2 * DX z.1) = quarticMoment P R := by
-  have hm := contact_moments hpair
-  constructor
-  · simp_rw [hDX]
-    rw [pairCharge_cond_X_mean hpair.2.1.1, hm.secantY_square]
-  · constructor
-    · calc
-        _ = expect P (fun z => stoch_to_det.contactSecantX P R z.1 * (stoch_to_det.contactSecantY P R z.2)^2) := by
-          simp_rw [hDX]
-          exact pairCharge_cond_X_inner hpair.2.1.1 (stoch_to_det.contactSecantX P R) (fun y => (stoch_to_det.contactSecantY P R y)^2)
-        _ = _ := (pairCharge_secant_mixed_moments hpair).1
-    · simp_rw [hDX]
-      exact pairCharge_cond_X_inner hpair.2.1.1 (fun x => (stoch_to_det.contactSecantX P R x)^2) (fun y => (stoch_to_det.contactSecantY P R y)^2)
+  simp_rw [hDX]
+  refine ⟨?_, ?_, ?_⟩
+  · rw [pairCharge_cond_X_mean hpair.2.1.1, (contact_moments hpair).secantY_square]
+  · rw [pairCharge_cond_X_inner hpair.2.1.1 (stoch_to_det.contactSecantX P R)
+      (fun y => (stoch_to_det.contactSecantY P R y)^2)]
+    exact (pairCharge_secant_mixed_moments hpair).1
+  · exact pairCharge_cond_X_inner hpair.2.1.1
+      (fun x => (stoch_to_det.contactSecantX P R x)^2)
+      (fun y => (stoch_to_det.contactSecantY P R y)^2)
 
 lemma pairCharge_defect_Y_moments {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) (DY : Y → ℝ)
@@ -282,24 +265,15 @@ lemma pairCharge_defect_Y_moments {S : Finset (X × Y)} {w P R : Law X Y}
     expect P (fun z => DY z.2) = 2 * defectX P R - defectY P R ∧
     expect P (fun z => stoch_to_det.contactSecantY P R z.2 * DY z.2) = (-3 * (defectX P R - defectY P R) - quarticMoment P R) / 2 ∧
     expect P (fun z => (stoch_to_det.contactSecantY P R z.2)^2 * DY z.2) = quarticMoment P R := by
-  have hm := contact_moments hpair
-  constructor
-  · simp_rw [hDY]
-    rw [pairCharge_cond_Y_mean hpair.2.1.1, hm.secantX_square]
-  · constructor
-    · calc
-        _ = expect P (fun z => stoch_to_det.contactSecantX P R z.1 ^ 2 * stoch_to_det.contactSecantY P R z.2) := by
-          have htower := pairCharge_cond_Y_inner hpair.2.1.1 (fun x => (stoch_to_det.contactSecantX P R x)^2) (stoch_to_det.contactSecantY P R)
-          simp_rw [← hDY] at htower
-          calc
-            _ = expect P (fun z => DY z.2 * stoch_to_det.contactSecantY P R z.2) := by congr 1; funext z; ring
-            _ = _ := htower
-        _ = _ := (pairCharge_secant_mixed_moments hpair).2
-    · have htower := pairCharge_cond_Y_inner hpair.2.1.1 (fun x => (stoch_to_det.contactSecantX P R x)^2) (fun y => (stoch_to_det.contactSecantY P R y)^2)
-      simp_rw [← hDY] at htower
-      calc
-        _ = expect P (fun z => DY z.2 * (stoch_to_det.contactSecantY P R z.2)^2) := by congr 1; funext z; ring
-        _ = _ := htower
+  simp_rw [hDY]
+  refine ⟨?_, ?_, ?_⟩
+  · rw [pairCharge_cond_Y_mean hpair.2.1.1, (contact_moments hpair).secantX_square]
+  · simpa only [mul_comm] using
+      (pairCharge_cond_Y_inner hpair.2.1.1 (fun x => (stoch_to_det.contactSecantX P R x)^2)
+        (stoch_to_det.contactSecantY P R)).trans (pairCharge_secant_mixed_moments hpair).2
+  · simpa only [quarticMoment, mul_comm] using pairCharge_cond_Y_inner hpair.2.1.1
+      (fun x => (stoch_to_det.contactSecantX P R x)^2)
+      (fun y => (stoch_to_det.contactSecantY P R y)^2)
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_secantStatistic_additive_expectation (P : Law X Y) (u F : X → ℝ) (v G : Y → ℝ)
@@ -343,14 +317,12 @@ lemma pairCharge_secantStatistic_correction_joint {S : Finset (X × Y)} {w P R :
   have hsne := (contact_moments hpair).separation_pos.ne'
   have hX := pairCharge_secantProduct_row_field hpair DX DX hDX
   have hY := pairCharge_secantProduct_column_field hpair DY DY hDY
-  have hXsquare : expect P (fun z => stoch_to_det.contactSecantX P R z.1 * DX z.1 * DX z.1) =
-      expect P (fun z => stoch_to_det.contactSecantX P R z.1 * (DX z.1)^2) := by congr 1; funext z; ring
-  have hYsquare : expect P (fun z => stoch_to_det.contactSecantY P R z.2 * DY z.2 * DY z.2) =
-      expect P (fun z => stoch_to_det.contactSecantY P R z.2 * (DY z.2)^2) := by congr 1; funext z; ring
-  rw [(pairCharge_defect_X_moments hpair DX hDX).2.2, hXsquare] at hX
-  rw [(pairCharge_defect_Y_moments hpair DY hDY).2.2, hYsquare] at hY
-  rw [pairCharge_secantStatistic_additive_expectation _ _ _ _ _ _ hsne, hX, hY]
-  field_simp [hsne]
+  simp only [mul_assoc, ← pow_two] at hX hY
+  rw [(pairCharge_defect_X_moments hpair DX hDX).2.2] at hX
+  rw [(pairCharge_defect_Y_moments hpair DY hDY).2.2] at hY
+  rw [pairCharge_secantStatistic_additive_expectation _ _ _ _ _ _ hsne]
+  simp only [mul_assoc]
+  rw [hX, hY]
   ring
 
 /-- The product endpoint for `H` and `defectY`. -/

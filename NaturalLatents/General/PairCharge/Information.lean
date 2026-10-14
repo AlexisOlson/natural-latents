@@ -71,16 +71,11 @@ lemma pairCharge_chi_square_completion {Ω : Type*} [Fintype Ω]
     · simp [hz, hdzero i hz]
     · field_simp [hz]
       ring
-  have hpos : 0 ≤ ∑ i, (d i - τ * M i * (F i - m))^2 / M i := by
-    exact Finset.sum_nonneg fun i _ => div_nonneg (sq_nonneg _) (hM i)
-  calc
-    0 ≤ ∑ i, (d i - τ * M i * (F i - m))^2 / M i := hpos
-    _ = (∑ i, (d i)^2 / M i) - 2 * τ * (∑ i, d i * (F i - m)) +
-        τ^2 * (∑ i, M i * (F i - m)^2) := by
-      simp_rw [hi]
-      rw [Finset.sum_add_distrib, Finset.sum_sub_distrib]
-      simp only [← Finset.mul_sum]
-    _ = _ := by rw [hcenter]
+  have hpos : 0 ≤ ∑ i, (d i - τ * M i * (F i - m))^2 / M i :=
+    Finset.sum_nonneg fun i _ => div_nonneg (sq_nonneg _) (hM i)
+  simp_rw [hi] at hpos
+  simpa only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum,
+    hcenter] using hpos
 
 /-- A variance primitive gives the entropy payment. Null reference cells are allowed when the first law
 also vanishes. -/
@@ -179,9 +174,7 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
       change (∑ i, d i * Real.log (M 0 i / Q i)) = 0
       apply Finset.sum_eq_zero
       intro i _
-      by_cases hz : Q i = 0
-      · simp [M, hz]
-      · simp [M, hz]
+      by_cases hz : Q i = 0 <;> simp [M, hz]
     simp [B', hc, hH'0]
   have hB'cont : ContinuousOn B' (Set.Ico (0 : ℝ) 1) := by
     intro u hu
@@ -197,11 +190,9 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
     have hh := hB'mono (by norm_num) hu hu.1
     simpa only [hB'0] using hh
   have hKcont : Continuous K := by
-    apply continuous_finsetSum
-    intro i _
-    exact continuous_const.mul
-      (stoch_to_det.continuous_phi.comp
-        ((continuous_const.add (continuous_id.mul continuous_const)).div_const (Q i)))
+    have hphi := stoch_to_det.continuous_phi
+    dsimp [K, M]
+    fun_prop
   have hBcont : Continuous B :=
     (hKcont.sub (continuous_const.mul (continuous_id.pow 2))).add
       (continuous_const.mul hHcont)
@@ -223,11 +214,7 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
     · simp [M, hz, stoch_to_det.phi]
   have hpay := hBmono (by norm_num) (by norm_num) (by norm_num : (0 : ℝ) ≤ 1)
   have hK1 : K 1 = ∑ i, Q i * stoch_to_det.phi (P i / Q i) := by
-    change (∑ i, Q i * stoch_to_det.phi (M 1 i / Q i)) = _
-    apply Finset.sum_congr rfl
-    intro i _
-    have he : M 1 i = P i := by dsimp [M, d]; ring
-    rw [he]
+    simp [K, M, d]
   dsimp [B] at hpay
   rw [hK0, hH0, hK1] at hpay
   norm_num at hpay
@@ -235,13 +222,10 @@ lemma pairCharge_entropy_path_payment {Ω : Type*} [Fintype Ω]
 
 lemma pairCharge_payment_positive (K Δ D : ℝ)
     (hpay : ∀ τ : ℝ, τ * Δ ≤ K + τ^2 * D) (hΔ : Δ ≠ 0) : 0 < D := by
-  by_contra hD
-  have hDn : D ≤ 0 := le_of_not_gt hD
+  by_contra! hD
   have hp := hpay ((K + 1) / Δ)
-  have he : (K + 1) / Δ * Δ = K + 1 := by field_simp [hΔ]
-  have hneg : ((K + 1) / Δ)^2 * D ≤ 0 :=
-    mul_nonpos_of_nonneg_of_nonpos (sq_nonneg _) hDn
-  rw [he] at hp
+  rw [div_mul_cancel₀ _ hΔ] at hp
+  have hneg := mul_nonpos_of_nonneg_of_nonpos (sq_nonneg ((K + 1) / Δ)) hD
   linarith
 
 lemma pairCharge_payment_bound (K Δ D : ℝ)
@@ -324,14 +308,7 @@ lemma pairCharge_entropy_linear_field_affine {Ω : Type*} [Fintype Ω]
     τ * Δ ≤ (∑ i, Q i * stoch_to_det.phi (P i / Q i)) +
       τ^2 * (VQA / 3 + VPA / 6 + Δ^2 / 12 + CQ / 6 + CP / 6 +
         VQB / 30 + VPB / 20) := by
-  dsimp only
-  let Δ := ∑ i, (P i - Q i) * A i
-  let VQA := ∑ i, Q i * (A i - ∑ j, Q j * A j)^2
-  let VPA := ∑ i, P i * (A i - ∑ j, P j * A j)^2
-  let VQB := ∑ i, Q i * (B i - ∑ j, Q j * B j)^2
-  let VPB := ∑ i, P i * (B i - ∑ j, P j * B j)^2
-  let CQ := ∑ i, Q i * (A i - ∑ j, Q j * A j) * (B i - ∑ j, Q j * B j)
-  let CP := ∑ i, P i * (A i - ∑ j, P j * A j) * (B i - ∑ j, P j * B j)
+  intro Δ VQA VPA VQB VPB CQ CP
   let c0 := VQA
   let c1 := VPA - VQA + Δ^2 + 2 * CQ
   let c2 := -Δ^2 + 2 * CP - 2 * CQ + VQB
@@ -357,21 +334,16 @@ lemma pairCharge_entropy_linear_field_affine {Ω : Type*} [Fintype Ω]
         (∑ i, (Q i + u * (P i - Q i)) *
           (A i + u * B i - ∑ j, (Q j + u * (P j - Q j)) * (A j + u * B j))^2) u := by
     have hi := hasDerivAt_id u
-    have h1 := hi.const_mul c0
-    have h2 := ((hi.pow 2).const_mul c1).div_const 2
-    have h3 := ((hi.pow 3).const_mul c2).div_const 3
-    have h4 := ((hi.pow 4).const_mul c3).div_const 4
-    have hr := ((h1.add h2).add h3).add h4
+    have hr := (((hi.const_mul c0).add (((hi.pow 2).const_mul c1).div_const 2)).add
+      (((hi.pow 3).const_mul c2).div_const 3)).add (((hi.pow 4).const_mul c3).div_const 4)
     apply hr.congr_deriv
     rw [pairCharge_variance_linear_field P Q A B hPt hQt hB u]
     dsimp [c0, c1, c2, c3, VQA, VPA, VQB, VPB, CQ, CP, Δ]
     ring
   have hgap (u : ℝ) (_hu : u ∈ Set.Ico (0 : ℝ) 1) :
       (∑ i, (P i - Q i) * (A i + u * B i)) = Δ := by
-    have he (i : Ω) : (P i - Q i) * (A i + u * B i) =
-        (P i - Q i) * A i + u * ((P i - Q i) * B i) := by ring
-    simp_rw [he]
-    simp only [Finset.sum_add_distrib, ← Finset.mul_sum, hB, mul_zero, add_zero]
+    simp only [mul_add, mul_left_comm (P _ - Q _) u, Finset.sum_add_distrib,
+      ← Finset.mul_sum, hB, mul_zero, add_zero]
     rfl
   have hp := pairCharge_entropy_path_payment P Q hP hQ hzero hPt hQt
     (fun u i => A i + u * B i) Δ H H' hHcont hH0 hH'0 hgap hHd hHdd τ
