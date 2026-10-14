@@ -55,27 +55,38 @@ def IsContact (S : Finset (α × β)) (w : α × β → ℝ) (q : α × β → �
 
 /-! ## Analytic tools -/
 
+omit [DecidableEq α] [DecidableEq β] in
+private lemma sum_eq_sum_of_supported {S : Finset (α × β)}
+    {q : α × β → ℝ} (hqS : Supported S q) (F : α × β → ℝ) :
+    (∑ z, F z * q z) = ∑ z ∈ S, F z * q z := by
+  symm
+  apply Finset.sum_subset (Finset.subset_univ S)
+  intro z _ hzS
+  simp [hqS z hzS]
+
 private lemma sum_mul_lg_self_eq_neg_H {γ : Type*} [Fintype γ]
     {m : γ → ℝ} (hm : IsPMF m) :
     (∑ a, m a * lg (m a)) = -H m := by
   simp [H, hm.total, one_div, lg_eq_log_div,
     mul_neg, Finset.sum_neg_distrib]
 
+private lemma sub_le_mul_log_div {p m : ℝ} (hp : 0 ≤ p) (hm : 0 ≤ m)
+    (hsupp : p ≠ 0 → m ≠ 0) : p - m ≤ p * Real.log (p / m) := by
+  by_cases hpzero : p = 0
+  · simp [hpzero, hm]
+  · have hmzero := hsupp hpzero
+    have hlog := mul_le_mul_of_nonneg_left
+      (Real.self_sub_one_le_mul_log (div_nonneg hp hm)) hm
+    calc
+      p - m = m * (p / m - 1) := by field_simp
+      _ ≤ m * ((p / m) * Real.log (p / m)) := hlog
+      _ = p * Real.log (p / m) := by field_simp
+
 private lemma unnormalized_gibbs_nonneg_lg {γ : Type*} [Fintype γ]
     {p m : γ → ℝ} (hp : IsPMF p) (hm : IsFinMeas m)
     (hmass : mass m ≤ 1) (hsupp : ∀ a, p a ≠ 0 → m a ≠ 0) :
     0 ≤ ∑ a, p a * lg (p a / m a) := by
-  have hterm : ∀ a, p a - m a ≤ p a * Real.log (p a / m a) := by
-    intro a
-    by_cases hpa : p a = 0
-    · simp [hpa, hm a]
-    · have hma := hsupp a hpa
-      have hlog := mul_le_mul_of_nonneg_left
-        (Real.self_sub_one_le_mul_log (div_nonneg (hp.nonneg a) (hm a))) (hm a)
-      calc
-        p a - m a = m a * (p a / m a - 1) := by field_simp
-        _ ≤ m a * ((p a / m a) * Real.log (p a / m a)) := hlog
-        _ = p a * Real.log (p a / m a) := by field_simp
+  have hterm (a) := sub_le_mul_log_div (hp.nonneg a) (hm a) (hsupp a)
   have hp_sum : ∑ a, p a = 1 := by simpa [mass] using hp.total
   have hnats : 0 ≤ ∑ a, p a * Real.log (p a / m a) := by
     calc
@@ -94,17 +105,7 @@ private lemma unnormalized_gibbs_eq_zero_iff {γ : Type*} [Fintype γ]
     {p m : γ → ℝ} (hp : IsPMF p) (hm : IsFinMeas m)
     (hmass : mass m ≤ 1) (hsupp : ∀ a, p a ≠ 0 → m a ≠ 0) :
     (∑ a, p a * lg (p a / m a)) = 0 ↔ p = m := by
-  have hterm : ∀ a, p a - m a ≤ p a * Real.log (p a / m a) := by
-    intro a
-    by_cases hpa : p a = 0
-    · simp [hpa, hm a]
-    · have hma := hsupp a hpa
-      have hlog := mul_le_mul_of_nonneg_left
-        (Real.self_sub_one_le_mul_log (div_nonneg (hp.nonneg a) (hm a))) (hm a)
-      calc
-        p a - m a = m a * (p a / m a - 1) := by field_simp
-        _ ≤ m a * ((p a / m a) * Real.log (p a / m a)) := hlog
-        _ = p a * Real.log (p a / m a) := by field_simp
+  have hterm (a) := sub_le_mul_log_div (hp.nonneg a) (hm a) (hsupp a)
   constructor
   · intro hzero
     have hconvert :
@@ -170,6 +171,37 @@ private lemma mass_refMeas_eq_Lambda (S : Finset (α × β)) (w : α × β → �
     mass (refMeas S w q) = Lambda S w (mX q) (mY q) := by
   simp [mass, refMeas, Lambda]
 
+private lemma refMeas_gibbs_conditions {S : Finset (α × β)} {w : α × β → ℝ}
+    (hw : Feasible S w) {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
+    IsFinMeas (refMeas S w q) ∧ mass (refMeas S w q) ≤ 1 ∧
+      ∀ z, q z ≠ 0 → refMeas S w q z ≠ 0 := by
+  have hqX : IsPMF (mX q) := isPMF_push hq
+  have hqY : IsPMF (mY q) := isPMF_push hq
+  have hm : IsFinMeas (refMeas S w q) := by
+    intro z
+    rw [refMeas]
+    split_ifs with hzS
+    · exact mul_nonneg
+        (mul_nonneg (hw.1 z hzS).le (Real.rpow_nonneg (hqX.nonneg z.1) _))
+        (Real.rpow_nonneg (hqY.nonneg z.2) _)
+    · exact le_rfl
+  have hmass : mass (refMeas S w q) ≤ 1 := by
+    rw [mass_refMeas_eq_Lambda]
+    exact hw.2 (mX q) (mY q) hqX hqY
+  have hsupp : ∀ z, q z ≠ 0 → refMeas S w q z ≠ 0 := by
+    intro z hz
+    have hzpos : 0 < q z := lt_of_le_of_ne (hq.nonneg z) (Ne.symm hz)
+    have hzS : z ∈ S := by
+      by_contra hzS
+      exact hz (hqS z hzS)
+    have hxle : q z ≤ mX q z.1 := apply_le_push hq.nonneg Prod.fst z
+    have hyle : q z ≤ mY q z.2 := apply_le_push hq.nonneg Prod.snd z
+    rw [refMeas, ite_eq_left hzS]
+    exact (mul_pos
+      (mul_pos (hw.1 z hzS) (Real.rpow_pos_of_pos (hzpos.trans_le hxle) _))
+      (Real.rpow_pos_of_pos (hzpos.trans_le hyle) _)).ne'
+  exact ⟨hm, hmass, hsupp⟩
+
 /-- Defect equals certificate gap.
 With `c = −3 lg w`: `G_w(q) = ⟨c,q⟩ − Φ(q)`. -/
 private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β → ℝ}
@@ -179,9 +211,7 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
   have hqY : IsPMF (mY q) := isPMF_push hq
   have hsum_support (k : α × β → ℝ) :
       (∑ z ∈ S, q z * k z) = ∑ z, q z * k z := by
-    apply Finset.sum_subset (Finset.subset_univ S)
-    intro z _ hzS
-    rw [hqS z hzS, zero_mul]
+    simpa only [mul_comm] using (sum_eq_sum_of_supported hqS k).symm
   have hsumq : (∑ z ∈ S, q z * lg (q z)) = -H q := by
     rw [hsum_support]
     exact sum_mul_lg_self_eq_neg_H hq
@@ -208,14 +238,8 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
     by_cases hz : q z = 0
     · simp [hz]
     · have hzpos : 0 < q z := lt_of_le_of_ne (hq.nonneg z) (Ne.symm hz)
-      have hxle : q z ≤ mX q z.1 := by
-        change q z ≤ push Prod.fst q z.1
-        unfold push
-        exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-      have hyle : q z ≤ mY q z.2 := by
-        change q z ≤ push Prod.snd q z.2
-        unfold push
-        exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
+      have hxle : q z ≤ mX q z.1 := apply_le_push hq.nonneg Prod.fst z
+      have hyle : q z ≤ mY q z.2 := apply_le_push hq.nonneg Prod.snd z
       have hxpos : 0 < mX q z.1 := hzpos.trans_le hxle
       have hypos : 0 < mY q z.2 := hzpos.trans_le hyle
       have hw0 : w z ≠ 0 := (hw z hzS).ne'
@@ -250,47 +274,44 @@ private theorem Gdef_eq_certificate_gap {S : Finset (α × β)} {w : α × β �
 theorem Gdef_nonneg {S : Finset (α × β)} {w : α × β → ℝ}
     (hw : Feasible S w) {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
     0 ≤ Gdef S w q := by
-  have hqX : IsPMF (mX q) := isPMF_push hq
-  have hqY : IsPMF (mY q) := isPMF_push hq
-  have hm : IsFinMeas (refMeas S w q) := by
-    intro z
-    rw [refMeas]
-    split_ifs with hzS
-    · exact mul_nonneg
-        (mul_nonneg (hw.1 z hzS).le (Real.rpow_nonneg (hqX.nonneg z.1) _))
-        (Real.rpow_nonneg (hqY.nonneg z.2) _)
-    · exact le_rfl
-  have hmass : mass (refMeas S w q) ≤ 1 := by
-    rw [mass_refMeas_eq_Lambda]
-    exact hw.2 (mX q) (mY q) hqX hqY
-  have hsupp : ∀ z, q z ≠ 0 → refMeas S w q z ≠ 0 := by
-    intro z hz
-    have hzpos : 0 < q z := lt_of_le_of_ne (hq.nonneg z) (Ne.symm hz)
-    have hzS : z ∈ S := by
-      by_contra hzS
-      exact hz (hqS z hzS)
-    have hxle : q z ≤ mX q z.1 := by
-      change q z ≤ push Prod.fst q z.1
-      unfold push
-      exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-    have hyle : q z ≤ mY q z.2 := by
-      change q z ≤ push Prod.snd q z.2
-      unfold push
-      exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-    rw [refMeas, ite_eq_left hzS]
-    exact (mul_pos
-      (mul_pos (hw.1 z hzS) (Real.rpow_pos_of_pos (hzpos.trans_le hxle) _))
-      (Real.rpow_pos_of_pos (hzpos.trans_le hyle) _)).ne'
+  obtain ⟨hm, hmass, hsupp⟩ := refMeas_gibbs_conditions hw hq hqS
   have hKL : 0 ≤ ∑ z, q z * lg (q z / refMeas S w q z) :=
     unnormalized_gibbs_nonneg_lg hq hm hmass hsupp
   have hsum :
       (∑ z ∈ S, q z * lg (q z / refMeas S w q z)) =
         ∑ z, q z * lg (q z / refMeas S w q z) := by
-    apply Finset.sum_subset (Finset.subset_univ S)
-    intro z _ hzS
-    rw [hqS z hzS, zero_mul]
+    simpa only [mul_comm] using
+      (sum_eq_sum_of_supported hqS (fun z => lg (q z / refMeas S w q z))).symm
   rw [Gdef, hsum]
   positivity
+
+private lemma weighted_rpow_sum_eq_zero {γ : Type*} [Fintype γ]
+    {u f : γ → ℝ} (hu : ∀ x, 0 ≤ u x) (hf : ∀ x, 0 ≤ f x)
+    (hzero : (∑ x, u x * f x ^ ((3 : ℝ) / 2)) = 0) :
+    ∀ x, u x = 0 ∨ f x = 0 := by
+  intro x
+  have hx := (Finset.sum_eq_zero_iff_of_nonneg
+    (fun a _ => mul_nonneg (hu a) (Real.rpow_nonneg (hf a) _))).mp
+      hzero x (Finset.mem_univ x)
+  simpa only [mul_eq_zero,
+    Real.rpow_eq_zero (hf x) (by norm_num : (3 : ℝ) / 2 ≠ 0)] using hx
+
+private lemma isPMF_normalize {γ : Type*} [Fintype γ] {m : γ → ℝ}
+    (hm : IsFinMeas m) (hpos : 0 < mass m) :
+    IsPMF (fun x => m x / mass m) := by
+  refine ⟨fun x => div_nonneg (hm x) hpos.le, ?_⟩
+  simp only [mass, ← Finset.sum_div]
+  exact div_self hpos.ne'
+
+private lemma sum_fiberwise_mul {γ δ : Type*} [Fintype δ] [DecidableEq δ]
+    (S : Finset γ) (f : γ → δ) (a : γ → ℝ) (b : δ → ℝ) :
+    (∑ z ∈ S, a z * b (f z)) =
+      ∑ x, (∑ z ∈ S.filter (fun z => f z = x), a z) * b x := by
+  rw [← Finset.sum_fiberwise S f (fun z => a z * b (f z))]
+  apply Finset.sum_congr rfl
+  intro x _
+  rw [Finset.sum_mul]
+  exact Finset.sum_congr rfl fun z hz => by rw [(Finset.mem_filter.mp hz).2]
 
 private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq γ]
     {R u : γ → ℝ} (hR : ∀ x, 0 ≤ R x) (hu : IsPMF u)
@@ -413,16 +434,12 @@ private lemma maximizer_rpow_two_thirds {γ : Type*} [Fintype γ] [DecidableEq �
       linarith
     have hau : ∀ x, a x ^ (3 : ℕ) = u x := by
       intro x
-      have heq :
-          a x * u x ^ ((2 : ℝ) / 3) =
-            a x ^ (3 : ℝ) / 3
-              + (u x ^ ((2 : ℝ) / 3)) ^ ((3 : ℝ) / 2) / ((3 : ℝ) / 2) := by
-        simpa only [Real.rpow_ofNat, hupow] using hYoungEq x
       have hpowers := (Real.young_inequality_eq_iff_of_nonneg
         (a := a x) (b := u x ^ ((2 : ℝ) / 3))
         (p := (3 : ℝ)) (q := (3 : ℝ) / 2)
-        (ha x) (Real.rpow_nonneg (hu.nonneg x) _) hpq).mp heq
-      exact (Real.rpow_natCast (a x) 3).symm.trans (hpowers.trans (hupow x))
+        (ha x) (Real.rpow_nonneg (hu.nonneg x) _) hpq).mp
+          (by simpa only [Real.rpow_ofNat, hupow] using hYoungEq x)
+      simpa only [Real.rpow_ofNat, hupow] using hpowers
     constructor
     · intro x
       rw [hFuEq, ← hau x, hR_eq x, hpow32]
@@ -476,17 +493,9 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
           (Real.rpow_nonneg (hv₀.nonneg z.2) _)
     have hLambdaRow (s : α → ℝ) :
         Lambda S w s v₀ = ∑ x, R x * s x ^ ((2 : ℝ) / 3) := by
-      unfold Lambda
-      rw [← Finset.sum_fiberwise S Prod.fst
-        (fun z => w z * s z.1 ^ ((2 : ℝ) / 3) * v₀ z.2 ^ ((2 : ℝ) / 3))]
-      apply Finset.sum_congr rfl
-      intro x _
-      dsimp [R]
-      rw [Finset.sum_mul]
-      apply Finset.sum_congr rfl
-      intro z hz
-      rw [(Finset.mem_filter.mp hz).2]
-      ring
+      simpa only [Lambda, R, mul_right_comm] using
+        sum_fiberwise_mul S Prod.fst
+          (fun z => w z * v₀ z.2 ^ ((2 : ℝ) / 3)) (fun x => s x ^ ((2 : ℝ) / 3))
     have hu₀Max : ∀ t : α → ℝ, IsPMF t →
         (∑ x, R x * t x ^ ((2 : ℝ) / 3)) ≤
           ∑ x, R x * u₀ x ^ ((2 : ℝ) / 3) := by
@@ -506,16 +515,8 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
           (Real.rpow_nonneg (hu₀.nonneg z.1) _)
     have hLambdaCol (s : β → ℝ) :
         Lambda S w u₀ s = ∑ y, Q y * s y ^ ((2 : ℝ) / 3) := by
-      unfold Lambda
-      rw [← Finset.sum_fiberwise S Prod.snd
-        (fun z => w z * u₀ z.1 ^ ((2 : ℝ) / 3) * s z.2 ^ ((2 : ℝ) / 3))]
-      apply Finset.sum_congr rfl
-      intro y _
-      dsimp [Q]
-      rw [Finset.sum_mul]
-      apply Finset.sum_congr rfl
-      intro z hz
-      rw [(Finset.mem_filter.mp hz).2]
+      exact sum_fiberwise_mul S Prod.snd
+        (fun z => w z * u₀ z.1 ^ ((2 : ℝ) / 3)) (fun y => s y ^ ((2 : ℝ) / 3))
     have hv₀Max : ∀ t : β → ℝ, IsPMF t →
         (∑ y, Q y * t y ^ ((2 : ℝ) / 3)) ≤
           ∑ y, Q y * v₀ y ^ ((2 : ℝ) / 3) := by
@@ -602,14 +603,8 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
       by_cases hz : z ∈ S <;> by_cases hy : z.2 = y <;> simp [hz, hy]
     let q : α × β → ℝ := fun z => M⁻¹ * m z
     have hq : IsPMF q := by
-      constructor
-      · intro z
-        exact mul_nonneg (inv_nonneg.mpr hMpos.le) (hm z)
-      · unfold mass
-        dsimp [q]
-        rw [← Finset.mul_sum]
-        change M⁻¹ * mass m = 1
-        rw [hmassm, inv_mul_cancel₀ hMpos.ne']
+      simpa only [q, div_eq_inv_mul, hmassm] using
+        isPMF_normalize hm (by rwa [hmassm])
     have hqS : Supported S q := by
       intro z hzS
       simp [q, m, hzS]
@@ -633,9 +628,7 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
     have hsumqS : (∑ z ∈ S, q z) = 1 := by
       calc
         (∑ z ∈ S, q z) = ∑ z, q z := by
-          apply Finset.sum_subset (Finset.subset_univ S)
-          intro z _ hzS
-          exact hqS z hzS
+          simpa only [one_mul] using (sum_eq_sum_of_supported hqS (fun _ => 1)).symm
         _ = 1 := by simpa [mass] using hq.total
     have hGcalc : Gdef S w q = 3 * lg M⁻¹ := by
       rw [Gdef, href]
@@ -677,43 +670,12 @@ private theorem valid_iff_feasible {S : Finset (α × β)} {w : α × β → ℝ
 private theorem Gdef_eq_zero_iff {S : Finset (α × β)} {w : α × β → ℝ} (hw : Feasible S w)
     {q : α × β → ℝ} (hq : IsPMF q) (hqS : Supported S q) :
     Gdef S w q = 0 ↔ IsContact S w q := by
-  have hqX : IsPMF (mX q) := isPMF_push hq
-  have hqY : IsPMF (mY q) := isPMF_push hq
-  have hm : IsFinMeas (refMeas S w q) := by
-    intro z
-    rw [refMeas]
-    split_ifs with hzS
-    · exact mul_nonneg
-        (mul_nonneg (hw.1 z hzS).le (Real.rpow_nonneg (hqX.nonneg z.1) _))
-        (Real.rpow_nonneg (hqY.nonneg z.2) _)
-    · exact le_rfl
-  have hmass : mass (refMeas S w q) ≤ 1 := by
-    rw [mass_refMeas_eq_Lambda]
-    exact hw.2 (mX q) (mY q) hqX hqY
-  have hsupp : ∀ z, q z ≠ 0 → refMeas S w q z ≠ 0 := by
-    intro z hz
-    have hzpos : 0 < q z := lt_of_le_of_ne (hq.nonneg z) (Ne.symm hz)
-    have hzS : z ∈ S := by
-      by_contra hzS
-      exact hz (hqS z hzS)
-    have hxle : q z ≤ mX q z.1 := by
-      change q z ≤ push Prod.fst q z.1
-      unfold push
-      exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-    have hyle : q z ≤ mY q z.2 := by
-      change q z ≤ push Prod.snd q z.2
-      unfold push
-      exact Finset.single_le_sum (fun a _ ↦ hq.nonneg a) (by simp)
-    rw [refMeas, ite_eq_left hzS]
-    exact (mul_pos
-      (mul_pos (hw.1 z hzS) (Real.rpow_pos_of_pos (hzpos.trans_le hxle) _))
-      (Real.rpow_pos_of_pos (hzpos.trans_le hyle) _)).ne'
+  obtain ⟨hm, hmass, hsupp⟩ := refMeas_gibbs_conditions hw hq hqS
   have hsum :
       (∑ z ∈ S, q z * lg (q z / refMeas S w q z)) =
         ∑ z, q z * lg (q z / refMeas S w q z) := by
-    apply Finset.sum_subset (Finset.subset_univ S)
-    intro z _ hzS
-    rw [hqS z hzS, zero_mul]
+    simpa only [mul_comm] using
+      (sum_eq_sum_of_supported hqS (fun z => lg (q z / refMeas S w q z))).symm
   constructor
   · intro hG
     have hsumAll :
@@ -763,6 +725,18 @@ private lemma dualConvexHull_fiber_le_envelope
   unfold concaveEnvelopePhi
   exact le_ciSup hbdd L
 
+omit [DecidableEq α] [DecidableEq β] in
+private lemma latent_comp_supported {p : α × β → ℝ} (L : Latent p)
+    (v : L.ι) (hv : L.prior v ≠ 0) : Supported (support p) (L.comp v) := by
+  intro z hzS
+  have hpz : p z = 0 := by simpa [support] using hzS
+  have hmix := L.mixture z
+  rw [hpz] at hmix
+  have hzero := (Finset.sum_eq_zero_iff_of_nonneg
+    (fun j _ => mul_nonneg (L.prior_isPMF.nonneg j)
+      ((L.comp_isPMF j).nonneg z))).mp hmix v (Finset.mem_univ v)
+  exact (mul_eq_zero.mp hzero).resolve_left hv
+
 private lemma dual_envelope_point_mem_convexHull
     {p : α × β → ℝ} (hp : IsPMF p) :
     (p, concaveEnvelopePhi p) ∈
@@ -770,15 +744,7 @@ private lemma dual_envelope_point_mem_convexHull
   obtain ⟨V, hVopt⟩ := exists_tau_optimal_latent hp
   have hpS : Supported (support p) p := supported_support_self p
   have hcompS (i : V.ι) (hi : V.prior i ≠ 0) :
-      Supported (support p) (V.comp i) := by
-    intro z hzS
-    have hpz : p z = 0 := hpS z hzS
-    have hmix := V.mixture z
-    rw [hpz] at hmix
-    have hzero := (Finset.sum_eq_zero_iff_of_nonneg
-      (fun j _ => mul_nonneg (V.prior_isPMF.nonneg j)
-        ((V.comp_isPMF j).nonneg z))).mp hmix i (Finset.mem_univ i)
-    exact (mul_eq_zero.mp hzero).resolve_left hi
+      Supported (support p) (V.comp i) := latent_comp_supported V i hi
   let points : V.ι → (α × β → ℝ) × ℝ := fun i =>
     if hi : V.prior i = 0 then (p, Phi p)
     else (V.comp i, Phi (V.comp i))
@@ -879,41 +845,21 @@ private lemma envelope_le_valid_objective
   have htop := hhull (dual_envelope_point_mem_convexHull hp)
   exact sub_nonpos.mp htop
 
-private lemma sum_smul_dualDirac (q : α × β → ℝ) :
-    (∑ z, q z • dualDirac z) = q := by
-  funext z'
-  simp [dualDirac]
-
 private lemma dualFunctional_expand
     (f : StrongDual ℝ ((α × β → ℝ) × ℝ))
     (q : α × β → ℝ) (t : ℝ) :
     f (q, t) =
       (∑ z, q z * f (dualDirac z, 0)) + t * f (0, 1) := by
-  have hq : q = ∑ z, q z • dualDirac z := (sum_smul_dualDirac q).symm
+  have hq : (q, (0 : ℝ)) = ∑ z, q z • (dualDirac z, (0 : ℝ)) := by
+    ext z
+    · simp [Prod.fst_sum, dualDirac]
+    · simp [Prod.snd_sum]
   calc
-    f (q, t) = f ((q, 0) + (0, t)) := by simp
-    _ = f (q, 0) + f (0, t) := f.map_add _ _
-    _ = f (∑ z, q z • (dualDirac z, 0)) + f (t • (0, 1)) := by
-      congr 2
-      · ext z'
-        · simp only [Prod.fst_sum, Prod.smul_fst]
-          exact congrFun hq z'
-        · simp only [Prod.snd_sum]
-          simp
-      · simp
+    f (q, t) = f ((q, 0) + t • (0, 1)) := by simp
+    _ = f (q, 0) + t * f (0, 1) := by rw [map_add, map_smul, smul_eq_mul]
     _ = (∑ z, q z * f (dualDirac z, 0)) + t * f (0, 1) := by
-      rw [map_sum]
-      simp_rw [map_smul]
-      simp only [smul_eq_mul]
-
-omit [DecidableEq α] [DecidableEq β] in
-private lemma sum_eq_sum_of_supported {S : Finset (α × β)}
-    {q : α × β → ℝ} (hqS : Supported S q) (F : α × β → ℝ) :
-    (∑ z, F z * q z) = ∑ z ∈ S, F z * q z := by
-  symm
-  apply Finset.sum_subset (Finset.subset_univ S)
-  intro z _ hzS
-  simp [hqS z hzS]
+      rw [hq, map_sum]
+      simp only [map_smul, smul_eq_mul]
 
 private lemma exists_approx_valid_certificate
     {p : α × β → ℝ} (hp : IsPMF p) {ε : ℝ} (hε : 0 < ε) :
@@ -992,30 +938,16 @@ private lemma restrictTo_objective (S : Finset (α × β))
 
 private lemma isClosed_valid (S : Finset (α × β)) :
     IsClosed {c : α × β → ℝ | Valid S c} := by
-  have heq : {c : α × β → ℝ | Valid S c} =
-      ⋂ q : α × β → ℝ, ⋂ (_ : IsPMF q), ⋂ (_ : Supported S q),
-        {c : α × β → ℝ | Phi q ≤ ∑ z ∈ S, c z * q z} := by
-    ext c
-    simp [Valid]
-  rw [heq]
-  apply isClosed_iInter
-  intro q
-  apply isClosed_iInter
-  intro hq
-  apply isClosed_iInter
-  intro hqS
+  simp only [Valid, Set.ofPred_forall]
+  refine isClosed_iInter fun q => isClosed_iInter fun _ => isClosed_iInter fun _ => ?_
   apply isClosed_le continuous_const
   fun_prop
 
+omit [Fintype α] [Fintype β] [DecidableEq α] [DecidableEq β] in
 private lemma isClosed_supported_set (S : Finset (α × β)) :
     IsClosed {c : α × β → ℝ | Supported S c} := by
-  have heq : {c : α × β → ℝ | Supported S c} =
-      ⋂ z ∈ (Finset.univ.filter fun z : α × β => z ∉ S),
-        {c : α × β → ℝ | c z = 0} := by
-    ext c
-    simp [Supported]
-  rw [heq]
-  exact isClosed_biInter fun z _ =>
+  simp only [Supported, Set.ofPred_forall]
+  exact isClosed_iInter fun z => isClosed_iInter fun _ =>
     isClosed_eq (continuous_apply z) continuous_const
 
 private def certificateSlice (p : α × β → ℝ) (T : ℝ) :
@@ -1174,17 +1106,8 @@ theorem exists_common_contact_pair {p : α × β → ℝ} (hp : IsPMF p) :
       ∀ v, L.prior v ≠ 0 → IsContact (support p) w (L.comp v) := by
   obtain ⟨L, hLopt⟩ := exists_tau_optimal_latent hp
   obtain ⟨w, hw, hwopt⟩ := exists_tau_optimal_kernel hp
-  have hpS : Supported (support p) p := supported_support_self p
   have hcompS (v : L.ι) (hv : L.prior v ≠ 0) :
-      Supported (support p) (L.comp v) := by
-    intro z hzS
-    have hpz : p z = 0 := hpS z hzS
-    have hmix := L.mixture z
-    rw [hpz] at hmix
-    have hzero := (Finset.sum_eq_zero_iff_of_nonneg
-      (fun j _ => mul_nonneg (L.prior_isPMF.nonneg j)
-        ((L.comp_isPMF j).nonneg z))).mp hmix v (Finset.mem_univ v)
-    exact (mul_eq_zero.mp hzero).resolve_left hv
+      Supported (support p) (L.comp v) := latent_comp_supported L v hv
   let c : α × β → ℝ := fun z => -3 * lg (w z)
   have hcertsum :
       (∑ z ∈ support p, c z * p z) =
@@ -1258,9 +1181,7 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
         intro z hzS
         rw [hq.2.2 z hzS]
       _ = ∑ z, q z := by
-        apply Finset.sum_subset (Finset.subset_univ S)
-        intro z _ hzS
-        exact hq.2.1 z hzS
+        simpa only [one_mul] using (sum_eq_sum_of_supported hq.2.1 (fun _ => 1)).symm
       _ = 1 := by simpa [mass] using hq.1.total
   let R : α → ℝ := fun x =>
     ∑ z ∈ S.filter (fun z => z.1 = x), w z * v z.2 ^ ((2 : ℝ) / 3)
@@ -1272,17 +1193,9 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
         (Real.rpow_nonneg (hv.nonneg z.2) _)
   have hLambdaRow (s : α → ℝ) :
       Lambda S w s v = ∑ x, R x * s x ^ ((2 : ℝ) / 3) := by
-    unfold Lambda
-    rw [← Finset.sum_fiberwise S Prod.fst
-      (fun z => w z * s z.1 ^ ((2 : ℝ) / 3) * v z.2 ^ ((2 : ℝ) / 3))]
-    apply Finset.sum_congr rfl
-    intro x _
-    dsimp [R]
-    rw [Finset.sum_mul]
-    apply Finset.sum_congr rfl
-    intro z hz
-    rw [(Finset.mem_filter.mp hz).2]
-    ring
+    simpa only [Lambda, R, mul_right_comm] using
+      sum_fiberwise_mul S Prod.fst
+        (fun z => w z * v z.2 ^ ((2 : ℝ) / 3)) (fun x => s x ^ ((2 : ℝ) / 3))
   have huMax : ∀ t : α → ℝ, IsPMF t →
       (∑ x, R x * t x ^ ((2 : ℝ) / 3)) ≤
         ∑ x, R x * u x ^ ((2 : ℝ) / 3) := by
@@ -1303,16 +1216,8 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
         (Real.rpow_nonneg (hu.nonneg z.1) _)
   have hLambdaCol (s : β → ℝ) :
       Lambda S w u s = ∑ y, Q y * s y ^ ((2 : ℝ) / 3) := by
-    unfold Lambda
-    rw [← Finset.sum_fiberwise S Prod.snd
-      (fun z => w z * u z.1 ^ ((2 : ℝ) / 3) * s z.2 ^ ((2 : ℝ) / 3))]
-    apply Finset.sum_congr rfl
-    intro y _
-    dsimp [Q]
-    rw [Finset.sum_mul]
-    apply Finset.sum_congr rfl
-    intro z hz
-    rw [(Finset.mem_filter.mp hz).2]
+    exact sum_fiberwise_mul S Prod.snd
+      (fun z => w z * u z.1 ^ ((2 : ℝ) / 3)) (fun y => s y ^ ((2 : ℝ) / 3))
   have hvMax : ∀ t : β → ℝ, IsPMF t →
       (∑ y, Q y * t y ^ ((2 : ℝ) / 3)) ≤
         ∑ y, Q y * v y ^ ((2 : ℝ) / 3) := by
@@ -1323,31 +1228,20 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
     apply (maximizer_rpow_two_thirds hQ hv hvMax).2
     rw [← hLambdaCol, hLambda]
     norm_num
-  have hmargX (z : α × β) : q z ≤ u z.1 := by
-    change q z ≤ push Prod.fst q z.1
-    unfold push
-    exact Finset.single_le_sum (fun a _ ↦ hq.1.nonneg a) (by simp)
-  have hmargY (z : α × β) : q z ≤ v z.2 := by
-    change q z ≤ push Prod.snd q z.2
-    unfold push
-    exact Finset.single_le_sum (fun a _ ↦ hq.1.nonneg a) (by simp)
+  have hmargX (z : α × β) : q z ≤ u z.1 := apply_le_push hq.1.nonneg Prod.fst z
+  have hmargY (z : α × β) : q z ≤ v z.2 := apply_le_push hq.1.nonneg Prod.snd z
   have hpropagate {z z' : α × β} (hzS : z ∈ S) (hz'S : z' ∈ S)
       (hzz' : Adj z z') (hzpos : 0 < q z) : 0 < q z' := by
     have hupos : 0 < u z.1 := hzpos.trans_le (hmargX z)
     have hvpos : 0 < v z.2 := hzpos.trans_le (hmargY z)
     rcases hzz' with hrow | hcol
     · have huz' : 0 < u z'.1 := by simpa [hrow] using hupos
-      have hterm :
-          0 < w z' * u z'.1 ^ ((2 : ℝ) / 3) :=
-        mul_pos (hw.1 z' hz'S) (Real.rpow_pos_of_pos huz' _)
-      have hterm_le :
-          w z' * u z'.1 ^ ((2 : ℝ) / 3) ≤ Q z'.2 := by
-        dsimp [Q]
-        exact Finset.single_le_sum
+      have hQpos : 0 < Q z'.2 := by
+        apply Finset.sum_pos'
           (fun a ha => mul_nonneg (hw.1 a (Finset.mem_filter.mp ha).1).le
             (Real.rpow_nonneg (hu.nonneg a.1) _))
-          (Finset.mem_filter.mpr ⟨hz'S, rfl⟩)
-      have hQpos : 0 < Q z'.2 := hterm.trans_le hterm_le
+        exact ⟨z', Finset.mem_filter.mpr ⟨hz'S, rfl⟩,
+          mul_pos (hw.1 z' hz'S) (Real.rpow_pos_of_pos huz' _)⟩
       have hvz' : 0 < v z'.2 :=
         lt_of_le_of_ne (hv.nonneg z'.2)
           (Ne.symm (mt (hQzero z'.2).mpr hQpos.ne'))
@@ -1355,17 +1249,12 @@ theorem contact_support_eq {S : Finset (α × β)} {w : α × β → ℝ} (hw : 
       exact mul_pos (mul_pos (hw.1 z' hz'S)
         (Real.rpow_pos_of_pos huz' _)) (Real.rpow_pos_of_pos hvz' _)
     · have hvz' : 0 < v z'.2 := by simpa [hcol] using hvpos
-      have hterm :
-          0 < w z' * v z'.2 ^ ((2 : ℝ) / 3) :=
-        mul_pos (hw.1 z' hz'S) (Real.rpow_pos_of_pos hvz' _)
-      have hterm_le :
-          w z' * v z'.2 ^ ((2 : ℝ) / 3) ≤ R z'.1 := by
-        dsimp [R]
-        exact Finset.single_le_sum
+      have hRpos : 0 < R z'.1 := by
+        apply Finset.sum_pos'
           (fun a ha => mul_nonneg (hw.1 a (Finset.mem_filter.mp ha).1).le
             (Real.rpow_nonneg (hv.nonneg a.2) _))
-          (Finset.mem_filter.mpr ⟨hz'S, rfl⟩)
-      have hRpos : 0 < R z'.1 := hterm.trans_le hterm_le
+        exact ⟨z', Finset.mem_filter.mpr ⟨hz'S, rfl⟩,
+          mul_pos (hw.1 z' hz'S) (Real.rpow_pos_of_pos hvz' _)⟩
       have huz' : 0 < u z'.1 :=
         lt_of_le_of_ne (hu.nonneg z'.1)
           (Ne.symm (mt (hRzero z'.1).mpr hRpos.ne'))
@@ -1426,69 +1315,35 @@ theorem contact_hypercontractive {S : Finset (α × β)} {w : α × β → ℝ} 
     exact Finset.sum_nonneg fun y _ =>
       mul_nonneg (hqY.nonneg y) (Real.rpow_nonneg (hg y) _)
   by_cases hAz : A = 0
-  · have hAterm :
-        ∀ x, mX q x * f x ^ ((3 : ℝ) / 2) = 0 := by
-      intro x
-      apply (Finset.sum_eq_zero_iff_of_nonneg
-        (fun a _ => mul_nonneg (hqX.nonneg a) (Real.rpow_nonneg (hf a) _))).mp
-      · exact hAz
-      · exact Finset.mem_univ x
-    have hleft :
-        (∑ z ∈ S, q z * f z.1 * g z.2) = 0 := by
+  · have hAterm := weighted_rpow_sum_eq_zero hqX.nonneg hf hAz
+    have hleft : (∑ z ∈ S, q z * f z.1 * g z.2) = 0 := by
       apply Finset.sum_eq_zero
       intro z hzS
       rw [hq.2.2 z hzS]
-      rcases mul_eq_zero.mp (hAterm z.1) with hx | hfpow
+      rcases hAterm z.1 with hx | hfzero
       · simp [hx]
-      · have hfzero : f z.1 = 0 :=
-          (Real.rpow_eq_zero (hf z.1) (by norm_num)).mp hfpow
-        simp [hfzero]
+      · simp [hfzero]
     rw [hleft, hAz]
     positivity
   · by_cases hBz : B = 0
-    · have hBterm :
-          ∀ y, mY q y * g y ^ ((3 : ℝ) / 2) = 0 := by
-        intro y
-        apply (Finset.sum_eq_zero_iff_of_nonneg
-          (fun b _ => mul_nonneg (hqY.nonneg b) (Real.rpow_nonneg (hg b) _))).mp
-        · exact hBz
-        · exact Finset.mem_univ y
-      have hleft :
-          (∑ z ∈ S, q z * f z.1 * g z.2) = 0 := by
+    · have hBterm := weighted_rpow_sum_eq_zero hqY.nonneg hg hBz
+      have hleft : (∑ z ∈ S, q z * f z.1 * g z.2) = 0 := by
         apply Finset.sum_eq_zero
         intro z hzS
         rw [hq.2.2 z hzS]
-        rcases mul_eq_zero.mp (hBterm z.2) with hy | hgpow
+        rcases hBterm z.2 with hy | hgzero
         · simp [hy]
-        · have hgzero : g z.2 = 0 :=
-            (Real.rpow_eq_zero (hg z.2) (by norm_num)).mp hgpow
-          simp [hgzero]
+        · simp [hgzero]
       rw [hleft, hBz]
       positivity
     · have hApos : 0 < A := lt_of_le_of_ne hA (Ne.symm hAz)
       have hBpos : 0 < B := lt_of_le_of_ne hB (Ne.symm hBz)
       let u : α → ℝ := fun x => (mX q x * f x ^ ((3 : ℝ) / 2)) / A
       let v : β → ℝ := fun y => (mY q y * g y ^ ((3 : ℝ) / 2)) / B
-      have hu : IsPMF u := by
-        constructor
-        · intro x
-          exact div_nonneg
-            (mul_nonneg (hqX.nonneg x) (Real.rpow_nonneg (hf x) _)) hA
-        · unfold mass
-          dsimp [u]
-          rw [← Finset.sum_div]
-          change A / A = 1
-          exact div_self hAz
-      have hv : IsPMF v := by
-        constructor
-        · intro y
-          exact div_nonneg
-            (mul_nonneg (hqY.nonneg y) (Real.rpow_nonneg (hg y) _)) hB
-        · unfold mass
-          dsimp [v]
-          rw [← Finset.sum_div]
-          change B / B = 1
-          exact div_self hBz
+      have hu : IsPMF u := isPMF_normalize
+        (fun x => mul_nonneg (hqX.nonneg x) (Real.rpow_nonneg (hf x) _)) hApos
+      have hv : IsPMF v := isPMF_normalize
+        (fun y => mul_nonneg (hqY.nonneg y) (Real.rpow_nonneg (hg y) _)) hBpos
       have hfpow (x : α) :
           (f x ^ ((3 : ℝ) / 2)) ^ ((2 : ℝ) / 3) = f x := by
         rw [← Real.rpow_mul (hf x)]
