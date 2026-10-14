@@ -157,19 +157,17 @@ lemma contact_rootRatioY_cube_mul_marginal {S : Finset (X × Y)} {w P R : Law X 
 
 lemma contact_rootRatioX_cube {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) : expect P (fun z => (rootRatioX P R z.1)^3) = 1 := by
-  calc
-    expect P (fun z => (rootRatioX P R z.1)^3) = ∑ x, stoch_to_det.mX P x * (rootRatioX P R x)^3 := by
-      exact (stoch_to_det.sum_push_mul Prod.fst P (fun x => (rootRatioX P R x)^3)).symm
-    _ = ∑ x, stoch_to_det.mX R x := Finset.sum_congr rfl (fun x _ => contact_rootRatioX_cube_mul_marginal hpair x)
-    _ = 1 := by simpa only [stoch_to_det.mass] using (stoch_to_det.isPMF_push (f := Prod.fst) hpair.2.2.1.1).total
+  unfold expect
+  rw [← stoch_to_det.sum_push_mul Prod.fst P (fun x => (rootRatioX P R x)^3)]
+  simp only [contact_rootRatioX_cube_mul_marginal hpair]
+  exact (stoch_to_det.isPMF_push (f := Prod.fst) hpair.2.2.1.1).total
 
 lemma contact_rootRatioY_cube {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) : expect P (fun z => (rootRatioY P R z.2)^3) = 1 := by
-  calc
-    expect P (fun z => (rootRatioY P R z.2)^3) = ∑ y, stoch_to_det.mY P y * (rootRatioY P R y)^3 := by
-      exact (stoch_to_det.sum_push_mul Prod.snd P (fun y => (rootRatioY P R y)^3)).symm
-    _ = ∑ y, stoch_to_det.mY R y := Finset.sum_congr rfl (fun y _ => contact_rootRatioY_cube_mul_marginal hpair y)
-    _ = 1 := by simpa only [stoch_to_det.mass] using (stoch_to_det.isPMF_push (f := Prod.snd) hpair.2.2.1.1).total
+  unfold expect
+  rw [← stoch_to_det.sum_push_mul Prod.snd P (fun x => (rootRatioY P R x)^3)]
+  simp only [contact_rootRatioY_cube_mul_marginal hpair]
+  exact (stoch_to_det.isPMF_push (f := Prod.snd) hpair.2.2.1.1).total
 
 lemma contact_rootRatioX_square {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) :
@@ -201,9 +199,8 @@ lemma contact_expect_add (P : Law X Y) (F G : X × Y → ℝ) :
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_expect_const {P : Law X Y} (hP : stoch_to_det.IsPMF P) (a : ℝ) :
     expect P (fun _ => a) = a := by
-  simp only [expect, ← Finset.sum_mul]
-  have hp : ∑ z, P z = 1 := hP.total
-  rw [hp, one_mul]
+  change (∑ z, P z * a) = a
+  rw [← Finset.sum_mul, hP.sum_eq_one, one_mul]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_expect_nonneg {P : Law X Y} (hP : stoch_to_det.IsPMF P)
@@ -255,8 +252,7 @@ lemma contact_weighted_sq_zero {P : Law X Y} (hP : stoch_to_det.IsPMF P)
   have ht : P z * (F z)^2 = 0 :=
     (Finset.sum_eq_zero_iff_of_nonneg
       (fun a _ => mul_nonneg (hP.nonneg a) (sq_nonneg (F a)))).mp hs z (Finset.mem_univ z)
-  have hsq : (F z)^2 = 0 := (mul_eq_zero.mp ht).resolve_left hz.ne'
-  nlinarith [sq_nonneg (F z)]
+  exact sq_eq_zero_iff.mp ((mul_eq_zero.mp ht).resolve_left hz.ne')
 
 lemma contact_separation {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R)
@@ -310,35 +306,26 @@ lemma contact_q_expect_sub (P : Law X Y) (F G : X × Y → ℝ) :
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_q_expect_scale (P : Law X Y) (a : ℝ) (F : X × Y → ℝ) :
     expect P (fun z => a * F z) = a * expect P F := by
-  simp only [expect]
-  simp_rw [show ∀ z, P z * (a * F z) = a * (P z * F z) by intro z; ring]
-  exact (Finset.mul_sum _ _ _).symm
+  simp only [expect, Finset.mul_sum, mul_left_comm]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_q_expect_shift_prod {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F G : X × Y → ℝ) (a b : ℝ) :
     expect P (fun z => (F z + a) * (G z + b)) =
       expect P (fun z => F z * G z) + a * expect P G + b * expect P F + a * b := by
-  calc
-    _ = expect P (fun z => ((F z * G z + a * G z) + b * F z) + a * b) := by
-      congr 1
-      funext z
-      ring
-    _ = _ := by
-      rw [contact_expect_add, contact_expect_add, contact_expect_add, contact_q_expect_scale, contact_q_expect_scale,
-        contact_expect_const hP]
+  conv_rhs => rw [← contact_expect_const hP (a * b)]
+  simp only [expect, Finset.mul_sum, ← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro z _
+  ring
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma contact_q_expect_shift_sq {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X × Y → ℝ) (a : ℝ) :
     expect P (fun z => (F z + a)^2) = expect P (fun z => (F z)^2) +
       2 * a * expect P F + a^2 := by
-  calc
-    _ = expect P (fun z => (F z + a) * (F z + a)) := by simp only [pow_two]
-    _ = _ := by
-      rw [contact_q_expect_shift_prod hP]
-      simp only [← pow_two]
-      ring
+  simp only [pow_two, contact_q_expect_shift_prod hP]
+  ring
 
 lemma contact_q_mixed_moments {P R : Law X Y}
     (hcond_g2 : ∀ x, (∑ y, P (x,y) * (rootRatioY P R y)^2) =
@@ -405,20 +392,13 @@ lemma contact_quartic_identity {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
         ring
       _ = _ := by
         simp only [contact_expect_add, contact_q_expect_sub, contact_q_expect_scale, contact_expect_const hP]
-  have huv : expect P (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2) =
-      expect P (fun z => rootRatioX P R z.1 * rootRatioY P R z.2) -
-      expect P (fun z => rootRatioX P R z.1) - expect P (fun z => rootRatioY P R z.2) + 1 := by
-    calc
-      _ = expect P (fun z => ((rootRatioX P R z.1 * rootRatioY P R z.2 - rootRatioX P R z.1) - rootRatioY P R z.2) + 1) := by
-        congr 1
-        funext z
-        rw [hf, hg]
-        ring
-      _ = _ := by rw [contact_expect_add, contact_q_expect_sub, contact_q_expect_sub, contact_expect_const hP]
+  have huv := contact_q_expect_shift_prod hP
+    (fun z => rootRatioX P R z.1) (fun z => rootRatioY P R z.2) (-1) (-1)
+  simp only [← sub_eq_add_neg, ← hf, ← hg] at huv
   rw [hm.1, hm.2, h22, hf2, hg2] at hj
-  rw [hj, huv]
+  rw [hj]
   unfold separation defectX defectY
-  ring
+  linarith [huv]
 
 lemma contact_quarticMoment_bound {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
     (hU2 : expect P (fun z => (stoch_to_det.contactSecantX P R z.1)^2) = 2 * defectX P R - defectY P R)
@@ -430,17 +410,11 @@ lemma contact_quarticMoment_bound {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
         expect P (fun z => (G z.2)^2)) :
     quarticMoment P R ≤ 6 * defectX P R * defectY P R - (separation P R)^2 := by
   have hU : expect P (fun z => stoch_to_det.contactSecantX P R z.1) = -defectX P R := by
-    have he : expect P (fun z => rootRatioX P R z.1) = expect P (fun z => stoch_to_det.contactSecantX P R z.1) + 1 := by
-      change expect P (fun z => stoch_to_det.contactSecantX P R z.1 + 1) = _
-      rw [contact_expect_add, contact_expect_const hP]
-    unfold defectX
-    linarith
+    simp only [defectX, rootRatioX, contact_expect_add, contact_expect_const hP]
+    ring
   have hV : expect P (fun z => stoch_to_det.contactSecantY P R z.2) = -defectY P R := by
-    have he : expect P (fun z => rootRatioY P R z.2) = expect P (fun z => stoch_to_det.contactSecantY P R z.2) + 1 := by
-      change expect P (fun z => stoch_to_det.contactSecantY P R z.2 + 1) = _
-      rw [contact_expect_add, contact_expect_const hP]
-    unfold defectY
-    linarith
+    simp only [defectY, rootRatioY, contact_expect_add, contact_expect_const hP]
+    ring
   have hF : expect P (fun z => stoch_to_det.contactSecantX P R z.1 + defectX P R) = 0 := by
     rw [contact_expect_add, contact_expect_const hP, hU]
     ring
@@ -450,14 +424,13 @@ lemma contact_quarticMoment_bound {P R : Law X Y} (hP : stoch_to_det.IsPMF P)
   have hh := hhessian (fun x => stoch_to_det.contactSecantX P R x + defectX P R) (fun y => stoch_to_det.contactSecantY P R y + defectY P R) hF hG
   rw [contact_q_expect_shift_prod hP, contact_q_expect_shift_sq hP, contact_q_expect_shift_sq hP,
     hU, hV, hU2, hV2] at hh
-  have hs : separation P R = defectX P R + defectY P R := by unfold separation defectX defectY; ring
+  have hs : separation P R = defectX P R + defectY P R := rfl
   rw [hs] at hquartic ⊢
   nlinarith [hquartic]
 
 lemma contact_scalar_bound (P R : Law X Y) :
     6 * defectX P R * defectY P R - (separation P R)^2 ≤ (separation P R)^2 / 2 := by
-  have hs : separation P R = defectX P R + defectY P R := by unfold separation defectX defectY; ring
-  rw [hs]
+  unfold separation
   nlinarith [sq_nonneg (defectX P R - defectY P R)]
 
 lemma contact_hessian_affine_pos {ι : Type*} [Fintype ι] (F : ι → ℝ) :
@@ -625,8 +598,7 @@ theorem contact_moments {S : Finset (X × Y)} {w P R : Law X Y}
   have hzS : ∀ z, 0 < P z → z ∈ S := by
     intro z hz
     by_contra hn
-    have hp := hP.2.1 z hn
-    linarith
+    exact hz.ne' (hP.2.1 z hn)
   refine ⟨(fun x hx => contact_cond_rootRatioY_square hpair hx),
     (fun y hy => contact_cond_rootRatioX_square hpair hy),
     contact_rootRatioX_cube hpair, contact_rootRatioY_cube hpair, hf2, hg2, contact_separation hpair hr he.2.2,

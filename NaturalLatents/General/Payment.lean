@@ -37,10 +37,7 @@ omit [DecidableEq X] [DecidableEq Y] in
 /-- Posterior overlap is symmetric. -/
 lemma payment_pairMass_comm {p : Law X Y} (L : stoch_to_det.Latent p) (i j : L.ι) :
     pairMass L i j = pairMass L j i := by
-  unfold pairMass
-  apply Finset.sum_congr rfl
-  intro z _
-  ring
+  simp only [pairMass, mul_assoc, mul_left_comm, mul_comm]
 
 omit [DecidableEq X] [DecidableEq Y] in
 lemma payment_pairMass_nonneg {p : Law X Y} (hp : stoch_to_det.IsPMF p)
@@ -81,11 +78,8 @@ lemma payment_push_triple {A C : Type*} [Fintype A] [Fintype C]
     stoch_to_det.push (fun u : A × A × C => (u.2.1,u.2.2,u.1)) q =
       fun v => q (v.2.2,v.1,v.2.1) := by
   funext ⟨j,c,i⟩
-  unfold stoch_to_det.push
-  rw [Finset.sum_filter, Fintype.sum_prod_type]
-  simp_rw [Fintype.sum_prod_type]
-  simp only [Prod.mk.injEq,ite_and]
-  simp_rw [payment_sum_ite]
+  simp only [stoch_to_det.push, Finset.sum_filter, Fintype.sum_prod_type,
+    Prod.mk.injEq, ite_and]
   simp
 
 lemma payment_push_pair {A C : Type*} [Fintype A] [Fintype C]
@@ -296,11 +290,7 @@ lemma payment_coordinate_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p)
     intro i c
     simp_rw [hcell]
     rw [Finset.sum_comm]
-    have hh : ∀ z, (∑ j, if f z = c then replicaJoint D.L (i,j,z) else 0) =
-        if f z = c then D.L.joint (i,z) else 0 := by
-      intro z
-      by_cases hz : f z = c <;> simp [hz,replica_sum_replica_second]
-    simp_rw [hh]
+    simp_rw [payment_sum_ite, replica_sum_replica_second]
     dsimp [P]
     simp only [stoch_to_det.push, Finset.sum_filter, Finset.mul_sum, stoch_to_det.Latent.joint]
     apply Finset.sum_congr rfl
@@ -374,13 +364,7 @@ lemma payment_mismatch {p : Law X Y} (hp : stoch_to_det.IsPMF p) (L : stoch_to_d
     unfold mismatch stoch_to_det.SharedRace.categoricalMismatch
     simp only [mul_sub, mul_one, Finset.sum_sub_distrib, Finset.mul_sum]
     rw [hp.sum_eq_one,Finset.sum_comm]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i _
-    unfold pairMass
-    apply Finset.sum_congr rfl
-    intro z _
-    ring
+    simp only [pairMass, pow_two, mul_assoc]
   rw [hd]
   linarith only [htotal,hsplit]
 
@@ -478,24 +462,8 @@ theorem mismatch_payment {p : Law X Y} (hp : stoch_to_det.IsPMF p) (D : CommonSe
       exact mul_le_mul_of_nonneg_left
         (hPC _ _ _ _ (hpair i j (Finset.mem_filter.mp hj).2))
         (payment_pairMass_nonneg hp D.L i j)
-    have hlhs : gamma*(∑ i, ∑ j ∈ Finset.univ.filter (fun j => i ≠ j), pairMass D.L i j) =
-        ∑ i, ∑ j ∈ Finset.univ.filter (fun j => i ≠ j), pairMass D.L i j * gamma := by
-      simp only [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro i _
-      apply Finset.sum_congr rfl
-      intro j _
-      ring
-    rw [hlhs]
-    apply le_trans hle
-    apply le_of_eq
-    simp only [mul_add,Finset.sum_add_distrib,Finset.mul_sum]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i _
-    apply Finset.sum_congr rfl
-    intro j _
-    ring
+    simpa only [Finset.mul_sum, mul_add, Finset.sum_add_distrib,
+      mul_assoc, mul_left_comm, mul_comm] using hle
   calc
     gamma*mismatch D.L ≤ _ := hcharge
     _ ≤ mediation D.L + beta*replicaBudget D.L := add_le_add

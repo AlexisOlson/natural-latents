@@ -52,10 +52,8 @@ lemma pairCharge_average_KL (Ip Im Vp Vm Delta y : ℝ)
     (hIm : Delta ^ 2 / (4 * Vm) ≤ Im) :
     y ^ 2 / (64 * ((Vp + Vm) / 2)) ≤ (Ip + Im) / 2 := by
   have hDel0 : 0 ≤ Delta := by linarith
-  have hproduct : 0 ≤ (Delta - y / 4) * (Delta + y / 4) := by
-    apply mul_nonneg
-    · linarith
-    · linarith
+  have hproduct := mul_nonneg (sub_nonneg.mpr hDelta)
+    (show 0 ≤ Delta + y / 4 by positivity)
   have hsquare : y ^ 2 ≤ 16 * Delta ^ 2 := by
     nlinarith only [hproduct]
   have hipmul := (div_le_iff₀ (show 0 < 4 * Vp by positivity)).mp hIp
@@ -73,10 +71,8 @@ lemma pairCharge_average_KL (Ip Im Vp Vm Delta y : ℝ)
   have hupper := mul_le_mul_of_nonneg_right hgram
     (show 0 ≤ 16 * (Ip + Im) by positivity)
   have hfinal : y ^ 2 ≤ 16 * (Vp + Vm) * (Ip + Im) := by
-    by_contra h
-    have hgap : 0 < y ^ 2 - 16 * (Vp + Vm) * (Ip + Im) := by linarith
-    have hpositive := mul_pos (show 0 < Vp + Vm by positivity) hgap
-    nlinarith only [hcombined, hupper, hpositive]
+    apply (mul_le_mul_iff_of_pos_left (show 0 < Vp + Vm by positivity)).mp
+    nlinarith only [hcombined, hupper]
   apply (div_le_iff₀ (show 0 < 64 * ((Vp + Vm) / 2) by positivity)).2
   nlinarith only [hfinal]
 
@@ -136,9 +132,7 @@ omit [DecidableEq X] [DecidableEq Y] in
 lemma pairCharge_expect_centered_square {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     (F : X × Y → ℝ) :
     expect P (fun z => (F z - expect P F)^2) = expect P (fun z => (F z)^2) - (expect P F)^2 := by
-  have h := contact_q_expect_shift_sq hP F (-expect P F)
-  have heq : (fun z => (F z - expect P F)^2) = (fun z => (F z + -expect P F)^2) := by rfl
-  rw [heq,h]
+  simp only [sub_eq_add_neg, contact_q_expect_shift_sq hP]
   ring
 
 omit [DecidableEq X] [DecidableEq Y] in
@@ -151,12 +145,9 @@ lemma pairCharge_expect_sq_ge_sq_expect {P : Law X Y} (hP : stoch_to_det.IsPMF P
 lemma pairCharge_quarticMoment_ge_secantProduct_mean_sq {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) :
     (expect P (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2))^2 ≤ quarticMoment P R := by
-  have h := pairCharge_expect_sq_ge_sq_expect hpair.2.1.1 (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2)
-  convert h using 1
-  unfold quarticMoment
-  congr 1
-  funext z
-  ring
+  simpa only [mul_pow, quarticMoment] using
+    pairCharge_expect_sq_ge_sq_expect hpair.2.1.1
+      (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2)
 
 lemma pairCharge_quarticRatio_upper {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) :
@@ -212,14 +203,9 @@ lemma pairCharge_secant_means {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) :
     expect P (fun z => stoch_to_det.contactSecantX P R z.1) = -defectX P R ∧
       expect P (fun z => stoch_to_det.contactSecantY P R z.2) = -defectY P R := by
-  have hEf : expect P (fun z => rootRatioX P R z.1) = expect P (fun z => stoch_to_det.contactSecantX P R z.1) + 1 := by
-    change expect P (fun z => stoch_to_det.contactSecantX P R z.1 + 1) = _
-    rw [contact_expect_add, contact_expect_const hpair.2.1.1]
-  have hEg : expect P (fun z => rootRatioY P R z.2) = expect P (fun z => stoch_to_det.contactSecantY P R z.2) + 1 := by
-    change expect P (fun z => stoch_to_det.contactSecantY P R z.2 + 1) = _
-    rw [contact_expect_add, contact_expect_const hpair.2.1.1]
-  unfold defectX defectY
-  constructor <;> linarith
+  simp only [defectX, defectY, rootRatioX, rootRatioY,
+    contact_expect_add, contact_expect_const hpair.2.1.1]
+  constructor <;> ring
 
 omit [DecidableEq X] [DecidableEq Y] in
 /-- Expansion shared by the two orientations of the mixed shifted moment. -/
@@ -228,14 +214,11 @@ lemma pairCharge_expect_shift_mixed {P : Law X Y} (hP : stoch_to_det.IsPMF P)
     expect P (fun z => (F z + 1) * (G z + 1)^2) =
       expect P (fun z => F z * (G z)^2) + 2 * expect P (fun z => F z * G z) +
       expect P F + expect P (fun z => (G z)^2) + 2 * expect P G + 1 := by
-  calc
-    _ = expect P (fun z => (((((F z * (G z)^2) + 2 * (F z * G z)) + F z) +
-        (G z)^2) + 2 * G z) + 1) := by
-      congr 1
-      funext z
-      ring
-    _ = _ := by
-      simp only [contact_expect_add, contact_q_expect_scale, contact_expect_const hP]
+  conv_rhs => rw [← contact_expect_const hP 1]
+  simp only [expect, Finset.mul_sum, ← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro z _
+  ring
 
 lemma pairCharge_secant_mixed_moments {S : Finset (X × Y)} {w P R : Law X Y}
     (hpair : CommonSupportPair S w P R) :
@@ -256,13 +239,7 @@ lemma pairCharge_secant_mixed_moments {S : Finset (X × Y)} {w P R : Law X Y}
       2 * expect P (fun z => stoch_to_det.contactSecantX P R z.1 * stoch_to_det.contactSecantY P R z.2) +
       expect P (fun z => stoch_to_det.contactSecantY P R z.2) + expect P (fun z => (stoch_to_det.contactSecantX P R z.1)^2) +
       2 * expect P (fun z => stoch_to_det.contactSecantX P R z.1) + 1 := by
-    calc
-      _ = expect P (fun z => (stoch_to_det.contactSecantY P R z.2 + 1) * (stoch_to_det.contactSecantX P R z.1 + 1)^2) := by
-        congr 1
-        funext z
-        unfold rootRatioX rootRatioY
-        ring
-      _ = _ := by simpa only [mul_comm] using hVraw
+    simpa only [rootRatioX, rootRatioY, mul_comm] using hVraw
   rw [hmix.2, hm.rootRatioX_square, hmeans.1, hmeans.2, hm.secantY_square] at hU
   rw [hmix.1, hm.rootRatioY_square, hmeans.1, hmeans.2, hm.secantX_square] at hV
   have hEf : expect P (fun z => rootRatioX P R z.1) = 1 - defectX P R := by unfold defectX; ring
@@ -379,12 +356,8 @@ lemma pairCharge_expect_product (P : Law X Y) (F : X → ℝ) (G : Y → ℝ) :
   rw [contact_expect_fst, contact_expect_snd]
   unfold expect marginalProduct
   rw [Fintype.sum_prod_type, Finset.sum_mul]
-  apply Finset.sum_congr rfl
-  intro x _
-  rw [Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro y _
-  ring
+  simp only [Finset.mul_sum]
+  simp only [mul_assoc, mul_left_comm, mul_comm]
 
 lemma pairCharge_expect_product_fst {P : Law X Y} (hP : stoch_to_det.IsPMF P) (F : X → ℝ) :
     expect (marginalProduct P) (fun z => F z.1) = expect P (fun z => F z.1) := by
@@ -443,10 +416,7 @@ lemma pairCharge_fixed_endpoint_table {S : Finset (X × Y)} {w P R : Law X Y}
       pairCharge_expect_product_snd hpair.2.1.1,hu,hv,contact_expect_const (pairCharge_product_isPMF hpair.2.1.1)]
     linarith
   have hH2 : expect P (fun z => (H z)^2) = quarticMoment P R := by
-    unfold H quarticMoment
-    congr 1
-    funext z
-    ring
+    simp only [H, quarticMoment, mul_pow]
   have hH2Q : expect (marginalProduct P) (fun z => (H z)^2) =
       9*defectX P R*defectY P R-2*(separation P R)^2 := by
     simp only [H,mul_pow]
@@ -533,20 +503,11 @@ lemma pairCharge_fixed_coefficient_data {S : Finset (X × Y)} {w P R : Law X Y}
     rw [hsquare (marginalProduct P),hH2Q,hHLQ,hL2Q]
   constructor
   · rw [hFP,hFQ]
-    dsimp only [quarticRatio]
-    change (t+quarticMoment P R)/(4*t)-defectX P R*defectY P R/t =
-      (1+t*(quarticMoment P R/t^2))/4-t*(defectX P R*defectY P R/t^2)
+    dsimp only [quarticRatio, t] at hden ⊢
     field_simp [hden]
   · rw [pairCharge_expect_centered_square (pairCharge_product_isPMF hpair.2.1.1),
       pairCharge_expect_centered_square hpair.2.1.1,hFP,hFQ,hFP2,hFQ2]
-    dsimp only [quarticRatio]
-    change _ = (9*(defectX P R*defectY P R/t^2)-2)/3+(quarticMoment P R/t^2)/6-
-      t^2*(defectX P R*defectY P R/t^2)^2/4-
-      t*(defectX P R*defectY P R/t^2)*((1+t*(quarticMoment P R/t^2))/4)/6-
-      ((1+t*(quarticMoment P R/t^2))/4)^2/12+
-      2*c*t*((3/8:ℝ)-2*(defectX P R*defectY P R/t^2)-(quarticMoment P R/t^2)/6+
-        t*((defectX P R*defectY P R/t^2)/3+(quarticMoment P R/t^2)/24))+
-      c^2*t*((7/12:ℝ)-t/2+2*t*(defectX P R*defectY P R/t^2)/3+t*(quarticMoment P R/t^2)/12)
+    dsimp only [quarticRatio, t] at hden ⊢
     field_simp [hden]
     ring
 
