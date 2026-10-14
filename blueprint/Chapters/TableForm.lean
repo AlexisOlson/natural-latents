@@ -150,22 +150,22 @@ through `score_of_table`. `NaturalLatents.T_le_mul_tau` states the constant as t
 
 # What the formal argument proves
 
-*The optima.* The Lean relates the frozen optima to the internal ones only by inequalities:
-$`T_\star(p)\le D(\Gamma)=T(p)` for the code $`\Gamma` of Lemma T6.2, and $`D(\Gamma)\le c\,\mathrm{SE}(q)` for every
-admissible $`q` (Lemmas T6.4 and T6.5). The formal argument needs only these inequalities; no theorem states
-$`T_\star=T` or $`\tau_\star=\tau`.
+*The optima.* For the code $`\Gamma` of Lemma T6.2 the Lean shows $`T_\star(p)\le D(\Gamma)=T(p)`, and
+$`D(\Gamma)\le c\,\mathrm{SE}(q)` for every admissible $`q` (Lemmas T6.4 and T6.5); the headline theorems need only
+these inequalities. Inside the proof of `table_of_score`, the error of that code is also identified with the frozen
+optimum, so $`T_\star(p)=T(p)` holds there. No separate theorem states it, and none states $`\tau_\star=\tau`.
 
 *The definitions.* The frozen `Probability`, `H`, `Hcond`, `CMI`, `StochasticError`, `DeterministicError` and
 `deterministicTable` agree with the definitions of `TableInformationProof.lean` and `TableBoundProof.lean`
 definitionally, by unfolding. The kernel checks this when it checks `table`; no separate lemma states it.
 
-*The two claims.* The repository proves both directions between the two claims, with the same constant:
-`score_of_table` from the table claim to the score claim, and `table_of_score` back, through an optimal code (Lemma
-T6.2) and the lower bound $`0` on every admissible $`\mathrm{SE}(q)`. So the equivalence remarked in the docstring of
-`ScoreClaim` holds in Lean. The docstrings' further remarks (attainment, relabelling) are informal comments that the
-proof does not use.
+*The two claims.* Both implications keep the supplied constant $`c`: `score_of_table` proves
+`TableClaim → ScoreClaim`, and `table_of_score` proves the converse. The converse uses an optimal code (Lemma T6.2),
+so the attainment of the deterministic optimum and the relabelling of its labels into $`[N]`, and the lower bound
+$`0` on every admissible $`\mathrm{SE}(q)`; it does not need the stochastic infimum to be attained. So the
+equivalence remarked in the docstring of `ScoreClaim` holds in Lean.
 
-*Remark (equality of the optima; not formalized).* In fact $`T_\star(p)=T(p)` and $`\tau_\star(p)=\tau(p)` for every
+*Remark (equality of the optima).* In fact $`T_\star(p)=T(p)` and $`\tau_\star(p)=\tau(p)` for every
 finite law $`p`, with $`T` and $`\tau` in bits. First, all four optima are finite and lie below each of their members. Every admissible
 $`\mathrm{SE}(q)` is a sum of three conditional mutual informations of a probability law, hence nonnegative
 (`stoch_to_det.condMI_nonneg`, `NaturalLatents/Upstream/Entropy.lean`, after `latentError_eq_core`). Every latent error
