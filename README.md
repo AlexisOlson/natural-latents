@@ -51,16 +51,20 @@ Carathéodory's theorem a latent with at most $`|X||Y|+1`$ values has the same $
 the three stochastic errors is at most $`\varepsilon`$, it gives each deterministic error at most
 $`3 \cdot \tfrac{13999}{2000}\,\varepsilon`$.
 
-A first version of this repository proved the smaller constant $`2789/400 = 6.9725`$ with a different pair charge
-(charge A); it remains in the commit history. This version uses charge C, whose proof for separations $`s\le1`$ closes
-with a scalar certificate, three quartics with fifteen rational coefficients in all, checked by exact arithmetic (for
-$`s\ge1`$ the separation price alone pays), at a cost of about $`0.027`$ in the constant; [docs/landscape.md](docs/landscape.md) compares the two.
+The pair charge (step 3 below) has more than one proof, and the choice trades the constant against how the proof
+reads. A first version of this repository proved the smaller constant $`2789/400 = 6.9725`$ with the pair charge
+$`PC(1/10,\,3/25)`$, whose paper proof uses no computer-found numbers but is long; it is kernel-verified at commit
+[`e18975a`](https://github.com/AlexisOlson/natural-latents/tree/e18975a). This version uses $`PC(23/250,\,7/60)`$,
+whose proof is shorter: for separations $`s\le1`$, one bound of the information below by a positive quadratic form,
+then a one-variable inequality closed by a certificate of fifteen computer-found rational coefficients (three
+quartics), checked by exact arithmetic; for $`s\ge1`$ the separation price alone pays. It costs about $`0.027`$ in the
+constant. [docs/landscape.md](docs/landscape.md) lists these and the other routes, with the status of each.
 
 ## The formal statements
 
 The definitions and both claims are in [NaturalLatents/Statement.lean](NaturalLatents/Statement.lean), about 110
 lines that import only Mathlib; reading it is the one Lean step worth taking to check what is claimed. Its
-probability-table definitions are those of the readable theorem of pull request #6. The file is written from
+probability-table definitions are those of Jeremy Gillen's readable theorem in pull request #6. The file is written from
 probability tables using Mathlib's real logarithm, finite sums and infima, and it contains no proofs:
 
 - `TableClaim`: there is a real $`c`$ with $`0 \le c < 7`$ such that for every finite law $`p`$ some deterministic code

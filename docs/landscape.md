@@ -19,28 +19,46 @@ Each row is a bound $`T(p)\le C\,\tau(p)`$ for every finite law. In the rows who
 own", each step carries the status shown and the assembled pricing is exact arithmetic. The author's rows
 keep PR #6's ledger and powered-reference race coding, priced by this repository's analysis of the race (the Gamma
 value $`j(a)`$ and caps or tables for it); they differ in the pair charge, in how it is summed,
-and in how the race price is capped. "Rests on" names the machine inputs, if any (defined in the
-[status key](#7-status-key-and-credit)). PR #6 means [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6)
+and in how the race price is capped. "Machine inputs" names the machine inputs, if any (defined in the
+[status key](#7-status-key-and-credit)). The table keeps short tags; the exact fraction for $`C`$ and every
+qualification are in the numbered notes below it. PR #6 means [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6)
 of DLorell/stoch_to_det at its head `7b41957d`.
 
-| $`C`$ (exact) | $`\approx`$ | Status | Rests on | Credit | Frontier |
-|---|---|---|---|---|---|
-| $`521115692681\text/75036146600`$ | 6.94486 | `paper proof` | fitted pair charge; 81 interval-certified caps on the race price | the author, unpublished | **yes**, both readings: lowest constant listed |
-| $`500429818681873\text/72047805525880`$ | 6.94580 | `kernel-verified` in an unpublished standalone Lean file against PR #6; no pinned axiom audit | the same fitted pair charge; race prices from fitted tables checked in Lean; no interval input | the author, unpublished | **yes**, whole-route reading; also the lowest `kernel-verified` constant listed |
-| $`18683211392538852259\text/2689172049828207160`$ | 6.94757 | `paper proof` | the same fitted pair charge; race cap by hand; no interval input | the author, unpublished | no: 6.94580 has the same kind of inputs and a smaller constant |
-| $`6586364623667\text/947461643720`$ | 6.95159 | `paper proof` | computer algebra for the pair charge; interval-certified race caps | the author, unpublished | no |
-| $`2789\text/400`$ | 6.9725 | `kernel-verified` in the first version of this repository; also `paper proof` | by hand, long; no fitted certificate and no interval-certified input | the first version of this repository, following PR #6's method | **yes**, both readings: lowest constant listed with neither kind of certificate |
-| $`3259043\text/466400`$ | 6.98766 | pair charge and cap C4b `paper proof`; composite has no status of its own | by hand, long | the author, unpublished | no |
-| $`612329\text/87500`$ and $`153077\text/21875`$ | 6.998046 and 6.997806 | pair charge (on a common support with holes) and cap C4b `paper proof`; composites have no status of their own | not rated | the author, unpublished | no on the whole-route reading; not placed on the charge reading (not rated) |
-| $`5249623\text/750000`$, stated as $`13999\text/2000`$ | 6.999497 | pair charge C `paper proof` on the [pair-charge page](pair-charge.md); cap C3b `kernel-verified` here and `paper proof` on the [cap page](cap.md); the route `kernel-verified` in this repository, by its verification procedure run by the author, with `pairCharge_C` and `NaturalLatents.T_le_mul_tau` at $`13999\text/2000`$ | a pair-charge certificate with fifteen exact rational coefficients, checked by exact rational arithmetic; cap C3b by hand | this repository, following PR #6's method | no: 6.9725 has no machine input and a smaller constant, so it dominates on the whole-route reading whether or not charge C's certificate counts as a machine input; charge C has no rating, so it is not placed on the charge reading |
-| $`174991\text/25000`$ | 6.99964 | `paper proof` | by hand, long; no interval cover | the author, unpublished | no |
-| $`611449624681\text/86131759120`$ | 7.0990 | `paper proof`; its scalar steps are interval-certified | an 8050-leaf interval cover and 31 certified polynomial inequalities that rule out regions of the parameter space | the author, unpublished | no |
-| $`262455475975567531769293\text/34940450429503539167584`$ | 7.5115 | `paper proof`; whether it counts as by hand is undecided (its correctness is accepted) | by hand, but a 20-monomial identity is left unprinted | the author, unpublished | charge reading only, if ruled by hand |
-| $`263243861856755163277009\text/34940450429503539167584`$ | 7.5341 | `paper proof` | by hand; a short pair charge in seven parts | the author, unpublished | charge reading only, unless 7.5115 is ruled by hand |
-| $`15943993687\text/2058091192`$ | 7.7470 | `paper proof` | by hand; a one-page pair charge | the author, unpublished | no (see below) |
-| $`47\text/5`$ | 9.4 | `kernel-verified`: PR #6's own verification script, run by the author at head `7b41957d` | fitted certificates: Bernstein pieces of degree 26 to 28, and a closure with degree-7 Bernstein vectors whose coefficients run to about 70 digits | Jeremy Gillen, PR #6 | no |
+| $`\approx C`$ | Status | Machine inputs | Credit | Frontier |
+|---|---|---|---|---|
+| 6.94486 <sup>1</sup> | `paper proof` | fitted charge; interval caps | author, unpublished | **yes** |
+| 6.94580 <sup>2</sup> | `kernel-verified` <sup>2</sup> | fitted charge; fitted tables | author, unpublished | **yes** (whole route) |
+| 6.94757 <sup>3</sup> | `paper proof` | fitted charge; cap by hand | author, unpublished | no |
+| 6.95159 <sup>4</sup> | `paper proof` | computer algebra; interval caps | author, unpublished | no |
+| 6.9725 <sup>5</sup> | `kernel-verified` <sup>5</sup> | none (by hand, long) | this repo v1 | **yes** |
+| 6.98766 <sup>6</sup> | parts `paper proof` <sup>6</sup> | none (by hand, long) | author, unpublished | no |
+| 6.998046 and 6.997806 <sup>7</sup> | parts `paper proof` <sup>7</sup> | not rated | author, unpublished | no <sup>7</sup> |
+| 6.999497 <sup>8</sup> | `kernel-verified` <sup>8</sup> | certificate; cap by hand | this repo | no |
+| 6.99964 <sup>9</sup> | `paper proof` | none (by hand, long) | author, unpublished | no |
+| 7.0990 <sup>10</sup> | `paper proof` <sup>10</sup> | interval cover; fitted inequalities | author, unpublished | no |
+| 7.5115 <sup>11</sup> | `paper proof` <sup>11</sup> | by hand? <sup>11</sup> | author, unpublished | charge reading only <sup>11</sup> |
+| 7.5341 <sup>12</sup> | `paper proof` | none (by hand) | author, unpublished | charge reading only <sup>12</sup> |
+| 7.7470 <sup>13</sup> | `paper proof` | none (by hand) | author, unpublished | no <sup>13</sup> |
+| 9.4 <sup>14</sup> | `kernel-verified` <sup>14</sup> | fitted certificates | PR #6 | no |
 
-The row at 6.999497 is this repository's route: charge C with cap C3b at $`a=211\text/45`$,
+Notes, keyed by the value of $`\approx C`$ in the first column. The entries restate what the short cells abbreviate.
+
+1. **6.94486**: $`C=521115692681\text/75036146600`$. Status `paper proof`. Machine inputs: fitted pair charge; 81 interval-certified caps on the race price. Credit: the author, unpublished. Frontier: **yes**, both readings: lowest constant listed.
+2. **6.94580**: $`C=500429818681873\text/72047805525880`$. Status: `kernel-verified` in an unpublished standalone Lean file against PR #6; no pinned axiom audit. Machine inputs: the same fitted pair charge; race prices from fitted tables checked in Lean; no interval input. Credit: the author, unpublished. Frontier: **yes**, whole-route reading; also the lowest `kernel-verified` constant listed.
+3. **6.94757**: $`C=18683211392538852259\text/2689172049828207160`$. Status `paper proof`. Machine inputs: the same fitted pair charge; race cap by hand; no interval input. Frontier: no: 6.94580 has the same kind of inputs and a smaller constant.
+4. **6.95159**: $`C=6586364623667\text/947461643720`$. Status `paper proof`. Machine inputs: computer algebra for the pair charge; interval-certified race caps. Frontier: no.
+5. **6.9725**: $`C=2789\text/400`$. Status: `kernel-verified` in the first version of this repository; also `paper proof`. Machine inputs: by hand, long; no fitted certificate and no interval-certified input. Credit: the first version of this repository, following PR #6's method. Frontier: **yes**, both readings: lowest constant listed with neither kind of certificate.
+6. **6.98766**: $`C=3259043\text/466400`$. Status: pair charge and cap C4b `paper proof`; composite has no status of its own. Machine inputs: by hand, long. Frontier: no.
+7. **6.998046 and 6.997806**: $`C=612329\text/87500`$ and $`C=153077\text/21875`$, in that order. Status: pair charge (on a common support with holes) and cap C4b `paper proof`; composites have no status of their own. Machine inputs: not rated. Frontier: no on the whole-route reading; not placed on the charge reading (not rated).
+8. **6.999497**: $`C=5249623\text/750000`$, stated as $`13999\text/2000`$. Status: pair charge C `paper proof` on the [pair-charge page](pair-charge.md); cap C3b `kernel-verified` here and `paper proof` on the [cap page](cap.md); the route `kernel-verified` in this repository, by its verification procedure run by the author, with `pairCharge_C` and `NaturalLatents.T_le_mul_tau` at $`13999\text/2000`$. Machine inputs: a pair-charge certificate with fifteen exact rational coefficients, checked by exact rational arithmetic; cap C3b by hand. Credit: this repository, following PR #6's method. Frontier: no: 6.9725 has no machine input and a smaller constant, so it dominates on the whole-route reading whether or not charge C's certificate counts as a machine input; charge C has no rating, so it is not placed on the charge reading.
+9. **6.99964**: $`C=174991\text/25000`$. Status `paper proof`. Machine inputs: by hand, long; no interval cover. Frontier: no.
+10. **7.0990**: $`C=611449624681\text/86131759120`$. Status: `paper proof`; its scalar steps are interval-certified. Machine inputs: an 8050-leaf interval cover and 31 certified polynomial inequalities that rule out regions of the parameter space. Frontier: no.
+11. **7.5115**: $`C=262455475975567531769293\text/34940450429503539167584`$. Status: `paper proof`; whether it counts as by hand is undecided (its correctness is accepted). Machine inputs: by hand, but a 20-monomial identity is left unprinted. Frontier: charge reading only, if ruled by hand.
+12. **7.5341**: $`C=263243861856755163277009\text/34940450429503539167584`$. Status `paper proof`. Machine inputs: by hand; a short pair charge in seven parts. Frontier: charge reading only, unless 7.5115 is ruled by hand.
+13. **7.7470**: $`C=15943993687\text/2058091192`$. Status `paper proof`. Machine inputs: by hand; a one-page pair charge. Frontier: no (see below).
+14. **9.4**: $`C=47\text/5`$. Status: `kernel-verified`: PR #6's own verification script, run by the author at head `7b41957d`. Machine inputs: fitted certificates: Bernstein pieces of degree 26 to 28, and a closure with degree-7 Bernstein vectors whose coefficients run to about 70 digits. Credit: Jeremy Gillen, PR #6. Frontier: no.
+
+The row at 6.999497 (note 8) is this repository's route: charge C with cap C3b at $`a=211\text/45`$,
 $`u=3941\text/20000`$. The row at 6.9725 is the first version of this repository, with charge A; it remains in the
 commit history. The present version uses charge C, whose proof for $`s\le1`$ closes with a scalar certificate, three
 quartics with fifteen rational coefficients in all (for $`s\ge1`$ the separation price alone pays), although charge A gives the smaller
@@ -145,14 +163,23 @@ ledger, race or payment. A cap certifying $`j(a)<u`$ at the chosen $`a`$ gives
 C=\max\left\{1+\frac{3u(1+2\beta)}{\gamma},\ \frac{3a-1}{2}+\frac{3u\beta}{\gamma}\right\}.
 ```
 
-| Charge | $`(\beta,\gamma)`$ | $`a`$ | $`u`$ | Cap | $`C`$ | Status |
-|---|---|---|---|---|---|---|
-| charge A (first version of this repository) | $`(1\text/10,3\text/25)`$ | $`93\text/20`$ | $`199\text/1000`$ | C3a | $`2789\text/400\approx6.9725`$ | `kernel-verified` in the first version of this repository |
-| charge C (this repository) | $`(23\text/250,7\text/60)`$ | $`211\text/45`$ | $`3941\text/20000`$ | C3b | $`5249623\text/750000\approx6.99950`$ | charge `paper proof` and formalized as `pairCharge_C`; the pricing at this point formalized as `T_le_of_connected` |
-| charge B | $`(3\text/32,15\text/128)`$ | $`1171\text/250`$ | $`3947\text/20000`$ | C3a | $`174991\text/25000\approx6.99964`$ | `paper proof`, charge, cap and composite |
-| charge C | $`(23\text/250,7\text/60)`$ | $`75\text/16`$ | $`197\text/1000`$ | C4b | $`153077\text/21875\approx6.99781`$ | charge (common support with holes) and cap `paper proof`; composite has no status of its own |
-| charge C | $`(23\text/250,7\text/60)`$ | $`586\text/125`$ | $`197\text/1000`$ | C4b | $`612329\text/87500\approx6.99805`$ | as above |
-| charge D | $`(9\text/100,583\text/5000)`$ | $`75\text/16`$ | $`1971\text/10000`$ | C4b | $`3259043\text/466400\approx6.98766`$ | charge (common connected support) and cap `paper proof`; composite has no status of its own |
+| Charge | $`(\beta,\gamma)`$ | $`a`$; $`u`$ | Cap | $`\approx C`$ | Status |
+|---|---|---|---|---|---|
+| A <sup>A</sup> | $`(1\text/10,3\text/25)`$ | $`93\text/20`$; $`199\text/1000`$ | C3a | 6.9725 | `kernel-verified` <sup>A</sup> |
+| C, this repo <sup>C</sup> | $`(23\text/250,7\text/60)`$ | $`211\text/45`$; $`3941\text/20000`$ | C3b | 6.99950 | `paper proof` and formalized <sup>C</sup> |
+| B <sup>B</sup> | $`(3\text/32,15\text/128)`$ | $`1171\text/250`$; $`3947\text/20000`$ | C3a | 6.99964 | `paper proof` <sup>B</sup> |
+| C, at $`a=75\text/16`$ <sup>C1</sup> | $`(23\text/250,7\text/60)`$ | $`75\text/16`$; $`197\text/1000`$ | C4b | 6.99781 | parts `paper proof` <sup>C1</sup> |
+| C, at $`a=586\text/125`$ <sup>C2</sup> | $`(23\text/250,7\text/60)`$ | $`586\text/125`$; $`197\text/1000`$ | C4b | 6.99805 | parts `paper proof` <sup>C2</sup> |
+| D <sup>D</sup> | $`(9\text/100,583\text/5000)`$ | $`75\text/16`$; $`1971\text/10000`$ | C4b | 6.98766 | parts `paper proof` <sup>D</sup> |
+
+Notes, keyed by the superscript in the first column.
+
+- **A**: charge A (first version of this repository). $`C=2789\text/400\approx6.9725`$. Status: `kernel-verified` in the first version of this repository.
+- **C**: charge C (this repository). $`C=5249623\text/750000\approx6.99950`$. Status: charge `paper proof` and formalized as `pairCharge_C`; the pricing at this point formalized as `T_le_of_connected`.
+- **B**: charge B. $`C=174991\text/25000\approx6.99964`$. Status: `paper proof`, charge, cap and composite.
+- **C1**: charge C. $`C=153077\text/21875\approx6.99781`$. Status: charge (common support with holes) and cap `paper proof`; composite has no status of its own.
+- **C2**: charge C. $`C=612329\text/87500\approx6.99805`$. Status: as above.
+- **D**: charge D. $`C=3259043\text/466400\approx6.98766`$. Status: charge (common connected support) and cap `paper proof`; composite has no status of its own.
 
 C3b is the cap of the [cap page](cap.md); C3a is the cap of the first version of this repository (C3b with
 $`\zeta(2)<79\text/48`$ in place of $`533\text/324`$); C4b is the four-term cap above. All three hold for every
@@ -188,9 +215,9 @@ None reaches 7. What they buy is a pair charge a reader can check in a few hours
 - `kernel-verified`: checked by the Lean kernel in the place named: this repository (the verification
   procedure in its README, also run by continuous integration), PR #6's own tree, or the author's
   unpublished standalone file against PR #6, which this repository's audit does not cover.
-- `paper proof`: a written proof checked step by step by readers other than the session that wrote it (language-model
-  readers under the author's review; see "How this was made" in the README), not by the Lean kernel. For entries
-  marked unpublished, neither the proof nor the checks are public.
+- `paper proof`: a written proof checked step by step by language-model readers in fresh contexts, not the session
+  that wrote it (see "How this was made" in the README). No human has checked these proofs line by line, and the Lean
+  kernel has not checked them. For entries marked unpublished, neither the proof nor the checks are public.
 - Machine inputs, which are not statuses:
   - interval-certified steps: inequalities proved by rigorous interval arithmetic with directed rounding over a finite
     cover, reproducible from a script;
