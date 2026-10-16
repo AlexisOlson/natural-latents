@@ -52,8 +52,9 @@ the three stochastic errors is at most $`\varepsilon`$, it gives each determinis
 $`3 \cdot \tfrac{13999}{2000}\,\varepsilon`$.
 
 A first version of this repository proved the smaller constant $`2789/400 = 6.9725`$ with a different pair charge
-(charge A); it remains in the commit history. This version uses charge C, which needs no case split by region and has a
-single price identity, at a cost of about $`0.027`$ in the constant; [docs/landscape.md](docs/landscape.md) compares the two.
+(charge A); it remains in the commit history. This version uses charge C, whose proof for separations $`s\le1`$ closes
+with one scalar certificate of fifteen rational coefficients checked by exact arithmetic (for $`s\ge1`$ the separation
+price alone pays), at a cost of about $`0.027`$ in the constant; [docs/landscape.md](docs/landscape.md) compares the two.
 
 ## The formal statements
 

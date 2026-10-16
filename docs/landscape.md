@@ -42,8 +42,9 @@ of DLorell/stoch_to_det at its head `7b41957d`.
 
 The row at 6.999497 is this repository's route: charge C with cap C3b at $`a=211\text/45`$,
 $`u=3941\text/20000`$. The row at 6.9725 is the first version of this repository, with charge A; it remains in the
-commit history. The present version uses charge C, which needs no case split by region and has a single price
-identity, although charge A gives the smaller constant.
+commit history. The present version uses charge C, whose proof for $`s\le1`$ closes with one scalar certificate of
+fifteen rational coefficients (for $`s\ge1`$ the separation price alone pays), although charge A gives the smaller
+constant.
 
 **The frontier.** Ease is compared by class, not by hours, in one of two readings. The charge reading rates the pair
 charge alone: by hand, then by hand but long, then machine-assisted. The whole-route reading compares the machine inputs

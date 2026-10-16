@@ -355,7 +355,7 @@ $`\Theta`$ has zero mean under $`P`$ and $`Q`$, it has zero mean under $`P_u`$, 
 ```
 
 With $`\int_0^1u(1-u)^2du=\int_0^1u^2(1-u)du=1\text/12`$, $`\int_0^1u^2(1-u)^2du=1\text/30`$ and
-$`\int_0^1u^3(1-u)du=1\text/20`$, the cross term integrates to $`(\lambda\text/6)[E_Q(W\Theta)+E_P(W\Theta)]`$ and the square
+$`\int_0^1u^3(1-u)du=1\text/20`$, the cross term integrates to $`-(\lambda\text/6)[E_Q(W\Theta)+E_P(W\Theta)]`$ and the square
 term, by (PC4.B), to $`\lambda^2[\rho\text/30+(\rho+2h)\text/20]\text/s^2=\lambda^2(5\rho+6h)\text/(60s^2)`$. Averaging the
 orientations, with $`\lambda`$ and $`D`$ common, gives (PC-R1).
 
