@@ -80,8 +80,8 @@ the same constant.
 
 What is machine-checked: the Lean kernel checks `table` and `score` end to end, and their axiom pins (see
 [Verify](#verify)) cover every lemma they use, including the adapted upstream code. The pages under `docs/` are a
-written proof of the same route; they are not machine-checked. The [blueprint](blueprint/README.md) (not yet published
-as a site) pairs each page lemma with its Lean declarations; its tags `kernel-verified`, `partly kernel-verified` and
+written proof of the same route; they are not machine-checked. The [blueprint](blueprint/README.md) ([site](https://alexisolson.github.io/natural-latents/))
+pairs each page lemma with its Lean declarations; its tags `kernel-verified`, `partly kernel-verified` and
 `paper proof` say how much of a page lemma's wording the cited declarations prove, and do not grade the headline.
 
 ## The idea of the proof
