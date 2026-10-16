@@ -216,8 +216,9 @@ None reaches 7. What they buy is a pair charge a reader can check in a few hours
   procedure in its README, also run by continuous integration), PR #6's own tree, or the author's
   unpublished standalone file against PR #6, which this repository's audit does not cover.
 - `paper proof`: a written proof checked step by step by language-model readers in fresh contexts, not the session
-  that wrote it (see "How this was made" in the README). No human has checked these proofs line by line, and the Lean
-  kernel has not checked them. For entries marked unpublished, neither the proof nor the checks are public.
+  that wrote it (see "How this was made" in the README). The author reports that no human has checked these written
+  proofs line by line; the `paper proof` label records the language-model checks, while any separate Lean verification
+  is identified by `kernel-verified`. For entries marked unpublished, neither the proof nor the checks are public.
 - Machine inputs, which are not statuses:
   - interval-certified steps: inequalities proved by rigorous interval arithmetic with directed rounding over a finite
     cover, reproducible from a script;

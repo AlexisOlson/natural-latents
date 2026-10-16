@@ -53,11 +53,12 @@ $`3 \cdot \tfrac{13999}{2000}\,\varepsilon`$.
 
 The pair charge (step 3 below) has more than one proof, and the choice trades the constant against how the proof
 reads. A first version of this repository proved the smaller constant $`2789/400 = 6.9725`$ with the pair charge
-$`PC(1/10,\,3/25)`$, whose paper proof uses no computer-found numbers but is long; it is kernel-verified at commit
-[`e18975a`](https://github.com/AlexisOlson/natural-latents/tree/e18975a). This version uses $`PC(23/250,\,7/60)`$,
-whose proof is shorter: for separations $`s\le1`$, one bound of the information below by a positive quadratic form,
-then a one-variable inequality closed by a certificate of fifteen computer-found rational coefficients (three
-quartics), checked by exact arithmetic; for $`s\ge1`$ the separation price alone pays. It costs about $`0.027`$ in the
+$`PC(1/10,\,3/25)`$, whose paper proof is by hand but long, with neither a fitted certificate nor interval-certified
+input; the route is kernel-verified at commit
+[`e18975a`](https://github.com/AlexisOlson/natural-latents/tree/e18975a). This version uses $`PC(23/250,\,7/60)`$: for
+separations $`0<s\le1`$, the paper proof derives a lower bound on the information using a nonnegative quadratic form,
+then reduces a scalar inequality to three one-variable quartics, certified by exact rational identities with fifteen
+positive remainder coefficients; for $`1\le s<2`$ the separation price alone pays. It costs about $`0.027`$ in the
 constant. [docs/landscape.md](docs/landscape.md) lists these and the other routes, with the status of each.
 
 ## The formal statements
