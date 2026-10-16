@@ -17,7 +17,8 @@ are at [AlexisOlson/stochastic-to-deterministic-latents](https://github.com/Alex
 
 Each row is a bound $`T(p)\le C\,\tau(p)`$ for every finite law. In the rows whose composite "has no status of its
 own", each step carries the status shown and the assembled pricing is exact arithmetic. The author's rows
-keep PR #6's ledger and use this repository's exponential race; they differ in the pair charge, in how it is summed,
+keep PR #6's ledger and powered-reference race coding, priced by this repository's analysis of the race (the Gamma
+value $`j(a)`$ and caps or tables for it); they differ in the pair charge, in how it is summed,
 and in how the race price is capped. "Rests on" names the machine inputs, if any (defined in the
 [status key](#7-status-key-and-credit)). PR #6 means [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6)
 of DLorell/stoch_to_det at its head `7b41957d`.
@@ -40,7 +41,9 @@ of DLorell/stoch_to_det at its head `7b41957d`.
 | $`47\text/5`$ | 9.4 | `kernel-verified`: PR #6's own verification script, run by the author at head `7b41957d` | fitted certificates: Bernstein pieces of degree 26 to 28, and a closure with degree-7 Bernstein vectors whose coefficients run to about 70 digits | Jeremy Gillen, PR #6 | no |
 
 The row at 6.999497 is this repository's route: charge C with cap C3b at $`a=211\text/45`$,
-$`u=3941\text/20000`$. The row at 6.9725 is the first version of this repository, with charge A.
+$`u=3941\text/20000`$. The row at 6.9725 is the first version of this repository, with charge A; it remains in the
+commit history. The present version uses charge C, which needs no case split by region and has a single price
+identity, although charge A gives the smaller constant.
 
 **The frontier.** Ease is compared by class, not by hours, in one of two readings. The charge reading rates the pair
 charge alone: by hand, then by hand but long, then machine-assisted. The whole-route reading compares the machine inputs
@@ -66,7 +69,9 @@ of the first version of this repository, and give $`2789\text/400`$.
 **Connected support, then a component split (this repository).** `exists_setup_of_connected` builds the latent when the
 support is connected, and `extension_of_connected` passes to every finite law because, over the connected components of the support, with
 weights $`\rho_k`$ and normalized laws $`\bar p_k`$, $`\sum_k\rho_k\tau(\bar p_k)\le\tau(p)`$ and
-$`T(p)\le\sum_k\rho_kT(\bar p_k)`$ ([extension](extension.md), (E3.F)). Status: `kernel-verified` in this repository.
+$`T(p)\le\sum_k\rho_kT(\bar p_k)`$ ([extension](extension.md), (E3.F)). Status: `kernel-verified` in this repository
+with charge C, at $`13999\text/2000`$; with charge A, at $`2789\text/400`$, it is `kernel-verified` in the first version.
+The split itself does not depend on the constant.
 
 **Positive laws, then continuity.** On a strictly positive law the support is the whole rectangle, which is connected,
 so the setup applies with contacts positive everywhere. For a general $`p`$ and $`0<\varepsilon<1`$, set
@@ -121,7 +126,10 @@ The replica budget $`K\le2M+B`$ is the inequality form of an exact identity $`K=
 **Large budgets need no pair charge.** For every finite latent whose posterior rows are positive on the support, if
 $`M\ge(3\text/20)\ln2`$ or $`M+B\ge(8\text/15)\ln2`$ (in nats; the thresholds are $`3\text/20`$ and $`8\text/15`$ bits),
 the race alone gives $`h\le(499\text/100)B+(399\text/100)M`$: run the race on each $`X`$-fiber and each $`Y`$-fiber and
-bound $`d`$ by 1, and past either threshold the term in $`d`$ is absorbed. With the ledger this gives
+bound $`d`$ by 1, so that $`h\le aB+2j(a)`$ for every $`a>1`$, with $`j(a)<F(a)`$ by Lemma K13. If
+$`M\ge(3\text/20)\ln2`$, take $`a=499\text/100`$: $`2F(499\text/100)<0.368<(399\text/100)(3\text/20)\ln2\le(399\text/100)M`$.
+If $`M+B\ge(8\text/15)\ln2`$, take $`a=133\text/50`$: $`2F(133\text/50)<0.779<(233\text/100)(8\text/15)\ln2\le(233\text/100)(M+B)`$,
+so $`h\le(133\text/50+233\text/100)B+(233\text/100)M\le(499\text/100)B+(399\text/100)M`$. With the ledger this gives
 $`T(p)\le(1397\text/200)\,\tau(p)\approx6.985\,\tau(p)`$ **only for laws whose setup latent meets either threshold**,
 never as a constant for every finite law. It locates the hard case: the pair charge is needed only below both
 thresholds. Status: `paper proof`, a corollary of the race inequality.
@@ -149,7 +157,9 @@ C3b is the cap of the [cap page](cap.md); C3a is the cap of the first version of
 $`\zeta(2)<79\text/48`$ in place of $`533\text/324`$); C4b is the four-term cap above. All three hold for every
 $`a>1`$: C3b is `kernel-verified` here (`racePrice_lt_capC3b`) and `paper proof` on the cap page; C3a and C4b
 are `paper proof`; and at each listed point $`u`$ exceeds the cap in exact arithmetic. Four pair charges are `paper proof`, and each is priced
-below 7 in the same skeleton; only charges A and B are complete checked routes. Charges A, B and D are rated by hand but
+below 7 in the same skeleton. Three are complete checked routes: charge A (the first version of this repository),
+charge C with cap C3b (this repository) and charge B (`paper proof` throughout); the C4b pricings of charges C and D
+have no composite status. Charges A, B and D are rated by hand but
 long. Charge C, the pair charge of this repository's route, is formalized here as `pairCharge_C`
 (`NaturalLatents/General/PairCharge.lean`).
 
@@ -177,7 +187,9 @@ None reaches 7. What they buy is a pair charge a reader can check in a few hours
 - `kernel-verified`: checked by the Lean kernel in the place named: this repository (the verification
   procedure in its README, also run by continuous integration), PR #6's own tree, or the author's
   unpublished standalone file against PR #6, which this repository's audit does not cover.
-- `paper proof`: a written proof checked step by step by independent readers, not by the Lean kernel.
+- `paper proof`: a written proof checked step by step by readers other than the session that wrote it (language-model
+  readers under the author's review; see "How this was made" in the README), not by the Lean kernel. For entries
+  marked unpublished, neither the proof nor the checks are public.
 - Machine inputs, which are not statuses:
   - interval-certified steps: inequalities proved by rigorous interval arithmetic with directed rounding over a finite
     cover, reproducible from a script;
@@ -188,6 +200,6 @@ None reaches 7. What they buy is a pair charge a reader can check in a few hours
 
 **Credit.** [DLorell/stoch_to_det](https://github.com/DLorell/stoch_to_det) formalized the problem and proved a finite
 constant. Its pull request #6, by Jeremy Gillen, proved $`C=47\text/5`$ and introduced the method this repository's
-main route follows: powered-reference race coding with a coordinate ledger, and a pair charge summed against the
-latent's own information. Its pull request #5, by Satya Benson, formalized the shared exponential race that this
+main route follows: powered-reference race coding with a coordinate ledger, and a single continuous pair charge summed
+against the latent's own information in place of upstream's near/far split. Its pull request #5, by Satya Benson, formalized the shared exponential race that this
 repository's Lean uses. Every entry not credited to PR #6 is the author's.

@@ -1,7 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/CoordinateRace.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 -- Source: pull request #6 by Jeremy Gillen (powered-reference race coding and the coordinate/table bridges).
--- Local changes: Added SharedRaceEntropyBound; moved the public shared-winner code integrability helper here and adapted coordinate conditioning to the support-local uniform entropy transport.
+-- Local changes: Added SharedRaceEntropyBound; retained the public shared-winner code integrability helper and adapted coordinate conditioning to the support-local uniform entropy transport.
 import NaturalLatents.Upstream.PoweredRaceWinner
 
 /-! Conditioning the shared-race entropy bound on an observed coordinate. -/

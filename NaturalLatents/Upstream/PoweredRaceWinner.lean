@@ -1,7 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/PoweredRaceWinner.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised.
 -- Source: pull request #6 by Jeremy Gillen (powered-reference race coding and the coordinate/table bridges).
--- Local changes: Moved and retained the public clockArgmin measurability lemma from the shared-clock development.
+-- Local changes: Retained the public clockArgmin measurability lemma.
 import NaturalLatents.Upstream.Race
 
 /-! A fourth-power clock reference. Its winning log score is an exact KL

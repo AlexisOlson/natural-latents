@@ -20,7 +20,10 @@ $`r_z` and the optimum $`T` are defined in (D3)). Let $`L` be a finite latent of
 deterministic map from the cells to the labels of $`L`, independent of $`Z=(X,Y)`, such that at each cell $`z` of the
 support the label $`F(z)` is distributed as the posterior $`r_z` of $`L`. With $`M` and $`B` the budgets of
 (D3) and $`h` the average over $`F` of $`H(f(Z)\mid X)+H(f(Z)\mid Y)` computed with the map $`f` fixed,
-$`T(p)\le M-B/2+3h/2`; the page also proves the exact average-score identity behind it. This is the first
+$`T(p)\le M-B/2+3h/2`; the page also proves the exact average-score identity behind it. The inequality is the
+coordinate-entropy ledger of [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen to
+DLorell/stoch_to_det (`T_le_coordinate_entropy_ledger` in its `CoordinateLedger.lean`, stated there for the
+shared-race winner of a seed setup); this page proves it for any calibrated random map. This is the first
 inequality of the assembly (step 2 of the [route](https://github.com/AlexisOlson/natural-latents/blob/main/docs/overview.md#the-route)). For the supplied setup
 latent, whose posteriors are positive, and every $`a>1`, the exponential race supplies such an $`F` with
 $`h\le aB+2\,j(a)\,d`, where $`j(a)=a\ln\Gamma(1-1/a)-\gamma_E` with $`\gamma_E` Euler's

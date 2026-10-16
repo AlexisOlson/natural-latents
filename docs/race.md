@@ -15,6 +15,12 @@ separate cap page bounds $`j(a)`$, and the mismatch payment bounds $`d`$. In the
 assembly `NaturalLatents.General.T_le_of_connected` (`NaturalLatents/General/Pricing.lean`), `exists_race` is applied at
 $`a=211\text/45`$ to the setup latent, whose posterior rows are positive by the field `rows_pos` of the setup.
 
+The race with clocks shared by all cells is upstream's Gumbel race, formalized abstractly in
+[pull request #5](https://github.com/DLorell/stoch_to_det/pull/5) by Satya Benson; bounding its entropy against a
+powered reference is the method of [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen,
+which works at fixed integer exponents. The price $`j(a)`$ for general $`a>1`$
+(Lemmas R7 and R8) is worked out on this page.
+
 Each lemma below states its hypotheses, so that it can be read alone. The lemmas are numbered R1 to R11 and the equations
 (R1) to (R31); the [cap page](cap.md) continues both numberings. Unless prefixed `stoch_to_det`, the Lean declarations named below are in the namespace
 `NaturalLatents.General`; the `stoch_to_det` declarations are in `NaturalLatents/Upstream/`, adapted from
@@ -451,7 +457,7 @@ clocks in Gumbel coordinates. The exact identity of (R24), with the price writte
 $`r\,j(a)\le\mathbb E\,m_a(rT)`$ for $`0\le r\le1`$, both in the same file.
 
 **Lemma R10 (fixed-seed mixture entropy).** Let $`\mathcal Z, \mathcal I`$ be finite nonempty sets, $`\nu`$ a probability
-law positive on $`\mathcal Z`$ (here $`\nu`$ is the source law; in Lemma R11 it is $`p`$), and $`r_z`$ strictly positive probability rows on $`\mathcal I`$. Put
+law positive on $`\mathcal Z`$ (here $`\nu`$ is the source law; in Lemma R11 it is the conditional law on an $`X=x`$ or $`Y=y`$ fiber, restricted to its positive support), and $`r_z`$ strictly positive probability rows on $`\mathcal I`$. Put
 $`\pi_i = \sum_z\nu(z)r_z(i)`$, let $`Z \sim \nu`$, and let $`L \mid Z = z \sim r_z`$. For $`a > 1`$, take original
 independent exponential clocks $`E`$, independent of $`Z`$, and define $`A_E(z) = \arg\min_iE_i\text/r_z(i)`$. Then
 

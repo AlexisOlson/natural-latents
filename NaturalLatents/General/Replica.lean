@@ -1,4 +1,4 @@
--- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), October 2026, first written on an unpublished branch of
 -- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
 -- (namespace NaturalLatents.General, declarations renamed, unused material removed).
 -- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
@@ -17,7 +17,7 @@ cell, and applies a chain rule coordinate by coordinate.
 
 ## Attribution
 
-Original work by Alexis Olson, first developed in
+Original work by Alexis Olson, October 2026, first written on an unpublished branch of
 github.com/AlexisOlson/stochastic-to-deterministic-latents.
 This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.

@@ -2,7 +2,8 @@ Natural Latents
 
 Copyright 2026 Alexis Olson. Licensed under the Apache License, Version 2.0.
 
-Portions are derived from DLorell/stoch_to_det, licensed under Apache-2.0:
+Portions are derived from DLorell/stoch_to_det by David Lorell, licensed
+under Apache-2.0:
 
     https://github.com/DLorell/stoch_to_det
 
@@ -19,7 +20,16 @@ foundation, duality, optimum existence, seed and race machinery, and pull
 request #6's coordinate-race, powered-race-winner, contact-information and
 probability-table modules. The assembly in this repository follows pull
 request #6's method: powered-reference race coding with a coordinate ledger.
-The shape of the probability-table statement follows its readable theorem.
+
+NaturalLatents/Statement.lean takes its table definitions (Probability, H,
+Hcond, CMI, StochasticError, DeterministicError, deterministicTable) from pull
+request #6's stoch_to_det/ReadableStatement.lean at that revision, unchanged
+apart from documentation and variable names, and states TableClaim in the form
+of its theorem natural_latents_linear_bound with a constant c < 7 in place of
+47/5; T, tau and ScoreClaim are added here. The Bridge section of
+NaturalLatents/Main.lean (finite_bound, table_bound, table_bound_entropy) is
+adapted from pull request #6's stoch_to_det/FiniteBoundProof.lean and
+stoch_to_det/TableBoundProof.lean at that revision.
 
 That revision also includes the shared exponential race of pull request #5 by
 Satya Benson (satchlj), which pull request #6 carries: the SharedRace/
@@ -27,16 +37,18 @@ modules, the clock-race lemmas in Race.lean, the contact secants in
 Floor.lean, and first versions of DomFloorCore.lean and PhiBounds.lean, which
 pull request #6 revises.
 
-The proof development under NaturalLatents/General/ and the rest of the
-repository, apart from the standard Apache License text, are the author's own
-work, building on the upstream definitions and the method credited above.
-Together, the files under NaturalLatents/General/ build on the upstream
-definitions, which
-NaturalLatents/General/Definitions.lean imports, and most of them use those
-definitions under their upstream names in the namespace stoch_to_det. Each
-of them states in its first lines that it was first developed in the
-author's earlier repository,
+Apart from the adapted material named above (the files under
+NaturalLatents/Upstream/, the table definitions in
+NaturalLatents/Statement.lean and the Bridge section of
+NaturalLatents/Main.lean) and the standard Apache License text, the repository
+is the author's own work, building on the upstream definitions and the method
+credited above. The files under NaturalLatents/General/ build on the upstream
+definitions, which NaturalLatents/General/Definitions.lean imports, and most
+of them use those definitions under their upstream names in the namespace
+stoch_to_det. They were written in October 2026, after pull request #6. Each
+states in its first lines whether it was first written on an unpublished
+branch of the author's earlier repository,
 https://github.com/AlexisOlson/stochastic-to-deterministic-latents (Lean
 package StochasticToDeterministicLatents), and reorganised for this
-repository: namespace NaturalLatents.General, declarations renamed, unused
-material removed.
+repository (namespace NaturalLatents.General, declarations renamed, unused
+material removed), or written for this repository.

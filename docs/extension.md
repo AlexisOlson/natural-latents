@@ -39,8 +39,9 @@ mutual information. This gives an additive proof for every nonnegative coefficie
 resulting value of $`\tau`$.
 
 **Lemma E3.1 (component laws and their common label).** For every probability law $`p`$ on finite nonempty alphabets
-$`\mathcal X\times\mathcal Y`$, let $`S=\mathrm{supp}\,p`$ and let $`(S_k)_{k\in\mathcal K}`$ be its connected components
-in the bipartite row-column graph. Put
+$`\mathcal X\times\mathcal Y`$, let $`S=\mathrm{supp}\,p`$ and let $`(S_k)_{k\in\mathcal K}`$ be its connected components:
+$`S_k`$ is the set of cells of $`S`$ whose row (equivalently, column) lies in the $`k`$-th connected component of the
+bipartite graph on the active rows and columns. Put
 
 ```math
 \mathcal X_k=\{x:\exists y\ (x,y)\in S_k\},\qquad

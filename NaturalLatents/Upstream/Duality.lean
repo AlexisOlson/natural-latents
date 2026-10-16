@@ -1,6 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Duality.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the DLorell/stoch_to_det main branch, taken from the head of pull request #6 by Jeremy Gillen at the revision above.
+-- Local changes: Added the private helpers sub_le_mul_log_div, refMeas_gibbs_conditions, weighted_rpow_sum_eq_zero, isPMF_normalize, sum_fiberwise_mul and latent_comp_supported.
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.LocallyConvex.Separation
 import Mathlib.Data.Fintype.EquivFin

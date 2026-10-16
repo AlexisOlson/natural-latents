@@ -360,7 +360,7 @@ Lean: `race_single_law` (`NaturalLatents/General/ExponentialRace.lean`) states (
 positive rows wherever $`\nu(z)>0`, so $`\nu` may vanish at some atoms; like `exists_race` it is stated in nats, through
 `sharedRaceEntropyNat` and `MINat` (`NaturalLatents/General/Nats.lean`). The Gibbs step (R26) is `race_gibbs_nats` and the averaging (R27) is
 `race_entropy_from_reference`, both in `NaturalLatents/General/RaceTransport.lean`, with the integrability of the
-fixed-seed entropy from `stoch_to_det.SharedRace.integrable_sharedWinner_code` (from pull request #5 by Satya Benson)
+fixed-seed entropy from `stoch_to_det.SharedRace.integrable_sharedWinner_code` (from pull request #6 by Jeremy Gillen)
 (`NaturalLatents/Upstream/CoordinateRace.lean`).
 
 :::theorem "R11" (parent := "race") (lean := "NaturalLatents.General.exists_race, NaturalLatents.General.race_of_single_law, NaturalLatents.General.race_map_calibrated, stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound, NaturalLatents.General.race_condMI_transport, NaturalLatents.General.race_condMI_coordinate_sum") (uses := "R10") (tags := "partly kernel-verified")
@@ -390,7 +390,7 @@ Lean: `exists_race` (`NaturalLatents/General/ExponentialRace.lean`): for every f
 $`h\le aB+2j(a)d`. It states existence only: that the
 family is the race map with the original clocks on both fibers is in the proof, not in the statement. The proof is
 `race_of_single_law` (`NaturalLatents/General/RaceTransport.lean`), which takes the family from `race_map_calibrated`,
-conditions Lemma R10 on $`X` and on $`Y` through `stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound` (from pull request #5 by Satya Benson)
+conditions Lemma R10 on $`X` and on $`Y` through `stoch_to_det.SharedRace.conditional_entropy_le_of_uniform_entropy_bound` (from pull request #6 by Jeremy Gillen)
 (`NaturalLatents/Upstream/CoordinateRace.lean`), and identifies the two conditional mutual informations with $`B` by
 `race_condMI_transport` and `race_condMI_coordinate_sum`.
 

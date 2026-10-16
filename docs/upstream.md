@@ -4,8 +4,13 @@ This page proves nothing. It lists what the proof takes from the Lean code under
 from [DLorell/stoch_to_det](https://github.com/DLorell/stoch_to_det) (Apache-2.0), and which page relies on each part.
 The assembly `NaturalLatents.General.T_le_of_connected` (`NaturalLatents/General/Pricing.lean`) reaches this code
 through the setup, the contact estimates, the race, the payment and the ledger. `NaturalLatents/Main.lean` reaches
-`reduce_to_connected` through the extension `extension_of_connected`, and uses the table modules directly to restate
-the bound for probability tables.
+`reduce_to_connected` through the extension `extension_of_connected`, uses the table modules directly to restate
+the bound for probability tables, and contains bridge proofs adapted from pull request #6's `FiniteBoundProof.lean` and
+`TableBoundProof.lean`.
+
+Nothing here is taken on citation: these files are compiled with the rest of the repository, scanned by
+`scripts/trust_scan.sh`, and lie inside the dependency cone whose axioms `Verify.lean` pins for `table`, `score` and
+`T_le_mul_tau`, so they are `kernel-verified` here.
 
 ## Provenance
 
@@ -13,7 +18,7 @@ Every file under `NaturalLatents/Upstream/` is adapted from DLorell/stoch_to_det
 `7b41957da9500716102cba323b3a48af0f23751c`, the head of its
 [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen. Each file's header names its source
 path and that revision, states the common modifications (module paths renamed, declarations unused by the main theorems
-removed, documentation revised), and names in a `Source:` line the layer below that the file comes from. Seventeen of
+removed, documentation revised), and names in a `Source:` line the layer below that the file comes from. Eighteen of
 the twenty-five files also carry a `Local changes:` line listing the helper lemmas they add, move or re-prove, among
 them the re-proof of `reduce_to_connected` in `Connected.lean`. The namespace `stoch_to_det` is kept. The code at that revision comes in three
 layers:
@@ -31,8 +36,9 @@ layers:
 - **Pull request #6 itself**: the coordinate race, the powered-race winner, the contact-information estimates, and
   the passage to probability tables.
 
-The assembly follows pull request #6's method, powered-reference race coding with a coordinate ledger, and the
-probability-table statement follows the shape of its readable theorem. See `NOTICE` and `LICENSE` for the terms.
+The assembly follows pull request #6's method, powered-reference race coding with a coordinate ledger. The
+probability-table definitions in `Statement.lean` are taken from its `ReadableStatement.lean`, and `TableClaim`
+restates its readable theorem with $`c<7`$ in place of $`47\text/5`$. See `NOTICE` and `LICENSE` for the terms.
 
 ## What each module provides
 

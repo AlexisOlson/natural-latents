@@ -6,7 +6,11 @@ $`\beta\ge0`$ and $`\gamma>0`$ such that the pair charge $`PC(\beta,\gamma)`$ of
 distinct components by the probability $`\mu_{ij}`$ that two labels drawn independently from the posterior at the same
 cell are $`i`$ and $`j`$, bounds the separation prices by the replica budget $`K`$ through the
 [affinity bound](affinity.md) and a midpoint relative-entropy inequality, and closes with the
-[replica budget](replica.md) $`K\le2M+B`$. The argument is generic in $`(\beta,\gamma)`$; at the pair charge
+[replica budget](replica.md) $`K\le2M+B`$. Summing a pair charge over component pairs by pair mass is upstream's
+mismatch estimate (near/far charges on the DLorell/stoch_to_det main branch, a single continuous charge in
+[pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen); the charge
+$`PC(\beta,\gamma)`$ through marginal affinities and its payment through the replica budget are this repository's.
+The argument is generic in $`(\beta,\gamma)`$; at the pair charge
 $`PC(23\text/250,7\text/60)`$, it gives $`(7\text/60)\,d\le(148\text/125)\,M+(23\text/250)\,B`$. This is
 step 6 of the [route](overview.md#the-route). In the assembly
 `NaturalLatents.General.T_le_of_connected` (`NaturalLatents/General/Pricing.lean`), `mismatch_payment` is applied to the

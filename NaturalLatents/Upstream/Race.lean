@@ -1,7 +1,7 @@
 -- Adapted from DLorell/stoch_to_det (Apache-2.0), file stoch_to_det/Race.lean at 7b41957da9500716102cba323b3a48af0f23751c;
 -- modified: module paths renamed; declarations unused by the main theorems removed; documentation revised; proofs shortened.
 -- Source: the main branch and the shared-race/contact additions of pull request #5 by Satya Benson, as included in pull request #6 by Jeremy Gillen.
--- Local changes: Added clockReindex_law and reorganised the clock-law and residual-clock helper chain; retained required public clock-race lemmas.
+-- Local changes: Added clockReindex_law and strictClockWin_join_section and reorganised the clock-law and residual-clock helper chain; retained required public clock-race lemmas.
 import NaturalLatents.Upstream.Scalar
 import NaturalLatents.Upstream.SharedRace.Definitions
 import NaturalLatents.Upstream.SharedRace.ClockLaw

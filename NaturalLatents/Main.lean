@@ -1,3 +1,7 @@
+-- The Bridge section (finite_bound, table_bound, table_bound_entropy) is adapted from DLorell/stoch_to_det
+-- (Apache-2.0), files stoch_to_det/FiniteBoundProof.lean and stoch_to_det/TableBoundProof.lean at
+-- 7b41957da9500716102cba323b3a48af0f23751c, pull request #6 by Jeremy Gillen; modified: the constant 47/5 replaced
+-- by c, the conjunct condH Γ id p = 0 dropped. The rest of this file is original work by Alexis Olson (see NOTICE).
 import NaturalLatents.Statement
 import NaturalLatents.General
 import NaturalLatents.Upstream.TableBoundProof
@@ -11,8 +15,8 @@ import NaturalLatents.Upstream.SourceCoarsening
 
 The bound itself is `General.T_le_of_connected`, extended to every law by
 `General.extension_of_connected`. The remaining results convert the latent formulation to
-probability tables and derive `score` from `table`; that conversion follows the bridge in
-`TableBoundProof`, from Jeremy Gillen's pull request #6 to DLorell/stoch_to_det.
+probability tables and derive `score` from `table`; that conversion is adapted from the bridge in
+`FiniteBoundProof` and `TableBoundProof`, from Jeremy Gillen's pull request #6 to DLorell/stoch_to_det.
 -/
 
 open scoped BigOperators

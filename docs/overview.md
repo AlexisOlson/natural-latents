@@ -37,7 +37,7 @@ rounding up, $`13999\text/2000`$. No positivity or independence assumption is ma
 claimed to be least.
 
 Lean: `NaturalLatents.table : TableClaim` and `NaturalLatents.score : ScoreClaim` (`NaturalLatents/Main.lean`), whose
-types and axioms are pinned in `Verify.lean`, with the constant `NaturalLatents.c := 13999 / 2000`. The exact optimum
+types and axioms are pinned in `Verify.lean`, with the constant `NaturalLatents.c := 13999 / 2000`. The explicit optimum
 bound is `NaturalLatents.T_le_mul_tau`, which states `T p ≤ (13999 / 2000) * tau p` and is pinned in `Verify.lean`. In
 `Statement.lean` the alphabets are the types `A` and `B` (the Lean `B` is an alphabet, not the budget $`B`$ below), and
 the code takes values in `Fin (Fintype.card (A × B))`.

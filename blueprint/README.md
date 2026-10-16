@@ -19,7 +19,8 @@ The site is written to `blueprint/_out/site/html-multi/index.html`. Dependency u
 the root manifest and toolchain stay fixed. CI builds and checks the blueprint on pushes and pull requests; publishing
 it to Pages is a separate, manually dispatched workflow job.
 
-Node tags describe the scope of the cited declaration names:
+Node tags describe the scope of the cited declaration names. They compare each page lemma's wording with its
+cited declarations; they do not grade the headline theorems, which the kernel checks in full (`Verify.lean`):
 
 - `kernel-verified`: the cited Lean declarations together prove the whole statement.
 - `partly kernel-verified`: the cited Lean declarations prove only part of the statement; the proof block opens with "Lean proves: ..." and names that part.

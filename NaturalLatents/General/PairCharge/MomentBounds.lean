@@ -1,6 +1,6 @@
--- Original work by Alexis Olson, Apache-2.0 (see NOTICE), first developed in
--- github.com/AlexisOlson/stochastic-to-deterministic-latents; reorganised for this repository
--- (namespace NaturalLatents.General, declarations renamed, unused material removed).
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), October 2026, written for this repository
+-- (namespace NaturalLatents.General); not part of the earlier repository
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents.
 -- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.Contact
 
@@ -14,8 +14,8 @@ used in the information floor.
 
 ## Attribution
 
-Original work by Alexis Olson, first developed in
-github.com/AlexisOlson/stochastic-to-deterministic-latents.
+Original work by Alexis Olson, October 2026, written for this repository; not part of the
+earlier repository github.com/AlexisOlson/stochastic-to-deterministic-latents.
 This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
 -/

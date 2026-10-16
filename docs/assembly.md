@@ -131,7 +131,8 @@ exactly $`C_B`$, the $`B`$ term would vanish and $`M\ge0`$ alone would suffice. 
 $`\tau(p)=0`$ it reads $`T(p)\le0`$. $`\square`$
 
 **Remark (every finite law).** Lemma M5.4 concerns laws with connected support. Lemma E3.4 of the
-[extension page](extension.md), with $`c\ge0`$, extends its conclusion to every finite law.
+[extension page](extension.md), with $`c\ge0`$, extends its conclusion to every finite law. It applies equally with
+$`C=C_B=5249623\text/750000`$, so the pages give $`T(p)\le(5249623\text/750000)\,\tau(p)`$ for every finite law.
 
 All $`H,I,D,M,B,T,\tau,h`$ and $`j`$ here are in nats; $`d`$ is a probability. The race price $`u`$ has the same entropy
 unit as $`j`$, $`\gamma`$ the unit of the pair charge's information terms, and $`a,\beta,C`$ are dimensionless. Dividing

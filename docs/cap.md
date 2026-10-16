@@ -159,8 +159,8 @@ j(a)
 ```
 
 The strict zeta bounds preserve strictness for every $`a > 1`$. Combining (K38) with (K36) proves the
-lemma. The first term of (K36) by itself is not used as a cap (it is below $`j(a)`$: at $`a=211\text/45`$ it is
-$`\approx0.1754<j\approx0.1968`$). $`\square`$
+lemma. The first term of (K36) alone is not a cap at the chosen exponent: at $`a=211\text/45`$ it is
+$`\approx0.1754`$, whereas $`j\approx0.1968`$. $`\square`$
 
 Lean: `racePrice_lt_capC3b` states $`j(a)<F(a)`$ for every $`a>1`$, with $`F`$ the function `gammaPriceCap`
 (`NaturalLatents/General/Definitions.lean`). It runs through `gammaPriceCap_assemble_remainders` (the bound in the variable

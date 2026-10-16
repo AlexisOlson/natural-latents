@@ -6,7 +6,11 @@ This page describes how `NaturalLatents/Main.lean` derives the two propositions 
 `bits_of_nats` converts to bits and `extension_of_connected` extends to every finite law. It is step 10 of the [route](overview.md#the-route). **It is a description of
 the formal argument, written directly from the Lean.** Its last section states exactly what the Lean proves about the
 frozen optima and definitions. The bridge files in `NaturalLatents/Upstream/` are adapted from pull request #6 by Jeremy
-Gillen to DLorell/stoch_to_det (see the [upstream page](upstream.md)). Here $`c=13999\text/2000`$, the constant
+Gillen to DLorell/stoch_to_det (see the [upstream page](upstream.md)), as are the bridge proofs `finite_bound`,
+`table_bound` and `table_bound_entropy` in `Main.lean` and the table definitions of `Statement.lean`. The frozen
+statement quantifies over finite latents; for finite $`X`$ and $`Y`$ this loses nothing, because a latent's error
+depends only on its mixture of conditional laws of $`(X,Y)`$, and by Carathéodory's theorem a latent with at most
+$`|A||B|+1`$ labels has the same marginal and the same error (a paper argument, not formalized). Here $`c=13999\text/2000`$, the constant
 `NaturalLatents.c`.
 
 ## 6. From latents to probability tables
@@ -37,7 +41,7 @@ with $`V`$ in the first slot. `TableClaim` asks for one code $`g`$, depending on
 $`p`$ only, with $`\mathrm{DE}(t_{p,g})\le c\,\mathrm{SE}(q)`$ for every such $`q`$; `ScoreClaim` asks for
 $`T_\star(p)\le c\,\tau_\star(p)`$. Inside the proof, $`T`$ and $`\tau`$ are the bit-valued `stoch_to_det.T` and
 `stoch_to_det.tau` (`NaturalLatents/Upstream/Functionals.lean`), that is, the optima of (D3) on the
-[contact page](contact.md) divided by $`\ln2`$ (D1): $`\tau`$ is an infimum over latents with any finite label type, and $`T`$ an infimum
+[contact page](contact.md) divided by $`\ln2`$ (D1) (for $`T`$, the two descriptions agree by Lemma T6.2): $`\tau`$ is an infimum over latents with any finite label type, and $`T`$ an infimum
 over deterministic latents, those in which each cell has positive joint mass with at most one label. On this page
 $`\Gamma`$ is a code, not the Gamma function of the [race page](race.md); $`A,B`$ are alphabets, not the budget $`B`$;
 and $`K`$ is a finite label set, not the replica budget $`K`$.
