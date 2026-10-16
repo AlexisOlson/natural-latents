@@ -1,6 +1,6 @@
--- Original work by Alexis Olson, Apache-2.0 (see NOTICE), October 2026, written for this repository
--- (namespace NaturalLatents.General); not part of the earlier repository
--- github.com/AlexisOlson/stochastic-to-deterministic-latents.
+-- Original work by Alexis Olson, Apache-2.0 (see NOTICE), October 2026, first written on an unpublished branch of
+-- github.com/AlexisOlson/stochastic-to-deterministic-latents as General/PairCharge/Entropy.lean; reorganised for
+-- this repository (namespace NaturalLatents.General, declarations renamed, unused material removed).
 -- This file builds on and cites the definitions of DLorell/stoch_to_det (Apache-2.0).
 import NaturalLatents.General.PairCharge.MomentBounds
 
@@ -14,8 +14,8 @@ cells with zero joint mass and positive product mass.
 
 ## Attribution
 
-Original work by Alexis Olson, October 2026, written for this repository; not part of the
-earlier repository github.com/AlexisOlson/stochastic-to-deterministic-latents.
+Original work by Alexis Olson, October 2026, first written on an unpublished branch of
+github.com/AlexisOlson/stochastic-to-deterministic-latents as General/PairCharge/Entropy.lean.
 This file builds on and cites the definitions of
 [`DLorell/stoch_to_det`](https://github.com/DLorell/stoch_to_det), Apache-2.0.
 -/

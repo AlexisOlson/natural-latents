@@ -53,8 +53,8 @@ $`3 \cdot \tfrac{13999}{2000}\,\varepsilon`$.
 
 A first version of this repository proved the smaller constant $`2789/400 = 6.9725`$ with a different pair charge
 (charge A); it remains in the commit history. This version uses charge C, whose proof for separations $`s\le1`$ closes
-with one scalar certificate of fifteen rational coefficients checked by exact arithmetic (for $`s\ge1`$ the separation
-price alone pays), at a cost of about $`0.027`$ in the constant; [docs/landscape.md](docs/landscape.md) compares the two.
+with a scalar certificate, three quartics with fifteen rational coefficients in all, checked by exact arithmetic (for
+$`s\ge1`$ the separation price alone pays), at a cost of about $`0.027`$ in the constant; [docs/landscape.md](docs/landscape.md) compares the two.
 
 ## The formal statements
 
@@ -169,7 +169,7 @@ statement, an added `axiom` and a `sorry`.
 ## Acknowledgments
 
 This repository builds on David Lorell's [DLorell/stoch_to_det](https://github.com/DLorell/stoch_to_det) (Apache-2.0), which
-formalized the problem and proved the first finite constant; its finite information theory, duality, existence of optimal
+formalized the problem and proved a finite constant, $`C \le 1771`$; its finite information theory, duality, existence of optimal
 latents and reduction to connected supports are adapted here. The files under `NaturalLatents/Upstream/` are adapted from
 that project at the head of its [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) by Jeremy Gillen,
 which carries the shared-race formalization of [pull request #5](https://github.com/DLorell/stoch_to_det/pull/5) by
