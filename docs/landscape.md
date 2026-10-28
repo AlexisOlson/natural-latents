@@ -10,8 +10,9 @@ an alternative. Each entry carries its exact status (see the [status key](#7-sta
 the author of this repository, Alexis Olson. Units and notation are those of
 [contact moments §0](contact.md#0-units-notation-and-standing-inputs); in particular $`M`$, $`B`$ and $`h`$ are in nats.
 
-Only the theorem for every finite law is treated here. Binary results, lower bounds on the constant and open problems
-are at [AlexisOlson/stochastic-to-deterministic-latents](https://github.com/AlexisOlson/stochastic-to-deterministic-latents).
+Only the theorem for every finite law is treated here. The lower bound $`C \ge R > 2.0012323023`$ is in
+[lower-bound/](../lower-bound/README.md); binary results and open problems are at
+[AlexisOlson/stochastic-to-deterministic-latents](https://github.com/AlexisOlson/stochastic-to-deterministic-latents).
 
 ## 2. The cost of tightening
 
