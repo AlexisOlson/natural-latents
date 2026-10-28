@@ -11,9 +11,10 @@ This is the problem stated in David Lorell's LessWrong post
 [Redux: (∃ Stochastic Natural Latent) Implies (∃ Deterministic Natural Latent)](https://www.lesswrong.com/posts/TgboJpeN95bs84odk/redux-stochastic-natural-latent-implies-deterministic),
 whose Lean proof in [DLorell/stoch_to_det](https://github.com/DLorell/stoch_to_det) gave $`C \le 1771`$; Jeremy
 Gillen's [pull request #6](https://github.com/DLorell/stoch_to_det/pull/6) to that project brought it to
-$`47/5 = 9.4`$. The constant here is not claimed to be sharp. A lower bound $`C \ge 1.960073002187`$ is proved in Lean,
-using `native_decide`, in Satya Benson's [satchlj/stoch-to-det-lower](https://github.com/satchlj/stoch-to-det-lower);
-it is not reproduced here.
+$`47/5 = 9.4`$. The constant here is not claimed to be sharp. A computer-assisted lower bound $`C \ge R > 2.0012323023`$, outside the
+Lean development, is in [lower-bound/](lower-bound/README.md) (see [A lower bound](#a-lower-bound)). Satya Benson's
+earlier lower bound $`C \ge 1.960073002187`$ is proved in Lean, using `native_decide`, in
+[satchlj/stoch-to-det-lower](https://github.com/satchlj/stoch-to-det-lower); it is not reproduced here.
 
 ## The theorem
 
@@ -171,6 +172,26 @@ cover every lemma the headlines use. `leanchecker` replays the declarations of `
 integration), `bash scripts/mutation_check.sh` checks on a disposable copy that the first two gates catch an edited
 statement, an added `axiom` and a `sorry`.
 
+## A lower bound
+
+For one explicit law $`p`$ on $`\mathbb Z_{30} \times \mathbb Z_{30}`$, [lower-bound/](lower-bound/README.md) shows
+$`T(p)/\tau(p) \ge R > 2.0012323023`$, where $`R`$ is an exact rational, so every constant in the theorem above
+satisfies $`C \ge R > 2`$. The sharp value of $`C`$ is unknown; the Lean theorem here is the upper bound
+$`C \le 13999/2000 < 7`$.
+
+The lower bound is a separate, computer-assisted proof: a written reduction
+([lower-bound/PROOF.md](lower-bound/PROOF.md)) with interval-certified numerical inputs, and a finite check of a
+912-family cover in interval arithmetic and exact rationals. It is outside the Lean development, it is not covered by
+`Verify.lean`, `leanchecker` or continuous integration, and the author reports that no human has checked it line by
+line. `python3 lower-bound/verify.py` checks every packaged file against a hash manifest, reruns the original cover
+assembler over the 912 family summaries and leaf sets, recomputes the packing scalar and $`R`$ in two independent
+implementations, and requires $`R > 2.0012323023`$ by exact comparison (Python 3 with numpy and numba; about 20 minutes
+and 12 GiB on the author's machine; `--quick` takes about a minute). It does not recompute the per-leaf bounds;
+`--leaves` does that for chosen families, and all of them would take about 68 CPU-hours.
+[lower-bound/README.md](lower-bound/README.md) lists what each mode checks. Satya Benson's
+$`C \ge 1.960073002187`$, above, is an earlier published lower bound, and the cell-price dual that the proof uses is his,
+as credited there.
+
 ## Acknowledgments
 
 This repository builds on David Lorell's [DLorell/stoch_to_det](https://github.com/DLorell/stoch_to_det) (Apache-2.0), which
@@ -194,8 +215,10 @@ section. `Statement.lean` is frozen by its hash, so its provenance is stated her
 
 The proofs and the Lean code in this repository were produced with language models used as drafting, proof-search
 and coding agents, under the direction and review of the repository owner, who decided what entered the tree. No
-statement inherits verification status from that process: the two headline theorems are checked by the Lean kernel
-as described under [Verify](#verify), against the statement file, which contains no proofs.
+statement inherits verification status from that process. The two headline theorems are checked by the Lean kernel
+as described under [Verify](#verify), against the statement file, which contains no proofs. The lower bound in
+[lower-bound/](lower-bound/README.md) was produced the same way and has no kernel check: its standing is the paper
+proof and computer checks described there, and the author reports that no human has checked those proofs line by line.
 
 ## License
 

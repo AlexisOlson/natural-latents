@@ -1,0 +1,23 @@
+--- 1. relative widths (pd_up - pd_lo) / pd_lo of data/law.json
+d = 0: 1.21e-78
+d = 14: 3.0e-74
+d = 15: 1.03e-59
+d = 16: 2.85e-74
+absolute width at d = 15: 4.94e-84
+--- 2. fit of the Gaussian profile, cyclic distance d <= 9
+max relative error of 0.1641 exp(-0.0846 d^2) against P(D=d) = 30 p_d: 0.115 percent
+max relative error of 0.0054705 exp(-0.0846 d^2) against p_d: 0.1242 percent
+30 p_0 = 0.16411555  p_0 = 0.0054705182
+--- 3. the numerator N of PROOF.md section 7
+keys of price_v4.json: T_over_tau_float, U2, conditional_ratio_display, conditional_ratio_lower, exact_phi0, gamma, hi, kappa_tau, law, law_sha256, lo, offset, phi, phi0_pattern, pool_T_over_tau, pool_cols, r, reserve_per_cell, spec
+Sum_gamma = 1896178602705315/140737488355328  Phi_0 = -27811237776763/281474976710656
+N > 0: True
+N in nats : 0.863577478472262
+N in bits : 1.24587894561533
+R = N / tau_up equals conditional_ratio_lower in price_v4.json: True
+R decimal: 2.00123230236323463210868894131
+--- 4. installed versions
+python 3.14.0
+numpy 2.3.4
+numba 0.65.1
+mpmath 1.4.1

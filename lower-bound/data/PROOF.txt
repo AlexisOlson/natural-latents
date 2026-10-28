@@ -1,0 +1,250 @@
+﻿PACK-BOUND: proof and verification notes
+
+1. Pinned problem and conventions
+
+The unchanged frozen price is out/prices.json, SHA-256
+ aa3bad1ff635e6ac0ba916b58709cdb7688f164fa3c8b4507f8bf66f45b1a167.
+Every JSON price is interpreted as its exact binary64 rational, not as an
+arbitrarily rounded decimal. The target alpha is
+ 3502021035450561/9007199254740992.
+Cells are (i,j), 0<=i,j<30, encoded as 30*i+j. Their orbit is the cyclic
+distance min((i-j) mod 30,(j-i) mod 30). The marginal law is circulant and
+even, with per-cell probability p_d. Logarithms are natural, h(t)=-t log t,
+h(0)=0. For a block U, r_i and c_j are its row and column masses, m is its
+total mass, and
+ c(U)=2 sum_i h(r_i)+2 sum_j h(c_j)-h(m).
+The residual is c(U)-sum_{z in U} gamma_z-phi(m).
+The frozen windows are (lo_j/960,hi_j/960], j=0,...,480; they are contiguous,
+cover (0,1], and have positive width. The proof checks both neighboring
+closures, hence the larger penalty at an endpoint. All negative witnesses
+used for the main obstruction lie strictly inside one window, so this
+conservative convention and the original right-closed convention agree.
+
+2. Obstruction to every valid node bound at the unchanged price
+
+Let B={ (i,j): cyclic distance(i,j)<=11 }, and U=B minus {(0,4)}.
+There are 30+2*11*30-1=689 cells. All 30 diagonal cells belong to U, so U is
+in the d0_ALL root family without requiring a symmetry argument. Define
+ s=p_0+2 sum_{d=1}^{11} p_d, a=p_4, and M=30*s-a.
+All row masses except row 0 equal s; row 0 equals s-a. All column masses
+except column 4 equal s; column 4 equals s-a. Therefore exactly
+ c(U)=4*(29*h(s)+h(s-a))-h(M),
+ gamma(U)=30*gamma_0+60 sum_{d=1}^{11} gamma_d-gamma_4.
+For the unchanged price,
+ gamma(U)=7943841111248305958655/590295810358705651712,
+ phi_479=2424715621387805/18014398509481984.
+Both the true-law and grid masses lie strictly in
+ (319/320,959/960), the interior of window 479.
+The grid mass is exactly 4497228775388919/4503599627370496.
+The grid residual is rigorously in
+ (-0.00232169076942,-0.00232169076940).
+The true residual is approximately -0.002321690769306773; the full rational
+outward enclosure is in out/rational_law_obstruction.json.
+
+For any valid lower bound L on any node containing U,
+ L <= inf_{V in node} residual(V) <= residual(U) < 0.
+Every complete cover of d0_ALL has a leaf containing U. Consequently no
+valid bound, LP/Lagrangian relaxation, dominance argument, branching rule,
+or finite exhaustive enumeration can produce an all-positive cover of
+this frozen point. This is an infeasible-price obstruction, stronger than
+an obstruction to a particular relaxation. It says nothing about the
+existence of another price proving C>2.
+
+A second simple block B minus {(29,29)} belongs to d0_L29 and has true
+residual approximately -0.0005557707824920694 (window 477). Independent
+search also supplied literal blocks in d0_L10 and d0_L15 whose true
+residuals are approximately -0.00020292418474753305 (window 186) and
+-0.0000007961955755163435 (window 233). These latter two survive the
+secondary experiment that caps every positive penalty at zero.
+
+3. Independent true-law enclosure
+
+Write a_j=sum_{r in Z} exp(-alpha*(j+30*r)^2),
+ b_j=sum_k a_k*a_{j-k}, m2=b_0, m3=sum_j a_j*b_{-j},
+ lambda_j=m2*a_j/b_j,
+ rho_x=sum_j a_j*cos(2*pi*j*x/30),
+ K_d=sum_j lambda_j*cos(2*pi*j*d/30).
+The uniform average of all 30 translates gives
+ p_d=K_d*sum_x rho_x^2*rho_{x+d}^2/(30^3*m2*m3).
+This expression can also be obtained by averaging the component-law cells
+q_0(x,x+d) directly. The fresh mpmath implementation uses the latter
+average. The integer-only implementation uses the displayed expression.
+The fresh mpmath probability boxes lie inside the inherited law boxes; the independent integer boxes contain all fresh mpmath probability boxes.
+
+For 0<=d<=15, summing the Gaussian terms r=-2,...,2 leaves two positive
+tails starting at magnitude L=90-d. Successive terms are bounded by a
+geometric ratio exp(-alpha*(2*L*30+30^2))<exp(-1)<1/2, so both tails are
+at most 4 exp(-alpha*L^2). This also encloses the literal R=20 sums: their
+terms include these five central terms and are bounded above by the
+infinite sum. Mirroring the coefficient boxes is safe for both; lambda
+pair boxes are explicitly hulled before the real Fourier transform.
+
+The integer-only backend uses 256-bit dyadic outward intervals. Basic
+arithmetic is implemented by Python integer products, exact Fraction
+ratios, floor, and ceiling. Transcendental bounds use:
+* exp(-t): reduce t to [0,1/8] by powers of two; bracket it between the
+  50-term even Taylor sum and the next odd sum, then square outward.
+* pi: Machin's identity 16*atan(1/5)-4*atan(1/239), each with 100 terms of
+  the alternating arctangent series and its next-term bound.
+* cos: reduce turns modulo one, pair +/- frequencies, and use the
+  degree-120 Taylor polynomial with remainder at most
+  (22/7)^122/122!. Integral and half-integral turns use exact +/-1.
+* log q: write q=2^k*y, 1<=y<2, and z=(y-1)/(y+1). The first N=110 terms
+  2 sum_{j=0}^{N-1} z^(2j+1)/(2j+1) have omitted positive tail at most
+  2*z^(2N+1)/((2N+1)*(1-z^2)), bounded uniformly using z<=1/3.
+All series operations are outward. Every kernel and rho lower endpoint is
+positive. The resulting normalization interval includes one. The symbolic
+normalization of the infinite law follows from the finite Fourier
+identities: convolution by K maps rho^2 to 30*m2*rho, and the mean of rho^3
+is m3. No numerical normalization check is substituted for that identity.
+No floating transcendental value is used to prove the sign of the true
+obstruction. Code: rational_law.py; receipt: rational_law_obstruction.json.
+The grid obstruction additionally has a separate exact-Fraction atanh
+calculation in exact_obstruction.py.
+
+4. Valid node bounds and the zero-cell correction
+
+At a node let A be forced on, O forced off, W0 free. Set
+ F(V)=2 sum_i h(r_i(V))+2 sum_j h(c_j(V)),
+ S(W)=F(A union W)-F(A)-gamma(W), W subset W0.
+S is normalized and submodular: h is concave and each marginal is a
+nonnegative modular mass sum; subtracting a modular price preserves
+submodularity. For any permutation of W0, its greedy marginal vector v
+satisfies v(W)<=S(W). This follows by adding members of W in permutation
+order and applying diminishing returns to each increment. A convex
+combination x of such greedy vectors is therefore a valid minorant.
+For every completion U=A union W,
+ residual(U)>=F(A)-gamma(A)+x(W)+(m(A)+m(W))*log(m(A)+m(W))-phi(m(A)+m(W)).
+Relax the free indicators to [0,1] at fixed free mass. Sorting x_z/p_z
+minimizes the linear term by fractional knapsack. On each knapsack
+segment/window intersection, use the supporting inequality
+ t*log t >= (1+log q)*t-q, q>0,
+then minimize the resulting affine function on its closed interval.
+The chosen q may be any positive proposal; no accuracy of float exp/log is
+needed. Proof code recomputes log q outward and all final algebra exactly.
+
+If a free cell z has exact grid mass zero and gamma_z<=0, remove it from
+any completion. Its mass and cost do not change and reinserting the cell increases the residual by -gamma_z>=0. Thus omitting all such free
+cells is a valid reduction. Forced-on zero cells may remain in the base.
+The exact d15 grid orbit has this property. Assigning surrogate masses
+1e-30 instead makes the weighted minimum-norm metric dominated by this
+modular orbit: about 2.77e20, versus ordinary node norms about 11--21.
+The ablation observes immediate numerical termination with one greedy
+vertex and very weak bounds. Removing the zeros restores useful proposals.
+This repairs numerical conditioning; it does not change the ideal
+mathematical optimum of the original base-polytope relaxation.
+
+The second candidate retains integrality in an equal-mass free group H.
+If its mass per cell is a, and d_k is the sum of its k smallest x values,
+then minimize, over integer k and the remaining fractional mass mu,
+ F(A)-gamma(A)+d_k+sigma_rest(mu)+psi(m(A)+k*a+mu)-phi(m(A)+k*a+mu).
+Every actual completion is included, so this is valid. The relaxation is
+contained in the original fractional one and is at least as strong in
+exact arithmetic. The sampled d0 gains are negligible; code orbit.py and
+integer_node_engine.py, comparison orbit_comparison.json.
+
+5. Fresh true-law transfer for the successful families
+
+Let Delta bound the L1 difference between the exact grid and rebuilt true
+law. It is computed by summing exact per-cell maximum endpoint errors,
+then rounded upward to a compact dyadic. Here Delta<1/4, so h is increasing throughout the error range. For any fixed block, the sums of
+row errors and column errors are each at most Delta. For 0<=x,y<=1 and
+|x-y|<=1/2,
+ |h(x)-h(y)|<=h(|x-y|).
+This follows from concavity: the largest positive increment is h(delta),
+and the largest negative increment is h(1-delta)<=h(delta) for delta<=1/2.
+Jensen's inequality therefore gives the block-cost error allowance
+ E_block=4*n*h(Delta/n)+h(Delta).
+A true mass in window (lo,hi] has grid mass in [lo-Delta,hi+Delta]. The
+checker tests every such expanded closed window and requires its grid
+residual lower bound to exceed E_block. This proves the actual true-law
+block inequality, including blocks whose mass crosses a price edge.
+The free-zero reduction is applied only on the grid; the transfer is
+charged for the whole original block, so positive true d15 masses are
+not discarded.
+
+6. Coverage, receipts, and controls
+
+For an L family, each cyclic line interval of length L+1 forbids all ones.
+For an L1_G family, each cyclic interval of length G+1 forbids all zeros.
+A separate unit-clause propagator reconstructs all forced decisions from
+each original root and recorded branch path. Branch variables agree at
+shared prefixes. No leaf is an ancestor of another, both branches exist
+at every internal prefix, and the exact Kraft sum is one. These facts
+prove coverage of each checked root family. Stored leaf bounds and
+acceptance flags receive no proof credit. Every greedy order is a checked
+permutation; simplex weights are exact nonnegative integers summing to a
+checked denominator. Receipts bind prices, law, code, cover and proposals.
+
+Tests evaluate every nonempty n4 block on five random positive even
+circulant laws and 2000 associated random nodes; a separate outward test
+covers all 65535 n4 blocks under 16 disjoint first-cell roots. n12 tests
+use 100000 random completions under 1000 numerical nodes and an additional
+100000 outward-checked completions under 100 nodes. Adding one nat to the
+new integral bound is deliberately invalid and is caught. Additional
+controls reject a stale price identity, a forged stored bound with changed
+prices, malformed windows, missing leaves, inconsistent branching,
+invalid greedy permutations and invalid simplex weights. Synthetic exact
+mass and shifted-mass controls exercise the larger-adjacent penalty and
+Delta-expanded windows. Integer-only exp/cos/log bounds pass 3000
+independent high-precision controls; exact integral-turn cosine identities
+are checked against their exact values, since an independent pi interval
+produces a wider enclosure of those same values.
+
+7. Campaign consequence
+
+A full successful cover at the unchanged point does not exist. Node counts
+cannot be projected into a successful certificate at that point. This
+does not refute C>2 for the law. Capping all 306 positive penalties at zero
+leaves the exact mass-packing minimum unchanged, but the d0_L10 and d0_L15
+counterexamples show that this repair alone is insufficient. Adding 16
+new witness columns to the stored pool leaves its numerical LP value near
+2.006248. The campaign should add the witnesses, re-freeze a price, and use
+the corrected zero-cell proposal engine with fresh, bound input receipts.
+The pool result is numerical evidence, not complete dual feasibility.
+
+
+
+8. Zero omission and logical family constraints
+
+For every certified sample family, the distinguished line has positive grid
+mass. Its run/gap clauses therefore contain no omitted grid-zero cell.
+The numerical omission cannot alter those logical propagations. This is
+checked explicitly in zero_semantics_controls.json. A future all-root
+extension must keep the logical on/off state separate from bound-only zero
+omission. The n6 alternating-line control in safe_zero_propagation.py shows
+that feeding artificial zero-cell off assignments into gap propagation can
+falsely make a nonempty family vacuous. The safe_node helper propagates the
+original logical assignments first and constructs a separate bound_off mask.
+The dominance inequality itself is unchanged. Every n4 block of a law with
+a genuine zero-mass diagonal also passes the exact reduction check.
+
+9. Separately refrozen point
+
+replacement_proposal.json is a different price. It is constructed from the
+augmented numerical pool, with an exact dyadic per-cell reserve, and its
+conditional scalar is about 2.0052480781. The 14 recorded counterexample
+checks pass, and full true-law sample checks pass on d0_L10 (1145 leaves)
+and d0_L15 (664 leaves); see replacement_family_certificates_v2.json.
+A weak independently generated proposal at one d0_L10 leaf was rejected.
+Reproducing the search's parent-to-child warm start supplied a stronger
+valid simplex minorant, which was then recomputed by the integer checker.
+No stored numerical bound was used for acceptance. Other sampled families
+remain unfinished after their search caps. This is not an all-block
+certificate and does not change the obstruction at the original price.
+
+10. Final cross-checks
+
+The literal R=20 finite construction was evaluated with all 30 unpaired
+cosine terms and exact rational interval arithmetic. Both its raw marginal
+and its explicitly normalized marginal preserve the obstruction upper
+bound < -0.00232169076930; see literal_R20_check.json. A separate integer
+calculation of component entropies encloses tau_L=0.4315228559185617 and
+reproduces the conditional scalar values, without trusting the inherited
+score endpoints (integer_score_checks.json).
+
+The same 689-cell block has negative true residual at both inherited larger
+slack variants: approximately -0.003122809091394858 at price value2.003248,
+and -0.004298254607291025 at price value2.000448. These are two specific
+price points, not a theorem about every possible slack adjustment. Receipt:
+inherited_slack_check.json. All original inputs were copied read-only.
